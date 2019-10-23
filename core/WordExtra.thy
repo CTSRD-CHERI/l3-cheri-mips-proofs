@@ -1424,6 +1424,17 @@ lemma shiftl_zero [simp]:
 using assms
 by (intro word_eqI) (simp add: word_size nth_shiftl)
 
+subsection \<open>@{const shiftr}\<close>
+
+lemma word_cat_shiftr:
+  fixes x :: "'a::len0 word"
+  fixes y :: "'b::len0 word"
+  assumes "n = LENGTH('b)"
+  shows "(word_cat x y >> n::'c::len word) = ucast x AND mask (LENGTH('c) - n)"
+using assms
+by (intro word_eqI)
+   (auto simp add: word_size nth_word_cat nth_shiftr nth_ucast word_ao_nth)
+
 subsection \<open>@{const scast}\<close>
 
 lemma nth_scast:

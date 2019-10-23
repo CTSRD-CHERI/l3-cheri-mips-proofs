@@ -190,7 +190,7 @@ next
     by (auto simp: word_size nth_word_extract add.assoc)
 qed
 
-lemma word_extract_word_cat [simp]:
+lemma word_extract_word_cat:
   fixes x :: "'a::len word"
     and y :: "'b::len word"
   assumes "n = LENGTH('b)"
