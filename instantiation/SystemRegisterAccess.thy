@@ -1,0 +1,114 @@
+(*<*) 
+
+(* Author: Kyndylan Nienhuis *)
+
+theory SystemRegisterAccess
+
+imports 
+  "ExecutionStep"
+  "LoadData"
+  "RestrictCap"
+  "StoreData"
+  "LoadCap"
+  "StoreCap"
+  "SealCap"
+  "UnsealCap"
+begin
+
+(*>*)
+section \<open>System register access\<close>
+
+lemma NumberedRegisterIsAccessible:
+  assumes reg: "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
+      and valid: "getStateIsValid s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+  shows "getSpecial_register_accessible cd s"
+proof -
+  obtain ac where ac: "ac \<in> actions"
+              and cd: "cd \<in> CapDerivationRegisters ac"
+    using reg
+    by auto
+  have ghost: "getEmptyGhostState s"
+    using valid by auto
+  show ?thesis
+    proof (cases ac)
+      case (LoadDataAction auth a l)
+      hence prov: "LoadDataAction auth a l \<in> actions"
+        using ac by simp
+      show ?thesis
+        using SemanticsLoadData[OF prov valid suc]
+        using cd LoadDataAction
+        by (auto split: if_splits CapRegister.splits)
+    next
+      case (StoreDataAction auth a l)
+      hence prov: "StoreDataAction auth a l \<in> actions"
+        using ac by simp
+      show ?thesis
+        using SemanticsStoreData[OF prov suc valid]
+        using cd StoreDataAction
+        by (auto split: if_splits CapRegister.splits)
+    next
+      case (RestrictCapAction r r')
+      hence prov: "RestrictCapAction r r' \<in> actions"
+        using ac by simp
+      show ?thesis
+        using SemanticsRestrictCap[OF prov valid suc]
+        using cd RestrictCapAction
+        by (auto split: CapRegister.splits)
+    next
+      case (LoadCapAction auth a cd)
+      hence prov: "LoadCapAction auth a cd \<in> actions"
+        using ac by simp
+      show ?thesis
+        using SemanticsLoadCap[OF prov suc]
+        using cd LoadCapAction
+        by (auto split: CapRegister.splits)
+    next
+      case (StoreCapAction auth cd a)
+      hence prov: "StoreCapAction auth cd a \<in> actions"
+        using ac by simp
+      show ?thesis 
+        using SemanticsStoreCap[OF prov suc]
+        using cd StoreCapAction
+        by (auto split: CapRegister.splits)
+    next
+      case (SealCapAction auth cd cd')
+      hence prov: "SealCapAction auth cd cd' \<in> actions"
+        using ac by simp
+      show ?thesis 
+        using SemanticsSealCap[OF prov suc]
+        using cd SealCapAction
+        by (auto split: CapRegister.splits)
+    next
+      case (UnsealCapAction auth cd cd')
+      hence prov: "UnsealCapAction auth cd cd' \<in> actions"
+        using ac by simp
+      show ?thesis 
+        using SemanticsUnsealCap[OF prov suc]
+        using cd UnsealCapAction
+        by (auto split: CapRegister.splits)
+    qed
+qed
+
+corollary SystemRegisterInstantiation [simp]:
+  shows "SystemRegisterProp NextStates"
+unfolding SystemRegisterProp_def
+proof clarify
+  fix s s' actions action cd
+  assume reg: "cd \<in> CapDerivationRegisters action"
+     and action: "action \<in> actions"
+     and system: "cd \<noteq> 0" "cd \<noteq> 1"
+     and valid: "getStateIsValid s"
+     and suc: "(KeepDomain actions, s') \<in> NextStates s"
+  have "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
+    using reg action by auto
+  from NumberedRegisterIsAccessible[OF this valid suc]
+  show "Access_System_Registers (getPerms (getPCC s))"
+    using system reg action
+    unfolding special_register_accessible_alt_def
+    by (auto simp: ValueAndStatePart_simp split: if_splits)
+qed
+
+(*<*)
+end
+(*>*)

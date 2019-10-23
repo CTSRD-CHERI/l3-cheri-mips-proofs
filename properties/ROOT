@@ -1,0 +1,14 @@
+session "CHERI-abstraction" = "CHERI-core" +
+  description {*
+    CHERI + abstraction
+  *}
+  theories 
+    CheriAbstraction
+
+session "CHERI-traces" = "CHERI-instantiation" +
+  description {*
+    CHERI + trace properties
+  *}
+  theories 
+    TraceProperties
+    Examples

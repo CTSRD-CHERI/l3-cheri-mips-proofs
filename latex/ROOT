@@ -1,0 +1,11 @@
+session "notes" = "CHERI-traces" + 
+  options [document = pdf, 
+           document_output = "output", 
+           show_question_marks = false,
+           names_short]
+  theories [document = false]
+    "LaTeXoutput"
+  theories 
+    "SecurityPropertiesReadable"
+  document_files (in ".")
+    "root.tex"

@@ -1,0 +1,6 @@
+session "CHERI-p256" = HOL +
+  description {*
+    HOL + CHERI (p256)
+  *}
+  sessions "HOL-Library"
+  theories CHERI_Monadic_p256

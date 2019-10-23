@@ -1,0 +1,6 @@
+session "CHERI-instantiation" = "CHERI-abstraction" +
+  description {*
+    CHERI + instantiation
+  *}
+  theories 
+    CheriInstantiation

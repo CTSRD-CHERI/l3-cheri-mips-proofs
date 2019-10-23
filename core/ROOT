@@ -1,0 +1,13 @@
+session "CHERI-alt" = "CHERI-p256" +
+  description {*
+    CHERI + alternative definitions
+  *}
+  theories CheriAltDefs
+
+session "CHERI-core" = "CHERI-alt" +
+  description {*
+    CHERI + general lemmas and proof methods
+  *}
+  theories 
+    CheriProofMethods
+    CheriLemmas
