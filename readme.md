@@ -2,13 +2,13 @@
 
 The theory files work with Isabelle2017.
 
-To reduce the startup time it is advisable to build a heap image of
-some of the theories. Add the following to the ROOTS file of Isabelle
+To reduce the startup time it is recommended to build a heap image of
+the theories. Add the following to the ROOTS file of Isabelle
 (usually located at ~/.isabelle/Isabelle2017/ROOTS):
 
-(path to repo)/generated
-(path to repo)/core
-(path to repo)/properties
+* (path to repo)/generated
+* (path to repo)/core
+* (path to repo)/properties
 
 # Folder structure
 
