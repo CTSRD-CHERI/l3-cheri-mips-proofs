@@ -190,6 +190,17 @@ next
     by (auto simp: word_size nth_word_extract add.assoc)
 qed
 
+lemma word_extract_word_cat [simp]:
+  fixes x :: "'a::len word"
+    and y :: "'b::len word"
+  assumes "n = LENGTH('b)"
+      and "LENGTH('c) = LENGTH('a) + LENGTH('b)"
+  shows "word_extract m n (word_cat x y::'c::len word) = (ucast x AND mask (Suc m - n))"
+using assms
+using test_bit_size[where w=x]
+by (intro word_eqI)
+   (auto simp add: word_size nth_word_extract nth_ucast nth_word_cat word_ao_nth)
+
 subsubsection \<open>@{const word_replicate}\<close>
 
 lemma word_replicate_alt_def:

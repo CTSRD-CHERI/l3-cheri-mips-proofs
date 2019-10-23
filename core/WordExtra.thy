@@ -1436,15 +1436,28 @@ by auto
 lemma scast_alt_def:
   fixes x :: "'a::len word"
   assumes "LENGTH('c) = LENGTH('a) + LENGTH('b)"
-      and "m = LENGTH('a) - 1"
-  shows "scast x = (word_cat (if x !! m then max_word else 0::'b::len word) x::'c::len word)"
+  shows "(scast x::'c::len word) = 
+         (word_cat (if x !! (LENGTH('a) - 1) then max_word else 0::'b::len word) x)"
   (is "?l = ?r")
 proof (intro word_eqI impI, unfold word_size)
   fix n
   show "?l !! n = ?r !! n"
-    by (cases "n = m")
+    by (cases "n = LENGTH('a) - 1")
        (auto simp: assms word_size nth_word_cat nth_scast 
              split: if_splits)
+qed
+
+lemma scast_down:
+  fixes x :: "'a::len word"
+  assumes "LENGTH('b) \<le> LENGTH('a)"
+  shows "(scast x::'b::len word) = ucast x"
+proof (intro word_eqI impI, unfold word_size)
+  fix n
+  assume "n < LENGTH('b)"
+  thus "(scast x::'b word) !! n = (ucast x::'b word) !! n"
+    using assms
+    by (cases "n = LENGTH('a) - 1") 
+       (auto simp add: nth_scast nth_ucast)
 qed
 
 lemma scast_scast_shiftl:
