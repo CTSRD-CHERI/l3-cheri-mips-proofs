@@ -1,4 +1,4 @@
-*** INSTALL ***
+# INSTALL
 
 The theory files work with Isabelle2017.
 
@@ -10,7 +10,7 @@ some of the theories. Add the following to the ROOTS file of Isabelle
 (path to repo)/core
 (path to repo)/properties
 
-*** Folder structure ***
+# Folder structure
 
 "generated" contains the Isabelle export of the L3 model.
 
