@@ -246,7 +246,14 @@ declare ucast_xor [alt_def_simp]
 declare ucast_plus_down [alt_def_simp]
 declare ucast_minus_down [alt_def_simp]
 
-lemmas scast_alt_def_sym [alt_def_simp] = scast_alt_def[THEN sym]
+lemma scast_alt_def_sym [alt_def_simp]:
+  fixes x :: "'a::len word"
+  assumes "LENGTH('c) = LENGTH('a) + LENGTH('b)"
+      and "m = LENGTH('a) - 1"
+  shows "(word_cat (if x !! m then max_word else 0::'b::len word) x) = 
+         (scast x::'c::len word)"
+using assms
+by (simp add: scast_alt_def)
 
 (* If child theories also import \<^emph>\<open>Words\<close> then it is undefined whether @{const bin_to_bl_def} will
 be in the simp set or not (see the Isabelle Tutorial 3.1.2). We therefore need to delete is again
