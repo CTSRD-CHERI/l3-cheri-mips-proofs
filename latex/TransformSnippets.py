@@ -248,14 +248,19 @@ def transformSnippet(snippet):
   if (tabular and snippet.hasLabels):
     result += "\\setcounter{SnippetLineNumber}{0}%\n"
   if (tabular):
-    result += "\\begin{tabular}{%s}%%\n" % columnLayout
+    # result += "\\begin{tabular}{%s}%%\n" % columnLayout
+    if (snippet.hasLabels):
+      result += "\\begin{mytabular}%\n"
+    else:
+      result += "\\begin{xtabular}{%s}%%\n" % columnLayout
   for i in range(0, len(snippet.lines)):
     line = snippet.lines[i]
     isFirst = (i == 0)
     isLast = (i == len(snippet.lines) - 1)
     result += transformLogicalLine(line, tabular, isFirst, isLast, snippet)
   if (tabular):
-    result += "\\end{tabular}%%\n"
+    # result += "\\end{tabular}%%\n"
+    result += "\\end{mytabular}%%\n"
   result += SnippetEnd
   result += "\n\n"
   return result

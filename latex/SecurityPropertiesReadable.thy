@@ -167,11 +167,11 @@ lemma PermitAccessSystemRegisters_alt:
 "PermitAccessSystemRegisters cap = Bit (Perms cap) 10"
 by simp
 
-definition "IsInvokable cap \<equiv> Permit_CCall (getPerms cap)"
-declare IsInvokable_def [simp]
+definition "PermitCCall cap \<equiv> Permit_CCall (getPerms cap)"
+declare PermitCCall_def [simp]
 
-lemma IsInvokable_alt:
-"IsInvokable cap = Bit (Perms cap) 8"
+lemma PermitCCall_alt:
+"PermitCCall cap = Bit (Perms cap) 8"
 by simp
 
 definition "PermitExecute cap \<equiv> Permit_Execute (getPerms cap)"
@@ -343,8 +343,8 @@ abbreviation IsUnpredictable :: "state \<Rightarrow> bool" where
 abbreviation ExceptionSignalled :: "state \<Rightarrow> bool" where 
   "ExceptionSignalled \<equiv> getExceptionSignalled"
 
-definition GeneralCapReg where "GeneralCapReg s i \<equiv> getCAPR i s"
-declare GeneralCapReg_def [simp]
+definition NormalCapReg where "NormalCapReg s i \<equiv> getCAPR i s"
+declare NormalCapReg_def [simp]
 
 definition SpecialCapReg where "SpecialCapReg s i \<equiv> getSCAPR i s"
 declare SpecialCapReg_def [simp]
@@ -364,7 +364,7 @@ by simp
 abbreviation IDC where "IDC \<equiv> getIDC"
 
 lemma IDC_alt:
-"IDC s = GeneralCapReg s 26"
+"IDC s = NormalCapReg s 26"
 by simp
 
 abbreviation DDC where "DDC \<equiv> getDDC"
@@ -393,10 +393,10 @@ by auto
 
 abbreviation TranslateAddr where "TranslateAddr \<equiv> getPhysicalAddress"
 
-abbreviation TranslateBounds where "TranslateBounds \<equiv> getPhysicalAddresses"
+abbreviation TranslateAddresses where "TranslateAddresses \<equiv> getPhysicalAddresses"
 
-lemma TranslateBounds_alt:
-"pAddr \<in> TranslateBounds vAddrs t s
+lemma TranslateAddresses_alt:
+"pAddr \<in> TranslateAddresses vAddrs t s
 is defined as
 exists vAddr.
 vAddr \<in> vAddrs
@@ -410,7 +410,7 @@ lemma TranslateCapAddresses_alt:
 "a \<in> TranslateCapAddresses vAddrs t s
 is defined as
 exists pAddr.
-pAddr \<in> TranslateBounds vAddrs t s
+pAddr \<in> TranslateAddresses vAddrs t s
 and a = GetCapAddress pAddr"
 unfolding getPhysicalCapAddresses_def
 by auto
@@ -445,7 +445,7 @@ lemma UnpredictableNext_alt_2:
           (PCC s' = PCC s) \<and>
           (BranchDelay s' = BranchDelay s) \<and>
           (BranchDelayPCC s' = BranchDelayPCC s) \<and>
-          (\<forall>cd. GeneralCapReg s' cd = GeneralCapReg s cd) \<and>
+          (\<forall>cd. NormalCapReg s' cd = NormalCapReg s cd) \<and>
           (\<forall>cd. SpecialCapReg s' cd = SpecialCapReg s cd) \<and>
           (\<forall>vAddr. TranslateAddr vAddr s' = TranslateAddr vAddr s) \<and>
           (BigEndian s' = BigEndian s) \<and>
@@ -460,7 +460,7 @@ and (inline for all a. MemCap s' a = MemCap s a)
 and PCC s' = PCC s
 and BranchDelay s' = BranchDelay s
 and BranchDelayPCC s' = BranchDelayPCC s
-and (inline for all cd. GeneralCapReg s' cd = GeneralCapReg s cd)
+and (inline for all cd. NormalCapReg s' cd = NormalCapReg s cd)
 and (inline for all cd. SpecialCapReg s' cd = SpecialCapReg s cd)
 and (inline for all vAddr. TranslateAddr vAddr s' = TranslateAddr vAddr s)
 and BigEndian s' = BigEndian s
@@ -501,7 +501,7 @@ lemma LoadDataProp_alt:
    and \<lbrakk>lbl ''Perms''\<rbrakk> PermitLoad (CapReg s auth)
    and \<lbrakk>lbl ''Length''\<rbrakk> ln \<noteq> 0
    and \<lbrakk>lbl ''Segment''\<rbrakk> MemSegment a ln \<subseteq> 
-       TranslateBounds (CapBounds (CapReg s auth)) LOAD s"
+       TranslateAddresses (CapBounds (CapReg s auth)) LOAD s"
 unfolding LoadDataProp_def 
 by simp
 
@@ -521,7 +521,7 @@ lemma StoreDataProp_alt:
    and \<lbrakk>lbl ''Perms''\<rbrakk> PermitStore (CapReg s auth)
    and \<lbrakk>lbl ''Length''\<rbrakk> ln \<noteq> 0
    and \<lbrakk>lbl ''Segment''\<rbrakk> MemSegment a ln \<subseteq> 
-       TranslateBounds (CapBounds (CapReg s auth)) STORE s
+       TranslateAddresses (CapBounds (CapReg s auth)) STORE s
    and \<lbrakk>lbl ''Cap''\<rbrakk> (not Tag (MemCap s' (GetCapAddress a)) 
                      or MemCap s' (GetCapAddress a) = MemCap s (GetCapAddress a)) )
    \<lbrakk>lbl ''End''\<rbrakk>"
@@ -558,8 +558,8 @@ lemma LoadCapProp_alt:
    and \<lbrakk>lbl ''PermsLoad''\<rbrakk> PermitLoad (CapReg s auth)
    and \<lbrakk>lbl ''PermsLoadCap''\<rbrakk> PermitLoadCapability (CapReg s auth)
    and \<lbrakk>lbl ''Segment''\<rbrakk> MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-       TranslateBounds (CapBounds (CapReg s auth)) LOAD s
-   and \<lbrakk>lbl ''Le''\<rbrakk> GeneralCapReg s' r \<le> MemCap s a"
+       TranslateAddresses (CapBounds (CapReg s auth)) LOAD s
+   and \<lbrakk>lbl ''Le''\<rbrakk> NormalCapReg s' r \<le> MemCap s a"
 unfolding LoadCapProp_def
 by simp
 
@@ -579,8 +579,8 @@ lemma StoreCapProp_alt:
    and \<lbrakk>lbl ''PermsStore''\<rbrakk> PermitStore (CapReg s auth)
    and \<lbrakk>lbl ''PermsStoreCap''\<rbrakk> PermitStoreCapability (CapReg s auth)
    and \<lbrakk>lbl ''Segment''\<rbrakk> MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-       TranslateBounds (CapBounds (CapReg s auth)) STORE s
-   and \<lbrakk>lbl ''Eq''\<rbrakk> MemCap s' a = GeneralCapReg s r"
+       TranslateAddresses (CapBounds (CapReg s auth)) STORE s
+   and \<lbrakk>lbl ''Eq''\<rbrakk> MemCap s' a = NormalCapReg s r"
 unfolding StoreCapProp_def
 by simp 
 
@@ -595,8 +595,8 @@ lemma StoreLocalCapProp_alt:
    if \<lbrakk>lbl ''Valid''\<rbrakk> StateIsValid s
    and \<lbrakk>lbl ''Next''\<rbrakk> (KeepDomain actions, s') \<in> sem s
    and \<lbrakk>lbl ''Action''\<rbrakk> StoreCapAction auth r a \<in> actions
-   and \<lbrakk>lbl ''SourceTag''\<rbrakk> Tag (GeneralCapReg s r)
-   and \<lbrakk>lbl ''Local''\<rbrakk> (not IsGlobal (GeneralCapReg s r))
+   and \<lbrakk>lbl ''SourceTag''\<rbrakk> Tag (NormalCapReg s r)
+   and \<lbrakk>lbl ''Local''\<rbrakk> (not IsGlobal (NormalCapReg s r))
    then \<lbrakk>lbl ''Perms''\<rbrakk> PermitStoreLocalCapability (CapReg s auth)"
 unfolding StoreLocalCapProp_def
 by simp
@@ -617,8 +617,8 @@ lemma SealCapProp_alt:
    and \<lbrakk>lbl ''NotSealed''\<rbrakk> (not IsSealed (CapReg s auth))
    and \<lbrakk>lbl ''Perms''\<rbrakk> PermitSeal (CapReg s auth)
    and \<lbrakk>lbl ''Segment''\<rbrakk> UCast t \<in> CapBounds (CapReg s auth)
-   and \<lbrakk>lbl ''SourceUnsealed''\<rbrakk> (not IsSealed (GeneralCapReg s r))
-   and \<lbrakk>lbl ''Result''\<rbrakk> GeneralCapReg s' r' = setType (setSealed ((GeneralCapReg s r), True), t))"
+   and \<lbrakk>lbl ''SourceUnsealed''\<rbrakk> (not IsSealed (NormalCapReg s r))
+   and \<lbrakk>lbl ''Result''\<rbrakk> NormalCapReg s' r' = setType (setSealed ((NormalCapReg s r), True), t))"
 unfolding SealCapProp_def Let_def
 by simp
 
@@ -636,9 +636,9 @@ lemma UnsealCapProp_alt:
    then \<lbrakk>lbl ''Tag''\<rbrakk> Tag (CapReg s auth)
    and \<lbrakk>lbl ''NotSealed''\<rbrakk> (not IsSealed (CapReg s auth))
    and \<lbrakk>lbl ''Perms''\<rbrakk> PermitUnseal (CapReg s auth)
-   and \<lbrakk>lbl ''Segment''\<rbrakk> UCast (ObjectType (GeneralCapReg s r)) \<in> CapBounds (CapReg s auth)
-   and \<lbrakk>lbl ''SourceSealed''\<rbrakk> IsSealed (GeneralCapReg s r)
-   and \<lbrakk>lbl ''Result''\<rbrakk> GeneralCapReg s' r' \<le> setType (setSealed ((GeneralCapReg s r), False), 0)"
+   and \<lbrakk>lbl ''Segment''\<rbrakk> UCast (ObjectType (NormalCapReg s r)) \<in> CapBounds (CapReg s auth)
+   and \<lbrakk>lbl ''SourceSealed''\<rbrakk> IsSealed (NormalCapReg s r)
+   and \<lbrakk>lbl ''Result''\<rbrakk> NormalCapReg s' r' \<le> setType (setSealed ((NormalCapReg s r), False), 0)"
 unfolding UnsealCapProp_def
 by auto
 
@@ -666,11 +666,11 @@ lemma InvokeCapProp_alt:
    for all r'.
    if \<lbrakk>lbl ''Valid''\<rbrakk> StateIsValid s
    and \<lbrakk>lbl ''Next''\<rbrakk> (SwitchDomain (InvokeCapability r r'), s') \<in> sem s
-   then \<lbrakk>lbl ''CodeDef''\<rbrakk> (let codeCap = GeneralCapReg s r in
-   \<lbrakk>lbl ''DataDef''\<rbrakk> (let dataCap = GeneralCapReg s r' in
+   then \<lbrakk>lbl ''CodeDef''\<rbrakk> (let codeCap = NormalCapReg s r in
+   \<lbrakk>lbl ''DataDef''\<rbrakk> (let dataCap = NormalCapReg s r' in
    \<lbrakk>lbl ''CodeSealed''\<rbrakk> (Tag codeCap inline and \<lbrakk>lbl ''DataTag''\<rbrakk> Tag dataCap)
    and \<lbrakk>lbl ''CodeTag''\<rbrakk> (IsSealed codeCap inline and \<lbrakk>lbl ''DataSealed''\<rbrakk> IsSealed dataCap)
-   and \<lbrakk>lbl ''CodePerms''\<rbrakk> (IsInvokable codeCap inline and \<lbrakk>lbl ''DataPerms''\<rbrakk> IsInvokable dataCap)
+   and \<lbrakk>lbl ''CodePerms''\<rbrakk> (PermitCCall codeCap inline and \<lbrakk>lbl ''DataPerms''\<rbrakk> PermitCCall dataCap)
    and \<lbrakk>lbl ''CodeExe''\<rbrakk> PermitExecute codeCap
    and \<lbrakk>lbl ''DataNotExe''\<rbrakk> (not PermitExecute dataCap)
    and \<lbrakk>lbl ''Type''\<rbrakk> ObjectType codeCap = ObjectType dataCap
@@ -679,7 +679,7 @@ lemma InvokeCapProp_alt:
    and \<lbrakk>lbl ''BranchDelay''\<rbrakk> BranchDelay s' = None
    and \<lbrakk>lbl ''BranchDelayPCC''\<rbrakk> BranchDelayPCC s' = None
    and \<lbrakk>lbl ''IDC''\<rbrakk> IDC s' = setType (setSealed (dataCap, False), 0)
-   and \<lbrakk>lbl ''CapReg''\<rbrakk> (inline for all cb. inline if cb \<noteq> 26 then GeneralCapReg s' cb = GeneralCapReg s cb)
+   and \<lbrakk>lbl ''CapReg''\<rbrakk> (inline for all cb. inline if cb \<noteq> 26 then NormalCapReg s' cb = NormalCapReg s cb)
    and \<lbrakk>lbl ''SCapReg''\<rbrakk> (inline for all cb. SpecialCapReg s' cb = SpecialCapReg s cb)
    and \<lbrakk>lbl ''Mem''\<rbrakk> (inline for all a. Mem s' a = Mem s a)))"
 unfolding InvokeCapProp_def Let_def
@@ -694,7 +694,7 @@ lemma ExceptionProp_alt:
    then \<lbrakk>lbl ''EXL''\<rbrakk> EXL s'
    and \<lbrakk>lbl ''PC''\<rbrakk> Base (PCC s') + PC s' \<in> ExceptionPCs
    and \<lbrakk>lbl ''PCC''\<rbrakk> PCC s' = KCC s
-   and \<lbrakk>lbl ''CapReg''\<rbrakk> (inline for all r. GeneralCapReg s' r = GeneralCapReg s r)
+   and \<lbrakk>lbl ''CapReg''\<rbrakk> (inline for all r. NormalCapReg s' r = NormalCapReg s r)
    and \<lbrakk>lbl ''EPCC''\<rbrakk> (if EXL s 
                       then EPCC s' = EPCC s
                       else EPCC s' = setOffset (PCC s, PC s))
@@ -1045,7 +1045,7 @@ declare CLCVirtualAddress_def [simp]
 
 lemma CLCVirtualAddress_alt:
   "CLCVirtualAddress cb rt offset s \<equiv>
-   Base (GeneralCapReg s cb) + Offset (GeneralCapReg s cb) + GPR s rt + 16 * SCast offset"
+   Base (NormalCapReg s cb) + Offset (NormalCapReg s cb) + GPR s rt + 16 * SCast offset"
 by (simp add: ValueAndStatePart_simp 
               scast_word_cat_zero shiftl_t2n
               ExecutionStep.CLCVirtualAddress_def)
@@ -1079,7 +1079,7 @@ declare CLLCVirtualAddress_def [simp]
 
 lemma CLLCVirtualAddress_alt:
   "CLLCVirtualAddress cb s \<equiv>
-   Base (GeneralCapReg s cb) + Offset (GeneralCapReg s cb)"
+   Base (NormalCapReg s cb) + Offset (NormalCapReg s cb)"
 by (simp add: ValueAndStatePart_simp 
               scast_word_cat_zero shiftl_t2n
               ExecutionStep.CLLCVirtualAddress_def)
@@ -1150,7 +1150,7 @@ declare CSCVirtualAddress_def [simp]
 
 lemma CSCVirtualAddress_alt:
   "CSCVirtualAddress cb rt offset s \<equiv>
-   Base (GeneralCapReg s cb) + Offset (GeneralCapReg s cb) + GPR s rt + 16 * SCast offset"
+   Base (NormalCapReg s cb) + Offset (NormalCapReg s cb) + GPR s rt + 16 * SCast offset"
 by (simp add: ValueAndStatePart_simp 
               scast_word_cat_zero shiftl_t2n
               ExecutionStep.CSCVirtualAddress_def)
@@ -1179,7 +1179,7 @@ declare CSCCVirtualAddress_def [simp]
 
 lemma CSCCVirtualAddress_alt:
   "CSCCVirtualAddress cb s \<equiv>
-   Base (GeneralCapReg s cb) + Offset (GeneralCapReg s cb)"
+   Base (NormalCapReg s cb) + Offset (NormalCapReg s cb)"
 by (simp add: ValueAndStatePart_simp 
               scast_word_cat_zero shiftl_t2n
               ExecutionStep.CSCCVirtualAddress_def)
@@ -1737,7 +1737,7 @@ by auto
 
 lemma StorablePhysAddresses_alt:
 "StorablePhysAddresses gPerm s \<equiv>
-TranslateBounds (StorableAddresses gPerm) STORE s"
+TranslateAddresses (StorableAddresses gPerm) STORE s"
 unfolding StorablePhysAddresses_def
 by auto
 
@@ -1945,10 +1945,10 @@ lemma MonotonicityReachableCaps_alt:
 "MonotonicityReachableCaps sem 
 is defined as
 for all s. for all s'. for all trace.
-if \<lbrakk>lbl ''Trace''\<rbrakk> s' \<in> FutureStates sem s trace
-and \<lbrakk>lbl ''Intra''\<rbrakk> IntraDomainTrace trace
+if \<lbrakk>lbl ''Valid''\<rbrakk> StateIsValid s
 and \<lbrakk>lbl ''NoSRA''\<rbrakk> (not SystemRegisterAccess (ReachablePermissions s))
-and \<lbrakk>lbl ''Valid''\<rbrakk> StateIsValid s
+and \<lbrakk>lbl ''Trace''\<rbrakk> s' \<in> FutureStates sem s trace
+and \<lbrakk>lbl ''Intra''\<rbrakk> IntraDomainTrace trace
 then \<lbrakk>lbl ''Conclusion''\<rbrakk> ReachableCaps s' \<subseteq> ReachableCaps s"
 unfolding MonotonicityReachableCaps_def
 by auto
@@ -2092,7 +2092,7 @@ by auto
 is defined as
 for all cap.
 if cap \<in> ReadableCaps perm s
-and IsInvokable cap
+and PermitCCall cap
 then IsSealed cap 
 and not ObjectType cap \<in> UnsealableTypes perm"
 unfolding InvokableCapsNotUnsealable_def
@@ -2113,7 +2113,7 @@ lemma AccessibleCaps_alt:
 is defined as
 (exists r. RegisterIsAlwaysAccessible r 
            and cap = CapReg s r)
-or (exists a. a \<in> TranslateBounds addrs LOAD s
+or (exists a. a \<in> TranslateAddresses addrs LOAD s
               and cap = MemCap s (GetCapAddress a))"
 unfolding AccessibleCaps_def
 by auto
@@ -2132,7 +2132,7 @@ lemma InvokableCaps_alt:
 is defined as
 cap \<in> AccessibleCaps addrs s
 and Tag cap 
-and IsInvokable cap"
+and PermitCCall cap"
 unfolding InvokableCaps_def
 by auto
 
@@ -2206,7 +2206,7 @@ is defined as
 (\<lbrakk>lbl ''Entry''\<rbrakk> Base (PCC s') + PC s' \<in> ExceptionPCs \<union> InvokableAddresses addrs s 
 \<lbrakk>lbl ''EntryEnd''\<rbrakk>)
 and \<lbrakk>lbl ''Memory''\<rbrakk> (inline for all a. 
-     inline if not \<lbrakk>lbl ''Translate''\<rbrakk> a \<in> TranslateBounds addrs STORE s
+     inline if not \<lbrakk>lbl ''Translate''\<rbrakk> a \<in> TranslateAddresses addrs STORE s
      then (\<lbrakk>lbl ''Value''\<rbrakk> MemData s' a = MemData s a
            and \<lbrakk>lbl ''Tag''\<rbrakk> MemTag s' (GetCapAddress a) = MemTag s (GetCapAddress a)))
 \<lbrakk>lbl ''MemoryEnd''\<rbrakk>
@@ -2714,17 +2714,17 @@ text_raw \<open>
 @{typeof "BranchToPCC x"}
 }%EndSnippet\<close>
 
-syntax (latex output) "_GeneralCapReg" :: 'a ("GeneralCapReg")
-translations "(CONST IsaField _GeneralCapReg)" \<leftharpoondown> "CONST GeneralCapReg"
+syntax (latex output) "_NormalCapReg" :: 'a ("NormalCapReg")
+translations "(CONST IsaField _NormalCapReg)" \<leftharpoondown> "CONST NormalCapReg"
 
 text_raw \<open>
-\DefineSnippet{GeneralCapReg-type}{%
-@{typeof "GeneralCapReg"}
+\DefineSnippet{NormalCapReg-type}{%
+@{typeof "NormalCapReg"}
 }%EndSnippet\<close>
 
 text_raw \<open>
-\DefineSnippet{GeneralCapReg-field-type}{%
-@{typeof "GeneralCapReg x"}
+\DefineSnippet{NormalCapReg-field-type}{%
+@{typeof "NormalCapReg x"}
 }%EndSnippet\<close>
 
 syntax (latex output) "_SpecialCapReg" :: 'a ("SpecialCapReg")
@@ -3018,17 +3018,17 @@ text_raw \<open>
 @{thm [display, margin = 50] PermitAccessSystemRegisters_alt}
 }%EndSnippet\<close>
 
-syntax (latex output) "_IsInvokable" :: 'a ("IsInvokable")
-translations "(CONST IsaDefinition _IsInvokable)" \<leftharpoondown> "CONST IsInvokable"
+syntax (latex output) "_PermitCCall" :: 'a ("PermitCCall")
+translations "(CONST IsaDefinition _PermitCCall)" \<leftharpoondown> "CONST PermitCCall"
 
 text_raw \<open>
-\DefineSnippet{IsInvokable-type}{%
-@{typeof "IsInvokable"}
+\DefineSnippet{PermitCCall-type}{%
+@{typeof "PermitCCall"}
 }%EndSnippet\<close>
 
 text_raw \<open>
-\DefineSnippet{IsInvokable}{%
-@{thm [display, margin = 50] IsInvokable_alt}
+\DefineSnippet{PermitCCall}{%
+@{thm [display, margin = 50] PermitCCall_alt}
 }%EndSnippet\<close>
 
 syntax (latex output) "_PermitExecute" :: 'a ("PermitExecute")
@@ -3315,17 +3315,17 @@ text_raw \<open>
 @{typeof "TranslateAddr"}
 }%EndSnippet\<close>
 
-syntax (latex output) "_TranslateBounds" :: 'a ("TranslateBounds")
-translations "(CONST IsaDefinition _TranslateBounds)" \<leftharpoondown> "CONST TranslateBounds"
+syntax (latex output) "_TranslateAddresses" :: 'a ("TranslateAddresses")
+translations "(CONST IsaDefinition _TranslateAddresses)" \<leftharpoondown> "CONST TranslateAddresses"
 
 text_raw \<open>
-\DefineSnippet{TranslateBounds-type}{%
-@{typeof "TranslateBounds"}
+\DefineSnippet{TranslateAddresses-type}{%
+@{typeof "TranslateAddresses"}
 }%EndSnippet\<close>
 
 text_raw \<open>
-\DefineSnippet{TranslateBounds}{%
-@{thm [display, margin = 50] TranslateBounds_alt}
+\DefineSnippet{TranslateAddresses}{%
+@{thm [display, margin = 50] TranslateAddresses_alt}
 }%EndSnippet\<close>
 
 syntax (latex output) "_TranslateCapAddresses" :: 'a ("TranslateCapAddresses")
@@ -3402,6 +3402,62 @@ text_raw \<open>
 text_raw \<open>
 \DefineSnippet{UnpredictableNext}{%
 @{thm [display, margin = 50] UnpredictableNext_alt}
+}%EndSnippet\<close>
+
+syntax (latex output) "_ActionAuthority" :: 'a ("ActionAuthority")
+translations "(CONST IsaDefinition _ActionAuthority)" \<leftharpoondown> "CONST ActionAuthority"
+
+text_raw \<open>
+\DefineSnippet{ActionAuthority-type}{%
+@{typeof "ActionAuthority"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_CapDerivations" :: 'a ("CapDerivations")
+translations "(CONST IsaDefinition _CapDerivations)" \<leftharpoondown> "CONST CapDerivations"
+
+text_raw \<open>
+\DefineSnippet{CapDerivations-type}{%
+@{typeof "CapDerivations"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_CapDerivationSources" :: 'a ("CapDerivationSources")
+translations "(CONST IsaDefinition _CapDerivationSources)" \<leftharpoondown> "CONST CapDerivationSources"
+
+text_raw \<open>
+\DefineSnippet{CapDerivationSources-type}{%
+@{typeof "CapDerivationSources"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_CapDerivationRegisters" :: 'a ("CapDerivationRegisters")
+translations "(CONST IsaDefinition _CapDerivationRegisters)" \<leftharpoondown> "CONST CapDerivationRegisters"
+
+text_raw \<open>
+\DefineSnippet{CapDerivationRegisters-type}{%
+@{typeof "CapDerivationRegisters"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_WrittenAddresses" :: 'a ("WrittenAddresses")
+translations "(CONST IsaDefinition _WrittenAddresses)" \<leftharpoondown> "CONST WrittenAddresses"
+
+text_raw \<open>
+\DefineSnippet{WrittenAddresses-type}{%
+@{typeof "WrittenAddresses"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_KeepsDomain" :: 'a ("KeepsDomain")
+translations "(CONST IsaDefinition _KeepsDomain)" \<leftharpoondown> "CONST KeepsDomain"
+
+text_raw \<open>
+\DefineSnippet{KeepsDomain-type}{%
+@{typeof "KeepsDomain"}
+}%EndSnippet\<close>
+
+syntax (latex output) "_SwitchesDomain" :: 'a ("SwitchesDomain")
+translations "(CONST IsaDefinition _SwitchesDomain)" \<leftharpoondown> "CONST SwitchesDomain"
+
+text_raw \<open>
+\DefineSnippet{SwitchesDomain-type}{%
+@{typeof "SwitchesDomain"}
 }%EndSnippet\<close>
 
 syntax (latex output) "_LoadDataProp" :: 'a ("LoadDataProp")
@@ -4836,22 +4892,6 @@ translations "(CONST IsaDefinition _FutureStates)" \<leftharpoondown> "CONST Fut
 text_raw \<open>
 \DefineSnippet{FutureStates-type}{%
 @{typeof "FutureStates"}
-}%EndSnippet\<close>
-
-syntax (latex output) "_KeepsDomain" :: 'a ("KeepsDomain")
-translations "(CONST IsaDefinition _KeepsDomain)" \<leftharpoondown> "CONST KeepsDomain"
-
-text_raw \<open>
-\DefineSnippet{KeepsDomain-type}{%
-@{typeof "KeepsDomain"}
-}%EndSnippet\<close>
-
-syntax (latex output) "_SwitchesDomain" :: 'a ("SwitchesDomain")
-translations "(CONST IsaDefinition _SwitchesDomain)" \<leftharpoondown> "CONST SwitchesDomain"
-
-text_raw \<open>
-\DefineSnippet{SwitchesDomain-type}{%
-@{typeof "SwitchesDomain"}
 }%EndSnippet\<close>
 
 syntax (latex output) "_IntraDomainTrace" :: 'a ("IntraDomainTrace")
