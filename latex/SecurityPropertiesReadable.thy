@@ -766,12 +766,12 @@ lemma AddressTranslationProp_alt:
    for all step :: InstructionIntention.
    for all a.
    if \<lbrakk>lbl ''Valid''\<rbrakk> StateIsValid s
-   and \<lbrakk>lbl ''NoASR''\<rbrakk> (not PermitAccessSystemRegisters (PCC s))
    and \<lbrakk>lbl ''Next''\<rbrakk> (step, s') \<in> sem s
    and \<lbrakk>lbl ''NoEx''\<rbrakk> step \<noteq> SwitchDomain RaiseException
+   and \<lbrakk>lbl ''NoASR''\<rbrakk> (not PermitAccessSystemRegisters (PCC s))
    then TranslateAddr a s' = TranslateAddr a s"
 unfolding AddressTranslationProp_def
-by simp
+by auto
 
 lemma CheriAbstraction_alt:
   "CheriAbstraction sem is defined as
