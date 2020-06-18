@@ -29,5 +29,3 @@ security properties defined before.
 "scripts" contains the python scripts that are used to generate part
 of the proofs.
 
-"latex" contains the files necessary to export human readable versions
-of the security properties.
