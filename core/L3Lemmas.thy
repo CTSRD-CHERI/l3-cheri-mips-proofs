@@ -168,6 +168,27 @@ lemma word_extract_empty_bounds:
 using assms
 by (intro word_eqI) (simp add: nth_word_extract)
 
+lemma word_extract_ucast_down:
+  fixes x :: "'a::len word"
+  assumes "LENGTH('b) = Suc i"
+  shows "word_extract i j (ucast x::'b::len word) = word_extract i j x"
+using assms
+by (intro word_eqI)
+   (auto simp: word_size nth_ucast nth_word_extract)
+
+lemma word_extract_ucast_up:
+  fixes x :: "'a::len word"
+  assumes "LENGTH('a) < LENGTH('b)"
+  shows "word_extract i j (ucast x::'b::len word) = word_extract i j x"
+  (is "?l = ?r")
+proof (intro word_eqI impI)
+  fix n
+  show "?l !! n = ?r !! n"
+    using assms
+    using test_bit_size[where n="n + j" and w=x]
+    by (auto simp: word_size nth_ucast nth_word_extract)
+qed
+
 lemma word_extract_word_extract:
   shows "word_extract m n (word_extract k l x::'a::len word) = 
          word_extract (min (min (m + l) k) (l + LENGTH('a) - 1)) (n + l) x"
@@ -200,6 +221,49 @@ using assms
 using test_bit_size[where w=x]
 by (intro word_eqI)
    (auto simp add: word_size nth_word_extract nth_ucast nth_word_cat word_ao_nth)
+
+lemma word_cat_word_extract:
+  assumes "LENGTH('a) = Suc i - k"
+      and "LENGTH('b) = i - j"
+      and "LENGTH('c) = Suc j - k"
+  shows "word_cat (word_extract i (Suc j) x::'b::len word) 
+                   (word_extract j k x::'c::len word) = 
+         (word_extract i k x::'a::len word)" (is "?l = ?r")
+proof (intro word_eqI, unfold word_size, clarify)
+  fix n
+  assume "n < LENGTH('a)"
+  show "?l !! n = ?r !! n"
+    proof (cases "LENGTH('c) \<le> n")
+      case True
+      hence "0 < n + k"
+        using assms by auto
+      have "0 < LENGTH('c)" by auto
+      hence "k \<le> Suc j"
+        unfolding assms by auto
+      from diff_diff_right[OF this]
+      show ?thesis
+        unfolding nth_word_cat nth_word_extract
+        using assms
+        using Suc_pred[OF `0 < n + k`]
+        by auto
+    next
+      case False
+      thus ?thesis 
+        unfolding nth_word_cat nth_word_extract
+        using assms
+        by auto
+    qed
+qed
+
+lemma word_cat_word_extract_ucast:
+  assumes "LENGTH('a) = Suc i"
+      and "LENGTH('b) = Suc i - j"
+      and "LENGTH('c) = j"
+  shows "word_cat (word_extract i j x::'b::len word) (ucast x::'c::len word) = 
+         (ucast x::'a::len word)"
+using assms                                                           
+using word_cat_word_extract[where 'a='a and 'b='b and 'c='c and i=i and j="j - 1" and k=0]
+by auto
 
 subsubsection \<open>@{const word_replicate}\<close>
 
