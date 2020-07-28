@@ -19,7 +19,7 @@ subsubsection \<open>@{const CAndPerm}\<close>
 thm dfn'CAndPerm_alt_def
 
 definition CAndPermActions where
-  "CAndPermActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CAndPermActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCAndPermActions where
   "getCAndPermActions v \<equiv> ValuePart (CAndPermActions v)"
@@ -50,7 +50,7 @@ thm dfn'CBuildCap_alt_def
 
 definition CBuildCapActions where
   "CBuildCapActions \<equiv> \<lambda>(cd, cb, ct). 
-   return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+   return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCBuildCapActions where
   "getCBuildCapActions v \<equiv> ValuePart (CBuildCapActions v)"
@@ -81,7 +81,7 @@ thm dfn'CClearHi_alt_def
 
 definition CClearHiActions where
   "CClearHiActions \<equiv> \<lambda>mask. 
-   return ((\<lambda>cd. RestrictCapAction (RegNormal cd) (RegNormal cd)) ` 
+   return ((\<lambda>cd. RestrictCapAction (RegGeneral cd) (RegGeneral cd)) ` 
                  {cd. mask !! (unat (cd - 16))})"
 
 abbreviation getCClearHiActions where
@@ -113,7 +113,7 @@ thm dfn'CClearLo_alt_def
 
 definition CClearLoActions where
   "CClearLoActions \<equiv> \<lambda>mask. 
-   return ((\<lambda>cd. RestrictCapAction (RegNormal cd) (RegNormal cd)) ` 
+   return ((\<lambda>cd. RestrictCapAction (RegGeneral cd) (RegGeneral cd)) ` 
                  {cd. mask !! (unat cd)})"
 
 abbreviation getCClearLoActions where
@@ -144,7 +144,7 @@ subsubsection \<open>@{const CClearTag}\<close>
 thm dfn'CClearTag_alt_def
 
 definition CClearTagActions where
-  "CClearTagActions \<equiv> \<lambda>(cd, cb). return {RestrictCapAction (RegNormal cd) (RegNormal cd)}"
+  "CClearTagActions \<equiv> \<lambda>(cd, cb). return {RestrictCapAction (RegGeneral cd) (RegGeneral cd)}"
 
 abbreviation getCClearTagActions where
   "getCClearTagActions v \<equiv> ValuePart (CClearTagActions v)"
@@ -175,7 +175,7 @@ thm dfn'CCopyType_alt_def
 
 definition CCopyTypeActions where
   "CCopyTypeActions \<equiv> \<lambda>(cd, cb, ct). 
-   return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+   return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCCopyTypeActions where
   "getCCopyTypeActions v \<equiv> ValuePart (CCopyTypeActions v)"
@@ -205,7 +205,7 @@ subsubsection \<open>@{const CFromPtr}\<close>
 thm dfn'CFromPtr_alt_def
 
 definition CFromPtrActions where
-  "CFromPtrActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CFromPtrActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCFromPtrActions where
   "getCFromPtrActions v \<equiv> ValuePart (CFromPtrActions v)"
@@ -235,7 +235,7 @@ subsubsection \<open>@{const CGetPCC}\<close>
 thm dfn'CGetPCC_alt_def
 
 definition CGetPCCActions where
-  "CGetPCCActions \<equiv> \<lambda>cd. return {RestrictCapAction RegPCC (RegNormal cd)}"
+  "CGetPCCActions \<equiv> \<lambda>cd. return {RestrictCapAction RegPCC (RegGeneral cd)}"
 
 abbreviation getCGetPCCActions where
   "getCGetPCCActions v \<equiv> ValuePart (CGetPCCActions v)"
@@ -265,7 +265,7 @@ subsubsection \<open>@{const CGetPCCSetOffset}\<close>
 thm dfn'CGetPCCSetOffset_alt_def
 
 definition CGetPCCSetOffsetActions where
-  "CGetPCCSetOffsetActions \<equiv> \<lambda>(cd, rs). return {RestrictCapAction RegPCC (RegNormal cd)}"
+  "CGetPCCSetOffsetActions \<equiv> \<lambda>(cd, rs). return {RestrictCapAction RegPCC (RegGeneral cd)}"
 
 abbreviation getCGetPCCSetOffsetActions where
   "getCGetPCCSetOffsetActions v \<equiv> ValuePart (CGetPCCSetOffsetActions v)"
@@ -295,7 +295,7 @@ subsubsection \<open>@{const CIncOffset}\<close>
 thm dfn'CIncOffset_alt_def
 
 definition CIncOffsetActions where
-  "CIncOffsetActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CIncOffsetActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCIncOffsetActions where
   "getCIncOffsetActions v \<equiv> ValuePart (CIncOffsetActions v)"
@@ -326,7 +326,7 @@ thm dfn'CIncOffsetImmediate_alt_def
 
 definition CIncOffsetImmediateActions where
   "CIncOffsetImmediateActions \<equiv> \<lambda>(cd, cb, increment). 
-   return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+   return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCIncOffsetImmediateActions where
   "getCIncOffsetImmediateActions v \<equiv> ValuePart (CIncOffsetImmediateActions v)"
@@ -357,8 +357,8 @@ thm dfn'CJALR_alt_def
 
 definition CJALRActions where
   "CJALRActions \<equiv> \<lambda>(cd, cb). 
-   return {RestrictCapAction RegPCC (RegNormal cd),
-           RestrictCapAction (if cb = cd then RegPCC else RegNormal cb) RegBranchDelayPCC}"
+   return {RestrictCapAction RegPCC (RegGeneral cd),
+           RestrictCapAction (if cb = cd then RegPCC else RegGeneral cb) RegBranchDelayPCC}"
 
 abbreviation getCJALRActions where
   "getCJALRActions v \<equiv> ValuePart (CJALRActions v)"
@@ -388,7 +388,7 @@ subsubsection \<open>@{const CJR}\<close>
 thm dfn'CJR_alt_def
 
 definition CJRActions where
-  "CJRActions \<equiv> \<lambda>cb. return {RestrictCapAction (RegNormal cb) RegBranchDelayPCC}"
+  "CJRActions \<equiv> \<lambda>cb. return {RestrictCapAction (RegGeneral cb) RegBranchDelayPCC}"
 
 abbreviation getCJRActions where
   "getCJRActions v \<equiv> ValuePart (CJRActions v)"
@@ -468,9 +468,9 @@ definition CLCActions where
         (\<lambda>a. bind (read_state (getCAPR cb))
         (\<lambda>cap. case a of None \<Rightarrow> return {} | 
                          Some x \<Rightarrow> return (if Permit_Load_Capability (getPerms cap)
-                                           then {LoadCapAction (RegNormal cb) (GetCapAddress x) cd}
-                                           else {RestrictCapAction (RegNormal cd) (RegNormal cd),
-                                                 LoadDataAction (RegNormal cb) x 32})))"
+                                           then {LoadCapAction (RegGeneral cb) (GetCapAddress x) cd}
+                                           else {RestrictCapAction (RegGeneral cd) (RegGeneral cd),
+                                                 LoadDataAction (RegGeneral cb) x 32})))"
 
 abbreviation getCLCActions where
   "getCLCActions v \<equiv> ValuePart (CLCActions v)"
@@ -548,9 +548,9 @@ definition CLLCActions where
         (\<lambda>a. bind (read_state (getCAPR cb))
         (\<lambda>cap. case a of None \<Rightarrow> return {} | 
                          Some x \<Rightarrow> return (if Permit_Load_Capability (getPerms cap)
-                                           then {LoadCapAction (RegNormal cb) (GetCapAddress x) cd}
-                                           else {RestrictCapAction (RegNormal cd) (RegNormal cd),
-                                                 LoadDataAction (RegNormal cb) x 32})))"
+                                           then {LoadCapAction (RegGeneral cb) (GetCapAddress x) cd}
+                                           else {RestrictCapAction (RegGeneral cd) (RegGeneral cd),
+                                                 LoadDataAction (RegGeneral cb) x 32})))"
 
 abbreviation getCLLCActions where
   "getCLLCActions v \<equiv> ValuePart (CLLCActions v)"
@@ -585,7 +585,7 @@ definition CMOVNActions where
   "CMOVNActions \<equiv> \<lambda>(cd, cb, rt). 
    bind (read_state (getGPR rt))
         (\<lambda>x. if x \<noteq> 0 
-             then return {RestrictCapAction (RegNormal cb) (RegNormal cd)}
+             then return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}
              else return {})"
 
 abbreviation getCMOVNActions where
@@ -621,7 +621,7 @@ definition CMOVZActions where
   "CMOVZActions \<equiv> \<lambda>(cd, cb, rt). 
    bind (read_state (getGPR rt))
         (\<lambda>x. if x = 0 
-             then return {RestrictCapAction (RegNormal cb) (RegNormal cd)}
+             then return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}
              else return {})"
 
 abbreviation getCMOVZActions where
@@ -655,7 +655,7 @@ thm dfn'CReadHwr_alt_def
 
 definition CReadHwrActions where
   "CReadHwrActions \<equiv> \<lambda>(cd, selector). 
-   return {RestrictCapAction (RegSpecial selector) (RegNormal cd)}"
+   return {RestrictCapAction (RegSpecial selector) (RegGeneral cd)}"
 
 abbreviation getCReadHwrActions where
   "getCReadHwrActions v \<equiv> ValuePart (CReadHwrActions v)"
@@ -686,7 +686,7 @@ thm dfn'CMove_alt_def
 
 definition CMoveActions where
   "CMoveActions \<equiv> \<lambda>(cd, cs). 
-   return {RestrictCapAction (RegNormal cs) (RegNormal cd)}"
+   return {RestrictCapAction (RegGeneral cs) (RegGeneral cd)}"
 
 abbreviation getCMoveActions where
   "getCMoveActions v \<equiv> ValuePart (CMoveActions v)"
@@ -764,7 +764,7 @@ definition CSCActions where
   "CSCActions \<equiv> \<lambda>(cs, cb, rt, offset). 
    bind (CSCPhysicalAddress cb rt offset)
         (\<lambda>a. return (case a of None \<Rightarrow> {} | 
-                               Some x \<Rightarrow> {StoreCapAction (RegNormal cb) cs (GetCapAddress x)}))"
+                               Some x \<Rightarrow> {StoreCapAction (RegGeneral cb) cs (GetCapAddress x)}))"
 
 abbreviation getCSCActions where
   "getCSCActions v \<equiv> ValuePart (CSCActions v)"
@@ -844,7 +844,7 @@ definition CSCCActions where
                  then bind (CSCCPhysicalAddress cb)
                            (\<lambda>a. return (case a of None \<Rightarrow> {}  
                                                 | Some x \<Rightarrow> 
-                                                    {StoreCapAction (RegNormal cb) cs (GetCapAddress x)}))
+                                                    {StoreCapAction (RegGeneral cb) cs (GetCapAddress x)}))
                   else return {})"
 
 abbreviation getCSCCActions where
@@ -879,7 +879,7 @@ thm dfn'CSeal_alt_def
 
 definition CSealActions where
   "CSealActions \<equiv> \<lambda>(cd, cs, ct). 
-   return (if cd = 0 then {} else {SealCapAction (RegNormal ct) cs cd})"
+   return (if cd = 0 then {} else {SealCapAction (RegGeneral ct) cs cd})"
 
 abbreviation getCSealActions where
   "getCSealActions v \<equiv> ValuePart (CSealActions v)"
@@ -909,7 +909,7 @@ subsubsection \<open>@{const CSetBounds}\<close>
 thm dfn'CSetBounds_alt_def
 
 definition CSetBoundsActions where
-  "CSetBoundsActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CSetBoundsActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCSetBoundsActions where
   "getCSetBoundsActions v \<equiv> ValuePart (CSetBoundsActions v)"
@@ -939,7 +939,7 @@ subsubsection \<open>@{const CSetBoundsExact}\<close>
 thm dfn'CSetBoundsExact_alt_def
 
 definition CSetBoundsExactActions where
-  "CSetBoundsExactActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CSetBoundsExactActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCSetBoundsExactActions where
   "getCSetBoundsExactActions v \<equiv> ValuePart (CSetBoundsExactActions v)"
@@ -970,7 +970,7 @@ thm dfn'CSetBoundsImmediate_alt_def
 
 definition CSetBoundsImmediateActions where
   "CSetBoundsImmediateActions \<equiv> \<lambda>(cd, cb, rt). 
-   return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+   return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCSetBoundsImmediateActions where
   "getCSetBoundsImmediateActions v \<equiv> ValuePart (CSetBoundsImmediateActions v)"
@@ -1000,7 +1000,7 @@ subsubsection \<open>@{const CSetOffset}\<close>
 thm dfn'CSetOffset_alt_def
 
 definition CSetOffsetActions where
-  "CSetOffsetActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegNormal cb) (RegNormal cd)}"
+  "CSetOffsetActions \<equiv> \<lambda>(cd, cb, rt). return {RestrictCapAction (RegGeneral cb) (RegGeneral cd)}"
 
 abbreviation getCSetOffsetActions where
   "getCSetOffsetActions v \<equiv> ValuePart (CSetOffsetActions v)"
@@ -1031,7 +1031,7 @@ thm dfn'CUnseal_alt_def
 
 definition CUnsealActions where
   "CUnsealActions \<equiv> \<lambda>(cd, cs, ct).
-   return (if cd = 0 then {} else {UnsealCapAction (RegNormal ct) cs cd})"
+   return (if cd = 0 then {} else {UnsealCapAction (RegGeneral ct) cs cd})"
 
 abbreviation getCUnsealActions where
   "getCUnsealActions v \<equiv> ValuePart (CUnsealActions v)"
@@ -1062,7 +1062,7 @@ thm dfn'CWriteHwr_alt_def
 
 definition CWriteHwrActions where
   "CWriteHwrActions \<equiv> \<lambda>(cb, selector). 
-   return {RestrictCapAction (RegNormal cb) (RegSpecial selector)}"
+   return {RestrictCapAction (RegGeneral cb) (RegSpecial selector)}"
 
 abbreviation getCWriteHwrActions where
   "getCWriteHwrActions v \<equiv> ValuePart (CWriteHwrActions v)"
@@ -1699,7 +1699,7 @@ definition CLoadActions where
   "CLoadActions \<equiv> \<lambda>(rd, cb, rt, offset, s, t). 
    bind (CLoadPhysicalAddress cb rt offset t)
         (\<lambda>a. return (case a of None \<Rightarrow> {} | 
-                               Some x \<Rightarrow> {LoadDataAction (RegNormal cb) x (2 ^ unat t)}))"
+                               Some x \<Rightarrow> {LoadDataAction (RegGeneral cb) x (2 ^ unat t)}))"
 
 abbreviation getCLoadActions where
   "getCLoadActions v \<equiv> ValuePart (CLoadActions v)"
@@ -1776,7 +1776,7 @@ definition CLLxActions where
   "CLLxActions \<equiv> \<lambda>(rd, cb, stt). 
    bind (CLLxPhysicalAddress cb)
         (\<lambda>a. return (case a of None \<Rightarrow> {} | 
-                               Some x \<Rightarrow> {LoadDataAction (RegNormal cb)
+                               Some x \<Rightarrow> {LoadDataAction (RegGeneral cb)
                                                      x 
                                                      (2 ^ unat (stt AND mask 2))}))"
 
@@ -2289,7 +2289,7 @@ definition CStoreActions where
   "CStoreActions \<equiv> \<lambda>(rs, cb, rt, offset, t). 
    bind (CStorePhysicalAddress cb rt offset t)
         (\<lambda>a. return (case a of None \<Rightarrow> {} | 
-                               Some x \<Rightarrow> {StoreDataAction (RegNormal cb) x (2 ^ unat t)}))"
+                               Some x \<Rightarrow> {StoreDataAction (RegGeneral cb) x (2 ^ unat t)}))"
 
 abbreviation getCStoreActions where
   "getCStoreActions v \<equiv> ValuePart (CStoreActions v)"
@@ -2365,7 +2365,7 @@ definition CSCxActions where
   "CSCxActions \<equiv> \<lambda>(rs, cb, rd, t). 
    bind (CSCxPhysicalAddress cb)
         (\<lambda>a. return (case a of None \<Rightarrow> {} | 
-                               Some x \<Rightarrow> {StoreDataAction (RegNormal cb) x (2 ^ unat t)}))"
+                               Some x \<Rightarrow> {StoreDataAction (RegGeneral cb) x (2 ^ unat t)}))"
 
 abbreviation getCSCxActions where
   "getCSCxActions v \<equiv> ValuePart (CSCxActions v)"
@@ -2568,8 +2568,8 @@ lemma TakeBranchActions_simps [simp]:
   shows "LoadDataAction auth a' l \<notin> ValuePart TakeBranchActions s"
     and "StoreDataAction auth a' l \<notin> ValuePart TakeBranchActions s"
     and "RestrictCapAction RegPCC loc' \<notin> ValuePart TakeBranchActions s"
-    and "RestrictCapAction (RegNormal cd) loc' \<notin> ValuePart TakeBranchActions s"
-    and "RestrictCapAction loc (RegNormal cd') \<notin> ValuePart TakeBranchActions s"
+    and "RestrictCapAction (RegGeneral cd) loc' \<notin> ValuePart TakeBranchActions s"
+    and "RestrictCapAction loc (RegGeneral cd') \<notin> ValuePart TakeBranchActions s"
     and "LoadCapAction auth a cd \<notin> ValuePart TakeBranchActions s"
     and "StoreCapAction auth cd a \<notin> ValuePart TakeBranchActions s"
     and "SealCapAction auth cd cd' \<notin> ValuePart TakeBranchActions s"

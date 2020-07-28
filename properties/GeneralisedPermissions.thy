@@ -628,7 +628,7 @@ lemma RegisterIsAlwaysAccessible_simps [simp]:
   shows "RegisterIsAlwaysAccessible RegPCC"
     and "RegisterIsAlwaysAccessible RegBranchDelayPCC"
     and "RegisterIsAlwaysAccessible RegBranchToPCC"
-    and "RegisterIsAlwaysAccessible (RegNormal cd)"
+    and "RegisterIsAlwaysAccessible (RegGeneral cd)"
     and "RegisterIsAlwaysAccessible (RegSpecial 0)"
     and "RegisterIsAlwaysAccessible (RegSpecial 1)"
 unfolding RegisterIsAlwaysAccessible_def

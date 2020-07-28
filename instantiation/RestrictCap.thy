@@ -2104,7 +2104,7 @@ definition ClearRegLoopPre where
                               | RegBranchDelayPCC \<Rightarrow>
                                 (case branchTo of None \<Rightarrow> return (cap_loc' \<le> cap)
                                                 | Some (_, x) \<Rightarrow> return (x \<le> cap))
-                              | RegNormal cd \<Rightarrow>
+                              | RegGeneral cd \<Rightarrow>
                                 return ((\<exists>i\<in>set l. cd = word_of_int (int i) \<and> cond i) \<or>
                                         (cap_loc' \<le> cap))
                               | _ \<Rightarrow> return (cap_loc' \<le> cap)))))"
@@ -2327,8 +2327,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLC [SemanticsRestrict_InstructionI]:
 proof (intro PrePostI)
   fix s
   assume pre: "ValuePart ?pre s"
-  have [simp]: "r = (case v of (cd, cb, rt, offset) \<Rightarrow> RegNormal cd)"
-               "r' = (case v of (cd, cb, rt, offset) \<Rightarrow> RegNormal cd)"
+  have [simp]: "r = (case v of (cd, cb, rt, offset) \<Rightarrow> RegGeneral cd)"
+               "r' = (case v of (cd, cb, rt, offset) \<Rightarrow> RegGeneral cd)"
     using pre
     unfolding CLCActions_def
     by (auto simp: ValueAndStatePart_simp
@@ -2365,8 +2365,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLLC [SemanticsRestrict_InstructionI]:
 proof (intro PrePostI)
   fix s
   assume pre: "ValuePart ?pre s"
-  have [simp]: "r = (case v of (cd, cb) \<Rightarrow> RegNormal cd)"
-               "r' = (case v of (cd, cb) \<Rightarrow> RegNormal cd)"
+  have [simp]: "r = (case v of (cd, cb) \<Rightarrow> RegGeneral cd)"
+               "r' = (case v of (cd, cb) \<Rightarrow> RegGeneral cd)"
     using pre
     unfolding CLLCActions_def
     by (auto simp: ValueAndStatePart_simp

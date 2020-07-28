@@ -128,7 +128,7 @@ by auto
 lemma ReachableCaps_Capr [intro!]:
   assumes "getTag (getCAPR cd s)"
   shows "getCAPR cd s \<in> ReachableCaps s"
-using Reg[where r="RegNormal cd"]
+using Reg[where r="RegGeneral cd"]
 using assms
 by auto
 

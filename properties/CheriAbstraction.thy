@@ -47,10 +47,10 @@ definition CapDerivations :: "DomainAction \<Rightarrow> (CapLocation \<times> C
   "CapDerivations p \<equiv>
    case p of StoreDataAction _ a l \<Rightarrow> {(LocMem (GetCapAddress a), LocMem (GetCapAddress a))}
            | RestrictCapAction r r' \<Rightarrow> {(LocReg r, LocReg r')}
-           | LoadCapAction _ a cd \<Rightarrow> {(LocMem a, LocReg (RegNormal cd))}
-           | StoreCapAction _ cd a \<Rightarrow> {(LocReg (RegNormal cd), LocMem a)}
-           | SealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}
-           | UnsealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}
+           | LoadCapAction _ a cd \<Rightarrow> {(LocMem a, LocReg (RegGeneral cd))}
+           | StoreCapAction _ cd a \<Rightarrow> {(LocReg (RegGeneral cd), LocMem a)}
+           | SealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}
+           | UnsealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}
            | _ \<Rightarrow> {}"
 
 lemma CapDerivations_simps [simp]:
@@ -60,13 +60,13 @@ lemma CapDerivations_simps [simp]:
     and "CapDerivations (RestrictCapAction r r') = 
          {(LocReg r, LocReg r')}"
     and "CapDerivations (LoadCapAction auth a cd) = 
-         {(LocMem a, LocReg (RegNormal cd))}"
+         {(LocMem a, LocReg (RegGeneral cd))}"
     and "CapDerivations (StoreCapAction auth cd a) = 
-         {(LocReg (RegNormal cd), LocMem a)}"
+         {(LocReg (RegGeneral cd), LocMem a)}"
     and "CapDerivations (SealCapAction auth cd cd') = 
-         {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}"
+         {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}"
     and "CapDerivations (UnsealCapAction auth cd cd') = 
-         {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}"
+         {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}"
 unfolding CapDerivations_def
 by simp_all
 
@@ -78,9 +78,9 @@ lemma CapDerivationSources_simps [simp]:
     and "CapDerivationSources (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
     and "CapDerivationSources (RestrictCapAction r r') = {LocReg r}"
     and "CapDerivationSources (LoadCapAction auth a cd) = {LocMem a}"
-    and "CapDerivationSources (StoreCapAction auth cd a) = {LocReg (RegNormal cd)}"
-    and "CapDerivationSources (SealCapAction auth cd cd') = {LocReg (RegNormal cd)}"
-    and "CapDerivationSources (UnsealCapAction auth cd cd') = {LocReg (RegNormal cd)}"
+    and "CapDerivationSources (StoreCapAction auth cd a) = {LocReg (RegGeneral cd)}"
+    and "CapDerivationSources (SealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
+    and "CapDerivationSources (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
 unfolding CapDerivationSources_def
 by simp_all
 
@@ -91,10 +91,10 @@ lemma CapDerivationTargets_simps [simp]:
   shows "CapDerivationTargets (LoadDataAction auth a' l) = {}"
     and "CapDerivationTargets (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
     and "CapDerivationTargets (RestrictCapAction r r') = {LocReg r'}"
-    and "CapDerivationTargets (LoadCapAction auth a cd) = {LocReg (RegNormal cd)}"
+    and "CapDerivationTargets (LoadCapAction auth a cd) = {LocReg (RegGeneral cd)}"
     and "CapDerivationTargets (StoreCapAction auth cd a) = {LocMem a}"
-    and "CapDerivationTargets (SealCapAction auth cd cd') = {LocReg (RegNormal cd')}"
-    and "CapDerivationTargets (UnsealCapAction auth cd cd') = {LocReg (RegNormal cd')}"
+    and "CapDerivationTargets (SealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
+    and "CapDerivationTargets (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
 unfolding CapDerivationTargets_def
 by simp_all
 
@@ -765,19 +765,19 @@ lemma ProvenanceCases:
   | (Loaded) auth a cd where
     "LoadCapAction auth a cd \<in> actions"
     "loc = LocMem a"
-    "loc' = LocReg (RegNormal cd)"
+    "loc' = LocReg (RegGeneral cd)"
   | (Stored) auth cd a where
     "StoreCapAction auth cd a \<in> actions"
-    "loc = LocReg (RegNormal cd)"
+    "loc = LocReg (RegGeneral cd)"
     "loc' = LocMem a"
   | (Sealed) auth cd cd' where
     "SealCapAction auth cd cd' \<in> actions"
-    "loc = LocReg (RegNormal cd)"
-    "loc' = LocReg (RegNormal cd')"
+    "loc = LocReg (RegGeneral cd)"
+    "loc' = LocReg (RegGeneral cd')"
   | (Unsealed) auth cd cd' where
     "UnsealCapAction auth cd cd' \<in> actions"
-    "loc = LocReg (RegNormal cd)"
-    "loc' = LocReg (RegNormal cd')"
+    "loc = LocReg (RegGeneral cd)"
+    "loc' = LocReg (RegGeneral cd')"
   | (Unchanged)
     "loc' \<notin> \<Union> (CapDerivationTargets ` actions)"
     "loc = loc'"

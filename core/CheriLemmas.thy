@@ -2717,7 +2717,7 @@ datatype CapRegister =
     RegPCC
   | RegBranchDelayPCC
   | RegBranchToPCC
-  | RegNormal RegisterAddress
+  | RegGeneral RegisterAddress
   | RegSpecial RegisterAddress
 
 lemmas Commute_CapRegisterI [Commute_compositeI] =
@@ -2729,9 +2729,9 @@ lemmas ValuePart_CapRegister [ValueAndStatePart_simp] =
 lemmas StatePart_CapRegister [ValueAndStatePart_simp] =
   CapRegister.case_distrib[where h="\<lambda>x. StatePart x _"]
 
-fun IsNormalRegister where
-  "IsNormalRegister (RegNormal cd) = True" |
-  "IsNormalRegister x = False"
+fun IsGeneralRegister where
+  "IsGeneralRegister (RegGeneral cd) = True" |
+  "IsGeneralRegister x = False"
 
 fun IsSpecialRegister where
   "IsSpecialRegister (RegSpecial cd) = True" |
@@ -2743,14 +2743,14 @@ definition getCapReg :: "CapRegister \<Rightarrow> state \<Rightarrow> Capabilit
       RegPCC \<Rightarrow> getPCC s 
     | RegBranchDelayPCC \<Rightarrow> getBranchDelayPccCap s
     | RegBranchToPCC \<Rightarrow> getBranchToPccCap s
-    | RegNormal cd \<Rightarrow> getCAPR cd s
+    | RegGeneral cd \<Rightarrow> getCAPR cd s
     | RegSpecial cd \<Rightarrow> getSCAPR cd s)"
 
 lemma getCapReg_loc_simps [simp]:
   shows "getCapReg RegPCC = getPCC"
     and "getCapReg RegBranchDelayPCC = getBranchDelayPccCap"
     and "getCapReg RegBranchToPCC = getBranchToPccCap"
-    and "getCapReg (RegNormal cd) = getCAPR cd"
+    and "getCapReg (RegGeneral cd) = getCAPR cd"
     and "getCapReg (RegSpecial cd) = getSCAPR cd"
 unfolding getCapReg_def
 by simp_all
@@ -2805,7 +2805,7 @@ by (cases loc) simp_all
 
 lemma getCapReg_setCAPR_simp [simp]:
   shows "getCapReg loc (setCAPR v s) = 
-         (if loc = RegNormal (snd v) \<and> snd v \<noteq> 0 then fst v else getCapReg loc s)"
+         (if loc = RegGeneral (snd v) \<and> snd v \<noteq> 0 then fst v else getCapReg loc s)"
 unfolding getCapReg_def
 by (cases loc) simp_all
 
@@ -2904,7 +2904,7 @@ by (cases loc) simp_all
 
 lemma getCap_setCAPR_simp [simp]:
   shows "getCap loc (setCAPR v s) = 
-         (if loc = LocReg (RegNormal (snd v)) \<and> snd v \<noteq> 0 then fst v else getCap loc s)"
+         (if loc = LocReg (RegGeneral (snd v)) \<and> snd v \<noteq> 0 then fst v else getCap loc s)"
 unfolding getCap_def
 by (cases loc) simp_all
 
@@ -2941,7 +2941,7 @@ lemma RegisterIsAccessible_simps [simp]:
   shows "RegisterIsAccessible RegPCC = return True"
     and "RegisterIsAccessible RegBranchDelayPCC = return True"
     and "RegisterIsAccessible RegBranchToPCC = return True"
-    and "RegisterIsAccessible (RegNormal cd) = return True"
+    and "RegisterIsAccessible (RegGeneral cd) = return True"
     and "RegisterIsAccessible (RegSpecial cd) = special_register_accessible cd"
 unfolding RegisterIsAccessible_def
 by simp_all
