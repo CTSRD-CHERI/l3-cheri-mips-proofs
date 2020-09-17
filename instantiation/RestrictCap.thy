@@ -2601,7 +2601,7 @@ qed
 theorem SemanticsRestrictCap:
   assumes prov: "RestrictCapAction r r' \<in> actions"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getCapReg r' s' \<le> getCapReg r s"
         "getRegisterIsAccessible r s"
         "getRegisterIsAccessible r' s"

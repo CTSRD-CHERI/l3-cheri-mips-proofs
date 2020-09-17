@@ -699,7 +699,7 @@ qed
 theorem SemanticsLoadData:
   assumes prov: "LoadDataAction auth a l \<in> actions"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"

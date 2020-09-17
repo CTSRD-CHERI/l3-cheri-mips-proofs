@@ -109,7 +109,7 @@ qed
 
 theorem SemanticsUnsealCap:
   assumes prov: "UnsealCapAction auth cd cd' \<in> actions"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "Permit_Unseal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"

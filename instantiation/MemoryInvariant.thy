@@ -2218,7 +2218,7 @@ by MemoryInvariant
 theorem MemoryInvariant:
   assumes prov: "a \<notin> \<Union> (WrittenAddresses ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getMemData a s' = getMemData a s"
 using assms
 using PrePostE[where s=s,

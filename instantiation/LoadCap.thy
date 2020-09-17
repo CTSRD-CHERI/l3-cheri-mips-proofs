@@ -243,7 +243,7 @@ qed
 
 theorem SemanticsLoadCap:
   assumes prov: "LoadCapAction auth a cd \<in> actions"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "Permit_Load_Capability (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"

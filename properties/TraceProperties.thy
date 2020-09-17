@@ -14,11 +14,11 @@ section \<open>Trace based security properties\<close>
 
 subsection \<open>Traces\<close>
 
-type_synonym Trace = "InstructionIntention list"
+type_synonym Trace = "AbstractStep list"
 
 primrec IntraDomainTrace :: "Trace \<Rightarrow> bool" where
   "IntraDomainTrace [] = True" |
-  "IntraDomainTrace (h # t) = (KeepsDomain h \<and> IntraDomainTrace t)"
+  "IntraDomainTrace (h # t) = (PreservesDomain h \<and> IntraDomainTrace t)"
 
 abbreviation InterDomainTrace :: "Trace \<Rightarrow> bool" where
   "InterDomainTrace t \<equiv> \<not> IntraDomainTrace t"
@@ -26,7 +26,7 @@ abbreviation InterDomainTrace :: "Trace \<Rightarrow> bool" where
 lemma IntraDomainTraceE:
   assumes "IntraDomainTrace trace"
       and "step \<in> set trace"
-  shows "KeepsDomain step"
+  shows "PreservesDomain step"
 using assms
 by (induct trace) auto
 
@@ -207,7 +207,7 @@ by (intro getGPermOfCaps_subset) auto
 
 lemma ReachableCaps_SCapr [elim]:
   assumes abstraction: "CheriAbstraction sem"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
       and reg: "cd \<in> CapDerivationRegisters action"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -236,7 +236,7 @@ qed
 
 lemma ReachableCaps_CapReg [elim]:
   assumes abstraction: "CheriAbstraction sem"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
       and reg: "case r of RegSpecial cd \<Rightarrow> cd \<in> CapDerivationRegisters action | _ \<Rightarrow> True"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -514,7 +514,7 @@ by auto
 
 lemma NextReachableCaps_getCap:
   assumes abstraction: "CheriAbstraction sem"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and readable: "loc \<in> ReadableLocations (ReachablePermissions s) s"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
@@ -665,7 +665,7 @@ qed
 lemma NextReachableCaps_Reg:
   assumes abstraction: "CheriAbstraction sem"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and readable: "RegisterIsAlwaysAccessible r"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and tag: "getTag (getCapReg r s')"
@@ -703,7 +703,7 @@ lemma NextReachableCaps_Memory:
   assumes abstraction: "CheriAbstraction sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and auth: "authCap \<in> ReachableCaps s"
       and unsealed: "\<not> getSealed authCap"
       and perm: "Permit_Load_Capability (getPerms authCap)"
@@ -732,7 +732,7 @@ lemma MonotonicityReachableCaps_Step:
   assumes abstraction: "CheriAbstraction sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> sem s"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
   shows "ReachableCaps s' \<subseteq> ReachableCaps s"
 proof 
   fix cap
@@ -787,7 +787,7 @@ proof (intro allI impI, elim conjE)
         using Cons(1)[OF r\<^sub>1]
         using Cons(3)
         by simp
-      have intra: "KeepsDomain step"
+      have intra: "PreservesDomain step"
         using Cons(3) by auto
       have valid2: "getStateIsValid r"
         using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
@@ -912,9 +912,9 @@ proof (cases "SwitchesDomain step")
     by auto
 next
   case False
-  then obtain actions where "step = KeepDomain actions"
+  then obtain actions where "step = PreserveDomain actions"
     by (cases step) auto
-  hence intra_suc: "(KeepDomain actions, s') \<in> sem s"
+  hence intra_suc: "(PreserveDomain actions, s') \<in> sem s"
     using suc
     by auto
   have "cd \<notin> \<Union> (CapDerivationRegisters ` actions)"
@@ -1130,10 +1130,10 @@ proof (intro allI impI, elim conjE)
         by auto
       hence "getMemCap a s' = getMemCap a r"
         proof -
-          obtain actions where "step = KeepDomain actions"
+          obtain actions where "step = PreserveDomain actions"
             using Cons(3)
             by (cases step) auto
-          hence intra_suc: "(KeepDomain actions, s') \<in> sem r"
+          hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
             using r\<^sub>2
             by auto
           have "\<not> (\<exists>action. action \<in> actions \<and>
@@ -1377,10 +1377,10 @@ proof (intro allI impI, elim conjE)
         by auto
       hence "getMemData a s' = getMemData a r"
         proof -
-          obtain actions where "step = KeepDomain actions"
+          obtain actions where "step = PreserveDomain actions"
             using Cons(3)
             by (cases step) auto
-          hence intra_suc: "(KeepDomain actions, s') \<in> sem r"
+          hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
             using r\<^sub>2
             by auto
           have no_store_data: 

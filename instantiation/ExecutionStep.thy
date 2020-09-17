@@ -2688,7 +2688,7 @@ by metis
 definition NextNonExceptionStep where
   "NextNonExceptionStep s \<equiv> 
    case CCallFastInstructionParam s of 
-     None \<Rightarrow> KeepDomain (ValuePart DomainActions s)
+     None \<Rightarrow> PreserveDomain (ValuePart DomainActions s)
    | Some v \<Rightarrow> SwitchDomain (InvokeCapability (fst v) (snd v))"
 
 lemma NextNonExceptionStep_RaiseException [simp]:
@@ -2705,7 +2705,7 @@ takes unpredictable behaviour into account.\<close>
 definition NextStates where
   "NextStates s \<equiv> 
    if isUnpredictable (StatePart NextWithGhostState s) then 
-     {(KeepDomain {}, s') |s'. s' \<in> UnpredictableNext s}
+     {(PreserveDomain {}, s') |s'. s' \<in> UnpredictableNext s}
    else if getExceptionSignalled (StatePart NextWithGhostState s) then 
      {(SwitchDomain RaiseException, StatePart Next s)}
    else {(NextNonExceptionStep s, StatePart Next s)}"

@@ -149,19 +149,19 @@ datatype DomainSwitch =
 
 subsection \<open>Instruction intention\<close>
 
-datatype InstructionIntention = 
-  KeepDomain "DomainAction set" |
+datatype AbstractStep = 
+  PreserveDomain "DomainAction set" |
   SwitchDomain DomainSwitch
 
-primrec KeepsDomain where
-  "KeepsDomain (KeepDomain actions) = True" |
-  "KeepsDomain (SwitchDomain crossing) = False"
+primrec PreservesDomain where
+  "PreservesDomain (PreserveDomain actions) = True" |
+  "PreservesDomain (SwitchDomain crossing) = False"
 
-abbreviation "SwitchesDomain step \<equiv> \<not> KeepsDomain step"
+abbreviation "SwitchesDomain step \<equiv> \<not> PreservesDomain step"
 
 section \<open>Properties\<close>
 
-type_synonym Semantics = "state \<Rightarrow> (InstructionIntention \<times> state) set"
+type_synonym Semantics = "state \<Rightarrow> (AbstractStep \<times> state) set"
 
 definition ExecuteProp :: "Semantics \<Rightarrow> bool" where
   "ExecuteProp semantics \<equiv>
@@ -191,7 +191,7 @@ definition LoadDataProp :: "Semantics \<Rightarrow> bool" where
   "LoadDataProp semantics \<equiv>
    \<forall>s s' actions auth a l.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     LoadDataAction auth a l \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -201,7 +201,7 @@ definition LoadDataProp :: "Semantics \<Rightarrow> bool" where
 
 lemma LoadDataPropE [elim]:
   assumes "LoadDataProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "LoadDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -215,7 +215,7 @@ by fast+
 
 lemma LoadDataPropE_mem:
   assumes "LoadDataProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "LoadDataAction auth a l \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment a l"
@@ -229,7 +229,7 @@ definition StoreDataProp :: "Semantics \<Rightarrow> bool" where
   "StoreDataProp semantics \<equiv>
    \<forall>s s' actions auth a l.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     StoreDataAction auth a l \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -241,7 +241,7 @@ definition StoreDataProp :: "Semantics \<Rightarrow> bool" where
 
 lemma StoreDataPropE [elim]:
   assumes "StoreDataProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -257,7 +257,7 @@ by fast+
 
 lemma StoreDataPropE_mem:
   assumes "StoreDataProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment a l"
@@ -269,7 +269,7 @@ by fast
 
 lemma StoreDataPropE_cap [elim]:
   assumes "StoreDataProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getMemCap (GetCapAddress a) s' \<le> getMemCap (GetCapAddress a) s"
@@ -280,13 +280,13 @@ definition RestrictCapProp :: "Semantics \<Rightarrow> bool" where
   "RestrictCapProp semantics \<equiv>
    \<forall>s s' actions r r'.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     RestrictCapAction r r' \<in> actions) \<longrightarrow>
    getCapReg r' s' \<le> getCapReg r s"
 
 lemma RestrictCapPropE [elim]:
   assumes "RestrictCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "RestrictCapAction r r' \<in> actions"
       and "getStateIsValid s"
   shows "getCapReg r' s' \<le> getCapReg r s"
@@ -298,7 +298,7 @@ definition LoadCapProp :: "Semantics \<Rightarrow> bool" where
   "LoadCapProp semantics \<equiv>
    \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     LoadCapAction auth a cd \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -310,7 +310,7 @@ definition LoadCapProp :: "Semantics \<Rightarrow> bool" where
 
 lemma LoadCapPropE [elim]:
   assumes "LoadCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "LoadCapAction auth a cd \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -326,7 +326,7 @@ by fast+
 
 lemma LoadCapPropE_mem:
   assumes "LoadCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "LoadCapAction auth a cd \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment (ExtendCapAddress a) 32"
@@ -340,7 +340,7 @@ definition StoreCapProp :: "Semantics \<Rightarrow> bool" where
   "StoreCapProp semantics \<equiv>
    \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     StoreCapAction auth cd a \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -352,7 +352,7 @@ definition StoreCapProp :: "Semantics \<Rightarrow> bool" where
 
 lemma StoreCapPropE [elim]:
   assumes "StoreCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -368,7 +368,7 @@ by fast+
 
 lemma StoreCapPropE_mem:
   assumes "StoreCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment (ExtendCapAddress a) 32"
@@ -382,7 +382,7 @@ definition StoreLocalCapProp :: "Semantics \<Rightarrow> bool" where
   "StoreLocalCapProp semantics \<equiv>
    \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     StoreCapAction auth cd a \<in> actions \<and>
     getTag (getCAPR cd s) \<and>
     \<not> Global (getPerms (getCAPR cd s))) \<longrightarrow>
@@ -390,7 +390,7 @@ definition StoreLocalCapProp :: "Semantics \<Rightarrow> bool" where
 
 lemma StoreLocalCapPropE [elim]:
   assumes "StoreLocalCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getTag (getCAPR cd s)"
       and "\<not> Global (getPerms (getCAPR cd s))"
@@ -404,7 +404,7 @@ definition SealCapProp :: "Semantics \<Rightarrow> bool" where
   "SealCapProp semantics \<equiv>
    \<forall>s s' actions auth cd cd'.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     SealCapAction auth cd cd' \<in> actions) \<longrightarrow>
    (let t = ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s)) in
     getTag (getCapReg auth s) \<and>
@@ -418,7 +418,7 @@ lemma SealCapPropE [elim]:
   fixes s auth
   defines "t \<equiv> ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s))"
   assumes "SealCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "SealCapAction auth cd cd' \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -435,7 +435,7 @@ definition UnsealCapProp :: "Semantics \<Rightarrow> bool" where
   "UnsealCapProp semantics \<equiv>
    \<forall>s s' actions auth cd cd'.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     UnsealCapAction auth cd cd' \<in> actions) \<longrightarrow>
    (Permit_Unseal (getPerms (getCapReg auth s)) \<and>
     getTag (getCapReg auth s) \<and>
@@ -446,7 +446,7 @@ definition UnsealCapProp :: "Semantics \<Rightarrow> bool" where
 
 lemma UnsealCapPropE [elim]:
   assumes "UnsealCapProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "UnsealCapAction auth cd cd' \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -463,14 +463,14 @@ definition SystemRegisterProp :: "Semantics \<Rightarrow> bool" where
   "SystemRegisterProp semantics \<equiv>
    \<forall>s s' actions cd.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>
+    (PreserveDomain actions, s') \<in> semantics s \<and>
     (cd \<noteq> 0 \<and> cd \<noteq> 1) \<and>
     cd \<in> \<Union> (CapDerivationRegisters ` actions)) \<longrightarrow>
    Access_System_Registers (getPerms (getPCC s))"
 
 lemma SystemRegisterPropE [elim]:
   assumes "SystemRegisterProp semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
       and "cd \<noteq> 0" "cd \<noteq> 1"
       and "getStateIsValid s"
@@ -566,13 +566,13 @@ definition MemoryInvariant :: "Semantics \<Rightarrow> bool" where
   "MemoryInvariant semantics \<equiv>
    \<forall>s s' actions a.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>   
+    (PreserveDomain actions, s') \<in> semantics s \<and>   
     (\<nexists>prov. prov \<in> actions \<and> a \<in> WrittenAddresses prov)) \<longrightarrow>
    (getMemData a s' = getMemData a s)"
 
 lemma MemoryInvariantE [elim]:
   assumes "MemoryInvariant semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "\<And>prov. prov \<in> actions \<Longrightarrow> a \<notin> WrittenAddresses prov"
       and "getStateIsValid s"
   shows "getMemData a s' = getMemData a s"
@@ -584,13 +584,13 @@ definition CapabilityInvariant :: "Semantics \<Rightarrow> bool" where
   "CapabilityInvariant semantics \<equiv>
    \<forall>s s' actions loc.
    (getStateIsValid s \<and>
-    (KeepDomain actions, s') \<in> semantics s \<and>   
+    (PreserveDomain actions, s') \<in> semantics s \<and>   
     (\<nexists>prov. prov \<in> actions \<and> loc \<in> CapDerivationTargets prov)) \<longrightarrow> 
    (getCap loc s' = getCap loc s)"
 
 lemma CapabilityInvariantE [elim]:
   assumes "CapabilityInvariant semantics"
-      and "(KeepDomain actions, s') \<in> semantics s"
+      and "(PreserveDomain actions, s') \<in> semantics s"
       and "\<And>prov. prov \<in> actions \<Longrightarrow> loc \<notin> CapDerivationTargets prov"
       and "getStateIsValid s"
   shows "getCap loc s' = getCap loc s"

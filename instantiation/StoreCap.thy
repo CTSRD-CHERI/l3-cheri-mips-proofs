@@ -254,7 +254,7 @@ qed
 
 theorem SemanticsStoreCap:
   assumes prov: "StoreCapAction auth cd a \<in> actions"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "Permit_Store (getPerms (getCapReg auth s))"
         "Permit_Store_Capability (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"

@@ -649,7 +649,7 @@ qed
 
 theorem SemanticsStoreData:
   assumes prov: "StoreDataAction auth a l \<in> actions"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
       and valid: "getStateIsValid s"
   shows "Permit_Store (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"

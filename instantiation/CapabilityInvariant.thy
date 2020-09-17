@@ -2257,7 +2257,7 @@ by CapInvariant
 theorem CapabilityCapInvariant:
   assumes prov: "loc \<notin> \<Union> (CapDerivationTargets ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getCap loc s' = getCap loc s"
 using assms
 using CapInvariant_NextWithGhostState
