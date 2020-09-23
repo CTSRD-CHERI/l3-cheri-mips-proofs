@@ -132,10 +132,11 @@ unfolding t_def SemanticsSealPost_def Let_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary SealCapInstantiation [simp]:
-  shows "SealCapProp NextStates"
+corollary SealCapInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "SealCapProp s lbl s'"
 unfolding SealCapProp_def
-using SemanticsSealCap
+using assms SemanticsSealCap
 by auto
 
 (*<*)

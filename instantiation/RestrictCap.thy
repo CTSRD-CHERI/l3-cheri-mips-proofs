@@ -2615,10 +2615,11 @@ using SemanticsExecute[OF suc] prov
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary RestrictCapInstantiation [simp]:
-  shows "RestrictCapProp NextStates"
+corollary RestrictCapInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "RestrictCapProp s lbl s'"
 unfolding RestrictCapProp_def
-using SemanticsRestrictCap
+using assms SemanticsRestrictCap
 by auto
 
 (*<*)

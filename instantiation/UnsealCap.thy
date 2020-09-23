@@ -127,10 +127,11 @@ unfolding SemanticsUnsealPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary UnsealCapInstantiation [simp]:
-  shows "UnsealCapProp NextStates"
+corollary UnsealCapInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "UnsealCapProp s lbl s'"
 unfolding UnsealCapProp_def
-using SemanticsUnsealCap
+using assms SemanticsUnsealCap
 by auto
 
 (*<*)

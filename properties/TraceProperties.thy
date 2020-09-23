@@ -38,7 +38,7 @@ primrec FutureStates :: "Semantics \<Rightarrow> state \<Rightarrow> Trace \<Rig
 subsection \<open>Transitively valid state\<close>
 
 lemma TraceInvarianceStateIsValid:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and valid: "getStateIsValid s"
       and trace: "s' \<in> FutureStates sem s trace"
   shows "getStateIsValid s'"
@@ -54,7 +54,7 @@ next
     by auto
   show ?case
     using Cons(1)[OF r\<^sub>1]
-    using CheriAbstractionE_ValidState[OF abstraction r\<^sub>2]
+    using CanBeSimulatedE_ValidState[OF abstraction r\<^sub>2]
     by auto
 qed
 
@@ -206,7 +206,7 @@ using assms
 by (intro getGPermOfCaps_subset) auto
 
 lemma ReachableCaps_SCapr [elim]:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
       and reg: "cd \<in> CapDerivationRegisters action"
@@ -216,7 +216,7 @@ lemma ReachableCaps_SCapr [elim]:
   shows "getSCAPR cd s \<in> ReachableCaps s"
 proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
-    using CheriAbstractionE_Execute[OF abstraction suc _ valid]
+    using CanBeSimulatedE_Execute[OF abstraction suc _ valid]
     by auto
   hence "getGPerm (getPCC s) \<le> ReachablePermissions s" 
     by auto
@@ -226,7 +226,7 @@ proof -
     by (auto simp: getGPerm_accessors)
   hence "RegisterIsAlwaysAccessible (RegSpecial cd)"
     unfolding RegisterIsAlwaysAccessible_def
-    using CheriAbstractionE_SystemRegister[OF abstraction suc _ _ _ valid]
+    using CanBeSimulatedE_SystemRegister[OF abstraction suc _ _ _ _ valid]
     using reg action
     by auto
   from Reg[OF this]
@@ -235,7 +235,7 @@ proof -
 qed
 
 lemma ReachableCaps_CapReg [elim]:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
       and reg: "case r of RegSpecial cd \<Rightarrow> cd \<in> CapDerivationRegisters action | _ \<Rightarrow> True"
@@ -247,7 +247,7 @@ using assms ReachableCaps_SCapr
 by (cases r) auto
 
 lemma ReachablePermissions_AddressTranslation:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
       and suc: "(step, s') \<in> sem s"
@@ -255,7 +255,7 @@ lemma ReachablePermissions_AddressTranslation:
   shows "getPhysicalAddress a s' = getPhysicalAddress a s"
 proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
-    using CheriAbstractionE_Execute[OF abstraction suc no_ex valid]
+    using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
     by auto
   hence "getGPerm (getPCC s) \<le> ReachablePermissions s" 
     by auto
@@ -264,7 +264,7 @@ proof -
     using no_sys valid_pcc
     by (auto simp: getGPerm_accessors)
   thus ?thesis
-    using CheriAbstractionE_AddressTranslation[OF abstraction suc no_ex _ valid]
+    using CanBeSimulatedE_AddressTranslation[OF abstraction suc no_ex _ valid]
     by auto
 qed
 
@@ -513,7 +513,7 @@ unfolding MonotonicityReachableCaps_def
 by auto
 
 lemma NextReachableCaps_getCap:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and readable: "loc \<in> ReadableLocations (ReachablePermissions s) s"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -523,7 +523,7 @@ lemma NextReachableCaps_getCap:
 proof (cases "actions = {}")
   case True
   hence "getCap loc s' = getCap loc s"
-    using CheriAbstractionE_CapabilityInvariant[OF abstraction suc _ valid]
+    using CanBeSimulatedE_CapabilityInvariant[OF abstraction suc _ _ valid]
     by simp
   hence "getCap loc s' \<in> ReadableCaps (ReachablePermissions s) s"
     using readable tag
@@ -538,7 +538,7 @@ next
     proof (cases rule: ProvenanceCases)
       case Unchanged
       hence "getCap loc s' = getCap loc s"
-        using CheriAbstractionE_CapabilityInvariant[OF abstraction suc _ valid]
+        using CanBeSimulatedE_CapabilityInvariant[OF abstraction suc _ _ valid]
         by simp
       hence "getCap loc s' \<in> ReadableCaps (ReachablePermissions s) s"
         using readable tag
@@ -548,7 +548,7 @@ next
     next
       case (StoreData auth a l)
       hence eq: "getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
-        using CheriAbstractionE_StoreData[OF abstraction suc StoreData(1) valid]
+        using CanBeSimulatedE_StoreData[OF abstraction suc _ StoreData(1) valid]
         using tag
         by auto
       hence "getTag (getMemCap (GetCapAddress a) s)"
@@ -567,7 +567,7 @@ next
       case (RestrictedReg r r')
       have le: "getCapReg r' s' \<le> getCapReg r s"
         using RestrictedReg
-        using CheriAbstractionE_RestrictRegCap[OF abstraction suc RestrictedReg(1) valid]
+        using CanBeSimulatedE_RestrictRegCap[OF abstraction suc _ RestrictedReg(1) valid]
         by auto
       have tag_original: "getTag (getCapReg r s)"
         using le tag RestrictedReg by auto
@@ -580,9 +580,10 @@ next
         by auto
     next
       case (Loaded auth a cd)
-      have "LoadCapProp sem"
-        using abstraction by auto
-      from LoadCapPropE_mem[OF this suc Loaded(1) valid, where a'="ExtendCapAddress a"]
+      have "LoadCapProp s (PreserveDomain actions) s'"
+        using CanBeSimulatedE[OF abstraction suc]
+        by auto
+      from LoadCapPropE_mem[OF this _ Loaded(1) valid, where a'="ExtendCapAddress a"]
       obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth s)" 
                          "getPhysicalAddress (vAddr, LOAD) s = Some (ExtendCapAddress a)"
         by auto
@@ -591,7 +592,7 @@ next
       and segment: "a \<in> getPhysicalCapAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
       and unsealed: "\<not> getSealed (getCapReg auth s)"
       and perm: "Permit_Load_Capability (getPerms (getCapReg auth s))"
-        using CheriAbstractionE_LoadCap[OF abstraction suc Loaded(1) valid]
+        using CanBeSimulatedE_LoadCap[OF abstraction suc _ Loaded(1) valid]
         by auto
       have auth: "getCapReg auth s \<in> ReachableCaps s"
         using ReachableCaps_CapReg[OF abstraction suc Loaded(1) _ no_sys valid tag_auth]
@@ -608,7 +609,7 @@ next
     next
       case (Stored auth cd a)
       have le: "getMemCap a s' \<le> getCAPR cd s"
-        using CheriAbstractionE_StoreCap[OF abstraction suc Stored(1) valid]
+        using CanBeSimulatedE_StoreCap[OF abstraction suc _ Stored(1) valid]
         by auto
       hence "getTag (getCAPR cd s)"
         using tag Stored by auto
@@ -623,19 +624,19 @@ next
         "t \<equiv> ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s))"
       have tag_cd: "getTag (getCAPR cd s)" 
       and tag_auth: "getTag (getCapReg auth s)"
-        using CheriAbstractionE_SealCap[OF abstraction suc Sealed(1) valid]
+        using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using tag Sealed
         by auto
       have "getCapReg auth s \<in> ReachableCaps s"
         using ReachableCaps_CapReg[OF abstraction suc Sealed(1) _ no_sys valid tag_auth]
         by (cases auth) auto
       hence "setType (setSealed (getCAPR cd s, True), t) \<in> ReachableCaps s"
-        using CheriAbstractionE_SealCap[OF abstraction suc Sealed(1) valid]
+        using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using tag_cd
         unfolding t_def
         by (intro ReachableCaps.Seal[where sealer="getCapReg auth s"]) auto
       thus ?thesis
-        using CheriAbstractionE_SealCap[OF abstraction suc Sealed(1) valid]
+        using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using Sealed 
         unfolding t_def
         by auto
@@ -644,26 +645,26 @@ next
       have tag_cd: "getTag (getCAPR cd s)"
       and tag_auth: "getTag (getCapReg auth s)"
         using TagOfGreaterCap[OF _ tag, where cap'="setType (setSealed (getCAPR cd s, False), 0)"]
-        using CheriAbstractionE_UnsealCap[OF abstraction suc Unsealed(1) valid]
+        using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using Unsealed
         by auto
       have "getCapReg auth s \<in> ReachableCaps s"
         using ReachableCaps_CapReg[OF abstraction suc Unsealed(1) _ no_sys valid tag_auth]
         by (cases auth) auto
       hence "setType (setSealed (getCAPR cd s, False), 0) \<in> ReachableCaps s"
-        using CheriAbstractionE_UnsealCap[OF abstraction suc Unsealed(1) valid]
+        using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using tag_cd
         by (intro ReachableCaps.Unseal[where unsealer="getCapReg auth s"]) auto
       from ReachableCaps.Restrict[OF this _ tag]
       show ?thesis
-        using CheriAbstractionE_UnsealCap[OF abstraction suc Unsealed(1) valid]
+        using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using Unsealed
         by auto
     qed
 qed
 
 lemma NextReachableCaps_Reg:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and valid: "getStateIsValid s"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and readable: "RegisterIsAlwaysAccessible r"
@@ -681,7 +682,7 @@ proof -
 qed
 
 lemma ReadableLocations_Invariance:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
       and suc: "(step, s') \<in> sem s"
@@ -700,7 +701,7 @@ proof -
 qed
 
 lemma NextReachableCaps_Memory:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
@@ -729,7 +730,7 @@ proof -
 qed
 
 lemma MonotonicityReachableCaps_Step:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
@@ -767,7 +768,7 @@ proof
 qed
 
 theorem AbstractionImpliesMonotonicityReachableCaps:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "MonotonicityReachableCaps sem"
 unfolding MonotonicityReachableCaps_def
 proof (intro allI impI, elim conjE)
@@ -809,7 +810,7 @@ lemmas MonotonicityReachableCaps =
   MonotonicityReachableCapsE[OF AbstractionImpliesMonotonicityReachableCaps]
 
 corollary MonotonicityTransUsableCaps:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and trace: "s' \<in> FutureStates sem s trace"
       and intra: "IntraDomainTrace trace"
       and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -819,7 +820,7 @@ using MonotonicityReachableCaps[OF abstraction trace intra no_sys_access valid]
 by auto
 
 corollary MonotonicityReachablePermissions:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and trace: "s' \<in> FutureStates sem s trace"
       and intra: "IntraDomainTrace trace"
       and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -832,7 +833,7 @@ by auto
 subsection \<open>Invariance of address translation\<close>
 
 lemma TraceInvarianceAddressTranslation:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and trace: "s' \<in> FutureStates sem s trace"
       and intra: "IntraDomainTrace trace"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -891,7 +892,7 @@ unfolding SameDomainSystemRegInvariant_def
 by auto
 
 lemma SystemRegisterInvariant_aux:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
       and no_access: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and system: "cd \<noteq> 0" "cd \<noteq> 1"
       and valid: "getStateIsValid s"
@@ -907,7 +908,7 @@ proof (cases "SwitchesDomain step")
     by (cases crossing) auto
   hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem s"
     using suc by auto
-  from CheriAbstractionE_InvokeCap[OF abstraction this valid]
+  from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid]
   show ?thesis
     by auto
 next
@@ -918,19 +919,19 @@ next
     using suc
     by auto
   have "cd \<notin> \<Union> (CapDerivationRegisters ` actions)"
-    using CheriAbstractionE_SystemRegister[OF abstraction intra_suc _ system  valid]
+    using CanBeSimulatedE_SystemRegister[OF abstraction intra_suc _ _ system  valid]
     using no_access
     by auto
   hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocReg (RegSpecial cd) \<notin> CapDerivationTargets prov"
     unfolding CapDerivationRegisters_def
     by auto
-  from CheriAbstractionE_CapabilityInvariant
-       [OF abstraction intra_suc this valid]
+  from CanBeSimulatedE_CapabilityInvariant
+       [OF abstraction intra_suc _ this valid]
   show ?thesis by auto
 qed
 
 theorem AbstractionImpliesSameDomainSystemRegInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "SameDomainSystemRegInvariant sem"
 unfolding SameDomainSystemRegInvariant_def
 proof (intro allI impI, elim conjE)
@@ -964,7 +965,7 @@ proof (intro allI impI, elim conjE)
       from SystemRegisterAccess_le[OF this]
       have no_access2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
         using no_access by auto
-      note pcc = CheriAbstractionE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
+      note pcc = CanBeSimulatedE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
       hence "getPCC r \<in> TransUsableCaps r"
         by auto
       hence "getGPerm (getPCC r) \<le> ReachablePermissions r"
@@ -1008,7 +1009,7 @@ unfolding DomainCrossSystemRegInvariant_def
 by auto
 
 theorem AbstractionImpliesDomainCrossSystemRegInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "DomainCrossSystemRegInvariant sem"
 unfolding DomainCrossSystemRegInvariant_def
 proof (intro allI impI, elim conjE)
@@ -1036,7 +1037,7 @@ proof (intro allI impI, elim conjE)
           case RaiseException
           hence "(SwitchDomain RaiseException, s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_Exception[OF abstraction this valid2]
+          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
           have "getSCAPR cd s' = SignalExceptionSCAPR cd r"
             by auto
           thus ?thesis
@@ -1047,7 +1048,7 @@ proof (intro allI impI, elim conjE)
           case (InvokeCapability cd cd')
           hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_InvokeCap[OF abstraction this valid2]
+          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
           show ?thesis by auto
         qed
       have "getSCAPR cd r = getSCAPR cd s"
@@ -1085,7 +1086,7 @@ unfolding SameDomainMemCapInvariant_def
 by auto
 
 theorem AbstractionImpliesSameDomainMemCapInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "SameDomainMemCapInvariant sem"
 unfolding SameDomainMemCapInvariant_def
 proof (intro allI impI, elim conjE)
@@ -1149,7 +1150,7 @@ proof (intro allI impI, elim conjE)
                     using action 
                     by auto
                   note restrict = 
-                       CheriAbstractionE_StoreData[OF abstraction intra_suc this valid2]
+                       CanBeSimulatedE_StoreData[OF abstraction intra_suc _ this valid2]
                   have a: "a = GetCapAddress a'"
                     using target StoreDataAction
                     by auto
@@ -1163,14 +1164,15 @@ proof (intro allI impI, elim conjE)
                     by auto
                   hence gperm: "getGPerm (getCapReg auth r) \<le> ReachablePermissions r"
                     by auto
-                  have "StoreDataProp sem"
-                    using abstraction by auto
+                  have "StoreDataProp r (PreserveDomain actions) s'"
+                    using CanBeSimulatedE[OF abstraction intra_suc]
+                    by auto
                   from StoreDataPropE_mem
-                       [OF this intra_suc _ valid2, 
-                        where a=a' and a'=a' and auth=auth and l=l]
+                       [OF this _ _ valid2, 
+                        where a=a' and a'=a' and auth=auth and l=l and actions=actions]
                   obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
                                      "getPhysicalAddress (vAddr, STORE) r = Some a'"
-                    using action StoreDataAction target `l \<noteq> 0`
+                    using action StoreDataAction target restrict
                     by auto
                   hence "a \<in> getPhysicalCapAddresses (StorableAddresses (getGPerm (getCapReg auth r))) STORE r"
                     using a restrict
@@ -1189,7 +1191,7 @@ proof (intro allI impI, elim conjE)
                   hence "StoreCapAction auth cd a \<in> actions"
                     using action target
                     by auto
-                  note store = CheriAbstractionE_StoreCap[OF abstraction intra_suc this valid2]
+                  note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ this valid2]
                   have "getCapReg auth r \<in> ReachableCaps r"
                     using ReachableCaps_CapReg
                           [OF abstraction intra_suc action _ no_sys2 valid2, where r=auth]
@@ -1200,10 +1202,12 @@ proof (intro allI impI, elim conjE)
                     by auto
                   hence gperm: "getGPerm (getCapReg auth r) \<le> ReachablePermissions r"
                     by auto
-                  have "StoreCapProp sem"
-                    using abstraction by auto
+                  have "StoreCapProp r (PreserveDomain actions) s'"
+                    using CanBeSimulatedE[OF abstraction intra_suc]
+                    by auto
                   from StoreCapPropE_mem
-                       [OF this intra_suc _ valid2, where a=a and a'="ExtendCapAddress a"]
+                       [OF this _ _ valid2, 
+                        where a=a and a'="ExtendCapAddress a" and actions=actions]
                   obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
                                      "getPhysicalAddress (vAddr, STORE) r = Some (ExtendCapAddress a)"
                     using action StoreCapAction target
@@ -1226,7 +1230,7 @@ proof (intro allI impI, elim conjE)
             qed
           hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocMem a \<notin> CapDerivationTargets prov"
             by auto
-          from CheriAbstractionE_CapabilityInvariant[OF abstraction intra_suc this valid2]
+          from CanBeSimulatedE_CapabilityInvariant[OF abstraction intra_suc _ this valid2]
           show ?thesis by auto
         qed
       thus ?case using ih by auto
@@ -1258,7 +1262,7 @@ unfolding DomainCrossMemCapInvariant_def
 by auto
 
 theorem AbstractionImpliesDomainCrossMemCapInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "DomainCrossMemCapInvariant sem"
 unfolding DomainCrossMemCapInvariant_def
 proof (intro allI impI, elim conjE)
@@ -1284,7 +1288,7 @@ proof (intro allI impI, elim conjE)
           case RaiseException
           hence "(SwitchDomain RaiseException, s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_Exception[OF abstraction this valid2]
+          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
           show ?thesis
             unfolding getMemCap_def
             by auto
@@ -1292,7 +1296,7 @@ proof (intro allI impI, elim conjE)
           case (InvokeCapability cd cd')
           hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_InvokeCap[OF abstraction this valid2]
+          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
           show ?thesis
             unfolding getMemCap_def
             by auto
@@ -1332,7 +1336,7 @@ unfolding SameDomainMemoryInvariant_def
 by auto
 
 theorem AbstractionImpliesSameDomainMemoryInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "SameDomainMemoryInvariant sem"
 unfolding SameDomainMemoryInvariant_def
 proof (intro allI impI, elim conjE)
@@ -1391,7 +1395,7 @@ proof (intro allI impI, elim conjE)
                  and addr: "a \<in> MemSegment a' l "
               hence "l \<noteq> 0"
                 by auto
-              note store = CheriAbstractionE_StoreData[OF abstraction intra_suc prov valid2]
+              note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
               have *: "a \<in> getPhysicalAddresses (StorableAddresses (getGPerm (getCapReg auth r))) STORE r"
                 using store addr
                 by (auto simp: getGPerm_accessors intro: getPhysicalAddressesI)
@@ -1419,7 +1423,7 @@ proof (intro allI impI, elim conjE)
               fix auth cd a'
               assume prov: "StoreCapAction auth cd a' \<in> actions" 
                  and addr: "a \<in> MemSegment (ExtendCapAddress a') 32"
-              note store = CheriAbstractionE_StoreCap[OF abstraction intra_suc prov valid2]
+              note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
               have *: "a \<in> getPhysicalAddresses (StorableAddresses (getGPerm (getCapReg auth r))) STORE r"
                 using store addr
                 by (auto simp: getGPerm_accessors intro: getPhysicalAddressesI)
@@ -1444,7 +1448,7 @@ proof (intro allI impI, elim conjE)
             unfolding WrittenAddresses_def
             using no_store_data no_store_cap
             by (auto split: DomainAction.splits)
-          from CheriAbstractionE_MemoryInvariant[OF abstraction intra_suc this valid2]
+          from CanBeSimulatedE_MemoryInvariant[OF abstraction intra_suc _ this valid2]
           show ?thesis 
             by auto
         qed
@@ -1478,7 +1482,7 @@ unfolding DomainCrossMemoryInvariant_def
 by auto
 
 theorem AbstractionImpliesDomainCrossMemoryInvariant:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "DomainCrossMemoryInvariant sem"      
 unfolding DomainCrossMemoryInvariant_def
 proof (intro allI impI, elim conjE)
@@ -1504,7 +1508,7 @@ proof (intro allI impI, elim conjE)
           case RaiseException
           hence "(SwitchDomain RaiseException, s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_Exception[OF abstraction this valid2]
+          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
           show ?thesis
             unfolding getMemData_def
             by auto
@@ -1512,7 +1516,7 @@ proof (intro allI impI, elim conjE)
           case (InvokeCapability cd cd')
           hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
             using r\<^sub>2 step by auto
-          from CheriAbstractionE_InvokeCap[OF abstraction this valid2]
+          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
           show ?thesis
             unfolding getMemData_def
             by auto

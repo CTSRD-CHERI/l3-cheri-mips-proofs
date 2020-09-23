@@ -673,10 +673,11 @@ unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary StoreDataInstantiation [simp]:
-  shows "StoreDataProp NextStates"
+corollary StoreDataInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "StoreDataProp s lbl s'"
 unfolding StoreDataProp_def
-using SemanticsStoreData
+using assms SemanticsStoreData
 by metis
 
 (*<*)

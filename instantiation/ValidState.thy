@@ -1583,10 +1583,11 @@ unfolding NextStates_def Next_NextWithGhostState
 unfolding StateIsValid_def EmptyGhostState_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
-corollary ValidStateInstantiation [simp]:
-  shows "ValidStateProp NextStates"
+corollary ValidStateInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "ValidStateProp s lbl s'"
 unfolding ValidStateProp_def
-using InvarianceValidState
+using assms InvarianceValidState
 by auto 
 
 (*<*)

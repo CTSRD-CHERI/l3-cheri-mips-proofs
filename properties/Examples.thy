@@ -267,7 +267,7 @@ definition CompartmentIsolation :: "Semantics \<Rightarrow> bool" where
    IsolationGuarantees segment types s s'"
 
 lemma CompartmentIsolation:
-  assumes abstraction: "CheriAbstraction sem"
+  assumes abstraction: "CanBeSimulated sem"
   shows "CompartmentIsolation sem"
 unfolding CompartmentIsolation_def 
   IsolatedState_def
@@ -387,7 +387,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
       case RaiseException
       hence "(SwitchDomain RaiseException, s') \<in> sem r"
         using r\<^sub>2 by auto
-      from CheriAbstractionE_Exception[OF abstraction this r_valid]
+      from CanBeSimulatedE_Exception[OF abstraction this _ r_valid]
       have "getBase (getPCC s') + getPC s' \<in> ExceptionPCs"
         by auto
       thus ?thesis
@@ -396,7 +396,8 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
       case (InvokeCapability cd cd')
       hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
         using r\<^sub>2 by auto
-      note invoke = CheriAbstractionE_InvokeCap[OF abstraction this r_valid]
+      note invoke = CanBeSimulatedE_InvokeCap[OF abstraction this _ r_valid, 
+                                              where cd=cd and cd'=cd']
       have "getCAPR cd r \<in> ReachableCaps r"
         using invoke by auto
       hence "getCAPR cd r \<in> ReachableCaps s"

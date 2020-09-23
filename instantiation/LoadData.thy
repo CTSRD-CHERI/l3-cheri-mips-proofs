@@ -719,10 +719,11 @@ unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary LoadDataInstantiation [simp]:
-  shows "LoadDataProp NextStates"
+corollary LoadDataInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "LoadDataProp s lbl s'"
 unfolding LoadDataProp_def
-using SemanticsLoadData
+using assms SemanticsLoadData
 by metis
 
 (*<*)

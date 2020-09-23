@@ -2228,10 +2228,11 @@ unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary MemoryInvariantInstantiation [simp]:
-  shows "MemoryInvariant NextStates"
+corollary MemoryInvariantInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "MemoryInvariant s lbl s'"
 unfolding MemoryInvariant_def
-using MemoryInvariant
+using assms MemoryInvariant
 by auto blast?
 
 (*<*)

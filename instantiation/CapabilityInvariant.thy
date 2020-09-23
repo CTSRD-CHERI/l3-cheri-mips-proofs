@@ -2268,10 +2268,11 @@ unfolding CapInvariantPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary CapabilityInvariantInstantiation [simp]:
-  shows "CapabilityInvariant NextStates"
+corollary CapabilityInvariantInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "CapabilityInvariant s lbl s'"
 unfolding CapabilityInvariant_def
-using CapabilityCapInvariant
+using assms CapabilityCapInvariant
 by auto blast?
 
 (*<*)
