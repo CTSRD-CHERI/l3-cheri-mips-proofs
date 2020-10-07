@@ -263,7 +263,7 @@ definition CompartmentIsolation :: "Semantics \<Rightarrow> bool" where
    (IsolatedState segment types s \<and>
     IntraDomainTrace trace \<and>
     SwitchesDomain step \<and>
-    s' \<in> FutureStates sem s (step # trace)) \<longrightarrow>
+    (step # trace, s') \<in> Traces sem s) \<longrightarrow>
    IsolationGuarantees segment types s s'"
 
 lemma CompartmentIsolation:
@@ -281,7 +281,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
   define gPerm where "gPerm = GPermOfSegment segment types"
   assume valid: "getStateIsValid s"
      and aligned: "CapabilityAligned segment"
-     and trace: "s' \<in> FutureStates sem s (step # trace)"
+     and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and inter: "SwitchesDomain step"
      and systemreg: "\<forall>cap. cap \<in> UsableCaps segment types s \<longrightarrow> 
@@ -326,7 +326,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
   have no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
     using SystemRegisterAccess_le[OF gperm]
     by auto
-  obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+  obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
              and r\<^sub>2: "(step, s') \<in> sem r"
     using trace by auto
   note r_valid = TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]

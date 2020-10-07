@@ -20,9 +20,6 @@ primrec IntraDomainTrace :: "Trace \<Rightarrow> bool" where
   "IntraDomainTrace [] = True" |
   "IntraDomainTrace (h # t) = (PreservesDomain h \<and> IntraDomainTrace t)"
 
-abbreviation InterDomainTrace :: "Trace \<Rightarrow> bool" where
-  "InterDomainTrace t \<equiv> \<not> IntraDomainTrace t"
-
 lemma IntraDomainTraceE:
   assumes "IntraDomainTrace trace"
       and "step \<in> set trace"
@@ -30,17 +27,24 @@ lemma IntraDomainTraceE:
 using assms
 by (induct trace) auto
 
-primrec FutureStates :: "Semantics \<Rightarrow> state \<Rightarrow> Trace \<Rightarrow> state set" where
-  "FutureStates sem s [] = {s}" |
-  "FutureStates sem s (h # t) = 
-   {s'' |s' s''. s' \<in> FutureStates sem s t \<and> (h, s'') \<in> sem s'}"
+primrec IsTrace :: "Semantics \<Rightarrow> state \<Rightarrow> Trace \<Rightarrow> state \<Rightarrow> bool" where
+  "IsTrace sem s [] s' = (s = s')" 
+| "IsTrace sem s (h # t) s' = (\<exists>x. IsTrace sem s t x \<and> (h, s') \<in> sem x)"
+
+definition Traces :: "Semantics \<Rightarrow> state \<Rightarrow> (Trace \<times> state) set" where
+  "Traces sem s = {(trace, s')| trace s'. IsTrace sem s trace s'}" 
+
+lemma Traces_member_simp [simp]:
+shows "(trace, s') \<in> Traces sem s = IsTrace sem s trace s'"
+unfolding Traces_def 
+by simp
 
 subsection \<open>Transitively valid state\<close>
 
 lemma TraceInvarianceStateIsValid:
   assumes abstraction: "CanBeSimulated sem"
       and valid: "getStateIsValid s"
-      and trace: "s' \<in> FutureStates sem s trace"
+      and trace: "(trace, s') \<in> Traces sem s"
   shows "getStateIsValid s'"
 using trace
 proof (induct trace arbitrary: s')
@@ -49,7 +53,7 @@ proof (induct trace arbitrary: s')
     using valid by simp
 next
   case (Cons step trace)
-  then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
   show ?case
@@ -493,17 +497,17 @@ by auto
 subsection \<open>Monotonicity of reachable capabilities\<close>
 
 definition MonotonicityReachableCaps :: "Semantics \<Rightarrow> bool" where
-  "MonotonicityReachableCaps semantics \<equiv>
+  "MonotonicityReachableCaps sem \<equiv>
    \<forall>s s' trace.
-   (s' \<in> FutureStates semantics s trace \<and>
+   ((trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
     getStateIsValid s) \<longrightarrow>
    ReachableCaps s' \<subseteq> ReachableCaps s"
 
 lemma MonotonicityReachableCapsE [elim]:
-  assumes "MonotonicityReachableCaps semantics"
-      and "s' \<in> FutureStates semantics s trace"
+  assumes "MonotonicityReachableCaps sem"
+      and "(trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and "getStateIsValid s"
@@ -775,13 +779,13 @@ proof (intro allI impI, elim conjE)
   fix s s' trace
   assume no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s trace"
+     and trace: "(trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
   show "ReachableCaps s' \<subseteq> ReachableCaps s"
     using trace intra
     proof (induct trace arbitrary: s')
       case (Cons step trace)
-      then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                       and r\<^sub>2: "(step, s') \<in> sem r"
         by auto
       have ih: "ReachableCaps r \<subseteq> ReachableCaps s" 
@@ -811,7 +815,7 @@ lemmas MonotonicityReachableCaps =
 
 corollary MonotonicityTransUsableCaps:
   assumes abstraction: "CanBeSimulated sem"
-      and trace: "s' \<in> FutureStates sem s trace"
+      and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
@@ -821,7 +825,7 @@ by auto
 
 corollary MonotonicityReachablePermissions:
   assumes abstraction: "CanBeSimulated sem"
-      and trace: "s' \<in> FutureStates sem s trace"
+      and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
@@ -834,7 +838,7 @@ subsection \<open>Invariance of address translation\<close>
 
 lemma TraceInvarianceAddressTranslation:
   assumes abstraction: "CanBeSimulated sem"
-      and trace: "s' \<in> FutureStates sem s trace"
+      and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
@@ -845,7 +849,7 @@ proof (induct trace arbitrary: s')
   thus ?case by simp
 next
   case (Cons step trace)
-  then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
   have intra2: "IntraDomainTrace trace"
@@ -870,9 +874,9 @@ qed
 subsection \<open>Invariance of system registers\<close>
 
 definition SameDomainSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
-  "SameDomainSystemRegInvariant semantics \<equiv>
+  "SameDomainSystemRegInvariant sem \<equiv>
    \<forall>s s' trace cd.
-   (s' \<in> FutureStates semantics s trace \<and>
+   ((trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
     cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> 
@@ -881,7 +885,7 @@ definition SameDomainSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma SameDomainSystemRegInvariantE [elim]:
   assumes "SameDomainSystemRegInvariant sem"
-      and "s' \<in> FutureStates sem s trace"
+      and "(trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and "cd \<noteq> 0" "cd \<noteq> 1"
@@ -938,7 +942,7 @@ proof (intro allI impI, elim conjE)
   fix s s' trace 
   fix cd :: "5 word"
   assume valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s trace"
+     and trace: "(trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and system: "cd \<noteq> 0" "cd \<noteq> 1"
@@ -946,7 +950,7 @@ proof (intro allI impI, elim conjE)
     using trace intra
     proof (induct trace arbitrary: s')
       case (Cons step trace)
-      then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                       and r\<^sub>2: "(step, s') \<in> sem r"
         by auto
       have ih: "getSCAPR cd r = getSCAPR cd s"
@@ -985,9 +989,9 @@ proof (intro allI impI, elim conjE)
 qed
 
 definition DomainCrossSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
-  "DomainCrossSystemRegInvariant semantics \<equiv>
+  "DomainCrossSystemRegInvariant sem \<equiv>
    \<forall>s s' trace step cd.
-   (s' \<in> FutureStates semantics s (step # trace) \<and>
+   ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     SwitchesDomain step \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
@@ -997,7 +1001,7 @@ definition DomainCrossSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma DomainCrossSystemRegInvariantE [elim]:
   assumes "DomainCrossSystemRegInvariant sem"
-      and "s' \<in> FutureStates sem s (step # trace)"
+      and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "SwitchesDomain step"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -1016,7 +1020,7 @@ proof (intro allI impI, elim conjE)
   fix s s' trace step
   fix cd :: "5 word"
   assume valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s (step # trace)"
+     and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and inter: "SwitchesDomain step"
      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -1024,7 +1028,7 @@ proof (intro allI impI, elim conjE)
      and non_eppc: "cd \<noteq> 31"
   show "getSCAPR cd s' = getSCAPR cd s"
     proof -
-      obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                  and r\<^sub>2: "(step, s') \<in> sem r"
         using trace by auto
       obtain crossing where step: "step = SwitchDomain crossing"
@@ -1066,7 +1070,7 @@ subsection \<open>Invariance of capabilities in memory\<close>
 definition SameDomainMemCapInvariant :: "Semantics \<Rightarrow> bool" where
   "SameDomainMemCapInvariant sem \<equiv>
    \<forall>s s' trace a.
-   (s' \<in> FutureStates sem s trace \<and>
+   ((trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
@@ -1075,7 +1079,7 @@ definition SameDomainMemCapInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma SameDomainMemCapInvariantE [elim]:
   assumes "SameDomainMemCapInvariant sem"
-      and "s' \<in> FutureStates sem s trace"
+      and "(trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -1093,14 +1097,14 @@ proof (intro allI impI, elim conjE)
   fix s s' trace a
   assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s trace"
+     and trace: "(trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
   show "getMemCap a s' = getMemCap a s"
     using trace intra
     proof (induct trace arbitrary: s')
       case (Cons step trace)
-      then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                       and r\<^sub>2: "(step, s') \<in> sem r"
         by auto
       have intra2: "IntraDomainTrace trace"
@@ -1240,7 +1244,7 @@ qed
 definition DomainCrossMemCapInvariant :: "Semantics \<Rightarrow> bool" where
   "DomainCrossMemCapInvariant sem \<equiv>
    \<forall>s s' trace step a.
-   (s' \<in> FutureStates sem s (step # trace) \<and>
+   ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     SwitchesDomain step \<and>
     a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s \<and>
@@ -1250,7 +1254,7 @@ definition DomainCrossMemCapInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma DomainCrossMemCapInvariantE [elim]:
   assumes "DomainCrossMemCapInvariant sem"
-      and "s' \<in> FutureStates sem s (step # trace)"
+      and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "SwitchesDomain step"
       and "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
@@ -1269,13 +1273,13 @@ proof (intro allI impI, elim conjE)
   fix s s' trace step a
   assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s (step # trace)"
+     and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and inter: "SwitchesDomain step"
      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
   show "getMemCap a s' = getMemCap a s"
     proof -
-      obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                  and r\<^sub>2: "(step, s') \<in> sem r"
         using trace by auto
       obtain crossing where step: "step = SwitchDomain crossing"
@@ -1316,7 +1320,7 @@ subsection \<open>Invariance of data\<close>
 definition SameDomainMemoryInvariant :: "Semantics \<Rightarrow> bool" where
   "SameDomainMemoryInvariant sem \<equiv>
    \<forall>s s' trace a.
-   (s' \<in> FutureStates sem s trace \<and>
+   ((trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     a \<notin> StorablePhysAddresses (ReachablePermissions s) s \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
@@ -1325,7 +1329,7 @@ definition SameDomainMemoryInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma SameDomainMemoryInvariantE [elim]:
   assumes "SameDomainMemoryInvariant sem"
-      and "s' \<in> FutureStates sem s trace"
+      and "(trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -1343,14 +1347,14 @@ proof (intro allI impI, elim conjE)
   fix s s' trace step a
   assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s trace"
+     and trace: "(trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
   show "getMemData a s' = getMemData a s"
     using trace intra
     proof (induct trace arbitrary: s')
       case (Cons step trace)
-      then obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                       and r\<^sub>2: "(step, s') \<in> sem r"
         by auto
       have intra2: "IntraDomainTrace trace"
@@ -1460,7 +1464,7 @@ qed
 definition DomainCrossMemoryInvariant :: "Semantics \<Rightarrow> bool" where
   "DomainCrossMemoryInvariant sem \<equiv>
    \<forall>s s' trace step a.
-   (s' \<in> FutureStates sem s (step # trace) \<and>
+   ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
     SwitchesDomain step \<and>
     a \<notin> StorablePhysAddresses (ReachablePermissions s) s \<and>
@@ -1470,7 +1474,7 @@ definition DomainCrossMemoryInvariant :: "Semantics \<Rightarrow> bool" where
 
 lemma DomainCrossMemoryInvariantE [elim]:
   assumes "DomainCrossMemoryInvariant sem"
-      and "s' \<in> FutureStates sem s (step # trace)"
+      and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
       and "SwitchesDomain step"
       and "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
@@ -1489,13 +1493,13 @@ proof (intro allI impI, elim conjE)
   fix s s' trace step a
   assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and valid: "getStateIsValid s"
-     and trace: "s' \<in> FutureStates sem s (step # trace)"
+     and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
      and inter: "SwitchesDomain step"
      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
   show "getMemData a s' = getMemData a s"
     proof -
-      obtain r where r\<^sub>1: "r \<in> FutureStates sem s trace"
+      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                  and r\<^sub>2: "(step, s') \<in> sem r"
         using trace by auto
       obtain crossing where step: "step = SwitchDomain crossing"
