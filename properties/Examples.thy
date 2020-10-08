@@ -401,8 +401,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
       have "getCAPR cd r \<in> ReachableCaps r"
         using invoke by auto
       hence "getCAPR cd r \<in> ReachableCaps s"
-        using AbstractionImpliesMonotonicityReachableCaps[OF abstraction]
-        using MonotonicityReachableCapsE[OF _ r\<^sub>1 intra no_sys valid]
+        using MonotonicityReachableCaps[OF abstraction r\<^sub>1 intra no_sys valid]
         by auto
       from ReachableInvokableCapsAreReadable[OF this]
       have "getCAPR cd r \<in> ReadableCaps (ReachablePermissions s) s"

@@ -506,26 +506,6 @@ by auto
 
 subsection \<open>Monotonicity of reachable capabilities\<close>
 
-definition MonotonicityReachableCaps :: "Semantics \<Rightarrow> bool" where
-  "MonotonicityReachableCaps sem \<equiv>
-   \<forall>s s' trace.
-   ((trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    getStateIsValid s) \<longrightarrow>
-   ReachableCaps s' \<subseteq> ReachableCaps s"
-
-lemma MonotonicityReachableCapsE [elim]:
-  assumes "MonotonicityReachableCaps sem"
-      and "(trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "getStateIsValid s"
-  shows "ReachableCaps s' \<subseteq> ReachableCaps s"
-using assms
-unfolding MonotonicityReachableCaps_def
-by auto
-
 lemma NextReachableCaps_getCap:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
@@ -781,71 +761,63 @@ proof
     qed
 qed
 
-theorem AbstractionImpliesMonotonicityReachableCaps:
+theorem MonotonicityReachableCaps:
   assumes abstraction: "CanBeSimulated sem"
-  shows "MonotonicityReachableCaps sem"
-unfolding MonotonicityReachableCaps_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace
-  assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and valid: "getStateIsValid s"
-     and trace: "(trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-  show "ReachableCaps s' \<subseteq> ReachableCaps s"
-    using trace intra
-    proof (induct trace arbitrary: s')
-      case (Cons step trace)
-      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                      and r\<^sub>2: "(step, s') \<in> sem r"
-        by auto
-      have ih: "ReachableCaps r \<subseteq> ReachableCaps s" 
-        using Cons(1)[OF r\<^sub>1]
-        using Cons(3)
-        by simp
-      have intra: "PreservesDomain step"
-        using Cons(3) by auto
-      hence no_ex: "step \<noteq> SwitchDomain RaiseException" 
-        by auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
-        by auto
-      have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-        using ReachableCaps_ReachablePermissions_le[OF ih]
-        using SystemRegisterAccess_le no_sys 
-        by auto
-      have "\<not> Access_System_Registers (getPerms (getPCC r))"
-        using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex no_sys2 valid2]
-        by auto
-      hence "ReachableCaps s' \<subseteq> ReachableCaps r"
-        using MonotonicityReachableCaps_Step[OF abstraction _ valid2, where s'=s']
-        using r\<^sub>2 intra
-        by (cases step) auto
-      thus ?case
-        using ih by simp
-    qed simp
-qed
-
-lemmas MonotonicityReachableCaps = 
-  MonotonicityReachableCapsE[OF AbstractionImpliesMonotonicityReachableCaps]
+      and trace: "(trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and valid: "getStateIsValid s"
+  shows "ReachableCaps s' \<subseteq> ReachableCaps s"
+using trace intra
+proof (induct trace arbitrary: s')
+  case (Cons step trace)
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+                  and r\<^sub>2: "(step, s') \<in> sem r"
+    by auto
+  have ih: "ReachableCaps r \<subseteq> ReachableCaps s" 
+    using Cons(1)[OF r\<^sub>1]
+    using Cons(3)
+    by simp
+  have intra: "PreservesDomain step"
+    using Cons(3) by auto
+  hence no_ex: "step \<noteq> SwitchDomain RaiseException" 
+    by auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+    using ReachableCaps_ReachablePermissions_le[OF ih]
+    using SystemRegisterAccess_le no_sys 
+    by auto
+  have "\<not> Access_System_Registers (getPerms (getPCC r))"
+    using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex no_sys2 valid2]
+    by auto
+  hence "ReachableCaps s' \<subseteq> ReachableCaps r"
+    using MonotonicityReachableCaps_Step[OF abstraction _ valid2, where s'=s']
+    using r\<^sub>2 intra
+    by (cases step) auto
+  thus ?case
+    using ih by simp
+qed simp
 
 corollary MonotonicityTransUsableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
   shows "TransUsableCaps s' \<subseteq> TransUsableCaps s"
-using MonotonicityReachableCaps[OF abstraction trace intra no_sys_access valid]
+using MonotonicityReachableCaps[OF abstraction trace intra no_sys valid]
 by auto
 
 corollary MonotonicityReachablePermissions:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
   shows "ReachablePermissions s' \<le> ReachablePermissions s"
-using MonotonicityTransUsableCaps[OF abstraction trace intra no_sys_access valid]
+using MonotonicityTransUsableCaps[OF abstraction trace intra no_sys valid]
 unfolding ReachablePermissions_def
 by auto
 
