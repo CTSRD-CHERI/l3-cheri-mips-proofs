@@ -514,18 +514,7 @@ lemma NextReachableCaps_getCap:
       and valid: "getStateIsValid s"
       and tag: "getTag (getCap loc s')"
   shows "getCap loc s' \<in> ReachableCaps s"
-proof (cases "actions = {}")
-  case True
-  hence "getCap loc s' = getCap loc s"
-    using CanBeSimulatedE_CapabilityInvariant[OF abstraction suc _ _ valid]
-    by simp
-  hence "getCap loc s' \<in> ReadableCaps (ReachablePermissions s) s"
-    using readable tag
-    by auto
-  thus ?thesis
-    by auto
-next
-  case False
+proof -
   obtain parentLoc where "parentLoc \<in> ProvenanceParents actions loc"
     using ProvenanceParentExists by auto
   thus ?thesis
