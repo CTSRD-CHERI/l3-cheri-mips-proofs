@@ -506,14 +506,14 @@ by auto
 
 subsection \<open>Monotonicity of reachable capabilities\<close>
 
-lemma NextReachableCaps_getCap:
+lemma NewCapsAreReachable:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
-      and readable: "loc \<in> ReadableLocations (ReachablePermissions s) s"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getCap loc s')"
-  shows "getCap loc s' \<in> ReachableCaps s"
+  shows "getCap loc s' \<in> ReachableCaps s \<or>
+         getCap loc s' = getCap loc s"
 proof -
   obtain parentLoc where "parentLoc \<in> ProvenanceParents actions loc"
     using ProvenanceParentExists by auto
@@ -523,28 +523,15 @@ proof -
       hence "getCap loc s' = getCap loc s"
         using CanBeSimulatedE_CapabilityInvariant[OF abstraction suc _ _ valid]
         by simp
-      hence "getCap loc s' \<in> ReadableCaps (ReachablePermissions s) s"
-        using readable tag
-        by auto
-      thus ?thesis
-        by auto
+      thus ?thesis by auto
     next
       case (StoreData auth a l)
-      hence eq: "getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
+      hence "getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
         using CanBeSimulatedE_StoreData[OF abstraction suc _ StoreData(1) valid]
         using tag
         by auto
-      hence "getTag (getMemCap (GetCapAddress a) s)"
-        using tag StoreData by auto
-      hence "getMemCap (GetCapAddress a) s \<in> ReadableCaps (ReachablePermissions s) s"
-        using StoreData
-        using readable 
-        by (auto intro: ReadableCapsI[where loc="LocMem (GetCapAddress a)"])
-      from ReadableCapsAreReachable[OF this]
-      have "getMemCap (GetCapAddress a) s \<in> ReachableCaps s"
-        by auto
       thus ?thesis
-        using StoreData eq
+        using StoreData
         by auto
     next
       case (RestrictedReg r r')
@@ -646,91 +633,34 @@ proof -
     qed
 qed
 
-lemma NextReachableCaps_Reg:
-  assumes abstraction: "CanBeSimulated sem"
-      and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> sem s"
-      and readable: "RegisterIsAlwaysAccessible r"
-      and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
-      and tag: "getTag (getCapReg r s')"
-  shows "getCapReg r s' \<in> ReachableCaps s"
-proof -
-  have "LocReg r \<in> ReadableLocations (ReachablePermissions s) s"
-    using readable
-    by (auto simp: RegisterIsAlwaysAccessible_def
-             split: CapLocation.splits CapRegister.splits) 
-  from NextReachableCaps_getCap[OF abstraction suc this no_sys valid]
-  show ?thesis
-    using tag by simp
-qed
-
-lemma ReadableLocations_Invariance:
-  assumes abstraction: "CanBeSimulated sem"
-      and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
-      and valid: "getStateIsValid s"
-      and suc: "(step, s') \<in> sem s"
-      and no_ex: "step \<noteq> SwitchDomain RaiseException"
-  shows "(loc \<in> ReadableLocations f s') = (loc \<in> ReadableLocations f s)"
-proof -
-  have "getPhysicalAddress (v, LOAD) s' = getPhysicalAddress (v, LOAD) s" for v
-    using CanBeSimulatedE_AddressTranslation[OF abstraction suc no_ex no_sys valid]
-    by metis
-  hence "getPhysicalCapAddresses addrs LOAD s' = getPhysicalCapAddresses addrs LOAD s" for addrs
-    unfolding getPhysicalCapAddresses_def
-    unfolding getPhysicalAddresses_def
-    by simp
-  thus ?thesis
-    by (cases loc) auto
-qed
-
-lemma NextReachableCaps_Memory:
-  assumes abstraction: "CanBeSimulated sem"
-      and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
-      and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> sem s"
-      and auth: "authCap \<in> ReachableCaps s"
-      and unsealed: "\<not> getSealed authCap"
-      and perm: "Permit_Load_Capability (getPerms authCap)"
-      and addr: "addr \<in> getPhysicalCapAddresses (MemSegmentCap authCap) LOAD s'"
-      and tag: "getTag (getMemCap addr s')"
-  shows "getMemCap addr s' \<in> ReachableCaps s"
-proof -
-  have usable: "authCap \<in> TransUsableCaps s"
-    using unsealed auth by auto
-  note getGPerm_ReachablePermissions_le[OF this]
-  note CapLoadableAddresses_le[OF this]
-  hence "MemSegmentCap authCap \<subseteq> CapLoadableAddresses (ReachablePermissions s)"
-    using perm ReachableCaps_getTag[OF auth]
-    by (auto simp: getGPerm_accessors)
-  note getPhysicalCapAddresses_le_subsetD[OF this addr]
-  hence "LocMem addr \<in> ReadableLocations (ReachablePermissions s) s"
-    using ReadableLocations_Invariance
-          [OF abstraction no_sys valid suc, where loc="LocMem addr"]
-    by auto
-  from NextReachableCaps_getCap[OF abstraction suc this no_sys valid]
-  show ?thesis
-    using tag by simp
-qed
-
 lemma MonotonicityReachableCaps_Step:
   assumes abstraction: "CanBeSimulated sem"
+      and suc: "(PreserveDomain actions, s') \<in> sem s"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> sem s"
   shows "ReachableCaps s' \<subseteq> ReachableCaps s"
 proof 
   fix cap
   assume "cap \<in> ReachableCaps s'"
   thus "cap \<in> ReachableCaps s"
     proof (induct rule: ReachableCaps.inducts)
-      case Reg
-      thus ?case 
-        using NextReachableCaps_Reg[OF abstraction valid suc _ no_sys]
+      case (Reg r)
+      thus ?case
+        using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocReg r"]
+        using Reg ReachableCaps.Reg
         by auto
     next
-      case Memory
+      case (Memory cap' a)
+      have "getPhysicalAddress (v, LOAD) s' = getPhysicalAddress (v, LOAD) s" for v
+        using CanBeSimulatedE_AddressTranslation[OF abstraction suc _ no_sys valid]
+        by auto
+      hence "getPhysicalCapAddresses addrs LOAD s' = getPhysicalCapAddresses addrs LOAD s" for addrs
+        unfolding getPhysicalCapAddresses_def
+        unfolding getPhysicalAddresses_def
+        by simp
       thus ?case 
-        using NextReachableCaps_Memory[OF abstraction no_sys valid suc]
+        using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocMem a"]
+        using Memory ReachableCaps.Memory
         by auto
     next
       case Restrict
@@ -782,7 +712,7 @@ proof (induct trace arbitrary: s')
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex no_sys2 valid2]
     by auto
   hence "ReachableCaps s' \<subseteq> ReachableCaps r"
-    using MonotonicityReachableCaps_Step[OF abstraction _ valid2, where s'=s']
+    using MonotonicityReachableCaps_Step[OF abstraction _ _ valid2, where s'=s']
     using r\<^sub>2 intra
     by (cases step) auto
   thus ?case
