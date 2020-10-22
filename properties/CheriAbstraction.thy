@@ -157,8 +157,6 @@ primrec PreservesDomain where
   "PreservesDomain (PreserveDomain actions) = True" |
   "PreservesDomain (SwitchDomain crossing) = False"
 
-abbreviation "SwitchesDomain step \<equiv> \<not> PreservesDomain step"
-
 section \<open>Properties\<close>
 
 type_synonym Semantics = "state \<Rightarrow> (AbstractStep \<times> state) set"

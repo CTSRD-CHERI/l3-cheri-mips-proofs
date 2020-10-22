@@ -809,8 +809,8 @@ lemma SystemRegisterInvariant_aux:
       and suc: "(step, s') \<in> sem s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
   shows "getSCAPR cd s' = getSCAPR cd s"
-proof (cases "SwitchesDomain step")
-  case True
+proof (cases "PreservesDomain step")
+  case False
   then obtain crossing where "step = SwitchDomain crossing"
     by (cases step) auto
   then obtain cd cd' where "step = SwitchDomain (InvokeCapability cd cd')"
@@ -822,7 +822,7 @@ proof (cases "SwitchesDomain step")
   show ?thesis
     by auto
 next
-  case False
+  case True
   then obtain actions where "step = PreserveDomain actions"
     by (cases step) auto
   hence intra_suc: "(PreserveDomain actions, s') \<in> sem s"
@@ -899,7 +899,7 @@ definition DomainCrossSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
    \<forall>s s' trace step cd.
    ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
-    SwitchesDomain step \<and>
+    \<not> PreservesDomain step \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
     cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31 \<and>
     getStateIsValid s) \<longrightarrow> 
@@ -909,7 +909,7 @@ lemma DomainCrossSystemRegInvariantE [elim]:
   assumes "DomainCrossSystemRegInvariant sem"
       and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
-      and "SwitchesDomain step"
+      and "\<not> PreservesDomain step"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and "cd \<noteq> 0" "cd \<noteq> 1" "cd \<noteq> 31"
       and "getStateIsValid s"
@@ -928,7 +928,7 @@ proof (intro allI impI, elim conjE)
   assume valid: "getStateIsValid s"
      and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
-     and inter: "SwitchesDomain step"
+     and inter: "\<not> PreservesDomain step"
      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
      and system: "cd \<noteq> 0" "cd \<noteq> 1"
      and non_eppc: "cd \<noteq> 31"
@@ -1155,7 +1155,7 @@ definition DomainCrossMemCapInvariant :: "Semantics \<Rightarrow> bool" where
    \<forall>s s' trace step a.
    ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
-    SwitchesDomain step \<and>
+    \<not> PreservesDomain step \<and>
     a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
     getStateIsValid s) \<longrightarrow>
@@ -1165,7 +1165,7 @@ lemma DomainCrossMemCapInvariantE [elim]:
   assumes "DomainCrossMemCapInvariant sem"
       and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
-      and "SwitchesDomain step"
+      and "\<not> PreservesDomain step"
       and "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and "getStateIsValid s"
@@ -1184,7 +1184,7 @@ proof (intro allI impI, elim conjE)
      and valid: "getStateIsValid s"
      and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
-     and inter: "SwitchesDomain step"
+     and inter: "\<not> PreservesDomain step"
      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
   show "getMemCap a s' = getMemCap a s"
     proof -
@@ -1378,7 +1378,7 @@ definition DomainCrossMemoryInvariant :: "Semantics \<Rightarrow> bool" where
    \<forall>s s' trace step a.
    ((step # trace, s') \<in> Traces sem s \<and>
     IntraDomainTrace trace \<and>
-    SwitchesDomain step \<and>
+    \<not> PreservesDomain step \<and>
     a \<notin> StorablePhysAddresses (ReachablePermissions s) s \<and>
     \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
     getStateIsValid s) \<longrightarrow>
@@ -1388,7 +1388,7 @@ lemma DomainCrossMemoryInvariantE [elim]:
   assumes "DomainCrossMemoryInvariant sem"
       and "(step # trace, s') \<in> Traces sem s"
       and "IntraDomainTrace trace"
-      and "SwitchesDomain step"
+      and "\<not> PreservesDomain step"
       and "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
       and "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and "getStateIsValid s"
@@ -1407,7 +1407,7 @@ proof (intro allI impI, elim conjE)
      and valid: "getStateIsValid s"
      and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
-     and inter: "SwitchesDomain step"
+     and inter: "\<not> PreservesDomain step"
      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
   show "getMemData a s' = getMemData a s"
     proof -

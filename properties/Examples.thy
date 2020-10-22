@@ -264,7 +264,7 @@ definition CompartmentIsolation :: "Semantics \<Rightarrow> bool" where
    \<forall>segment types s s' trace step.
    (IsolatedState segment types s \<and>
     IntraDomainTrace trace \<and>
-    SwitchesDomain step \<and>
+    \<not> PreservesDomain step \<and>
     (step # trace, s') \<in> Traces sem s) \<longrightarrow>
    IsolationGuarantees segment types s s'"
 
@@ -285,7 +285,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
      and aligned: "CapabilityAligned segment"
      and trace: "(step # trace, s') \<in> Traces sem s"
      and intra: "IntraDomainTrace trace"
-     and inter: "SwitchesDomain step"
+     and inter: "\<not> PreservesDomain step"
      and systemreg: "\<forall>cap. cap \<in> UsableCaps segment types s \<longrightarrow> 
                      \<not> Access_System_Registers (getPerms cap)"
      and segment: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
