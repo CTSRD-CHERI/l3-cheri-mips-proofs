@@ -204,7 +204,8 @@ lemma GPerm_le_GPermOfSegment:
             Permit_Load (getPerms cap) \<or>
             Permit_Load_Capability (getPerms cap) \<or>
             Permit_Store (getPerms cap) \<or>
-            Permit_Store_Capability (getPerms cap)) \<longrightarrow>
+            Permit_Store_Capability (getPerms cap) \<or>
+            Permit_Store_Local_Capability (getPerms cap)) \<longrightarrow>
            MemSegmentCap cap \<subseteq> segment) \<and>
           \<not> Access_System_Registers (getPerms cap))"
 unfolding less_eq_GeneralisedPerm_ext_def
@@ -223,7 +224,8 @@ definition ContainedCapBounds where
            Permit_Load (getPerms cap) \<or>
            Permit_Load_Capability (getPerms cap) \<or>
            Permit_Store (getPerms cap) \<or>
-           Permit_Store_Capability (getPerms cap))) \<longrightarrow>
+           Permit_Store_Capability (getPerms cap) \<or>
+           Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
           MemSegmentCap cap \<subseteq> segment"
 
 definition ContainedObjectTypes where 
@@ -291,7 +293,8 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
                     Permit_Load (getPerms cap) \<or>
                     Permit_Load_Capability (getPerms cap) \<or>
                     Permit_Store (getPerms cap) \<or>
-                    Permit_Store_Capability (getPerms cap))) \<longrightarrow>
+                    Permit_Store_Capability (getPerms cap) \<or>
+                    Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
                    MemSegmentCap cap \<subseteq> segment"
      and types: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
                 (Permit_Seal (getPerms cap) \<or>

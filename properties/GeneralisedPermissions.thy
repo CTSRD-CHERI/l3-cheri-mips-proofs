@@ -746,30 +746,31 @@ definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
           CapLoadableAddresses = if Permit_Load_Capability perms then MemSegmentCap cap else {},
           StorableAddresses = if Permit_Store perms then MemSegmentCap cap else {},
           CapStorableAddresses = if Permit_Store_Capability perms then MemSegmentCap cap else {},
-          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms \<and> Permit_Store_Capability perms 
-                                then MemSegmentCap cap else {},
-          SealableTypes = if Permit_Seal perms 
-                          then {t. ucast t \<in> MemSegmentCap cap} else {},
-          UnsealableTypes = if Permit_Unseal perms 
-                            then {t. ucast t \<in> MemSegmentCap cap} else {}\<rparr>
+          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms then MemSegmentCap cap else {},
+          SealableTypes = if Permit_Seal perms then {t. ucast t \<in> MemSegmentCap cap} else {},
+          UnsealableTypes = if Permit_Unseal perms then {t. ucast t \<in> MemSegmentCap cap} else {}\<rparr>
    else bot"
 
 lemma Generalise_accessors:
   shows "SystemRegisterAccess (Generalise cap) = 
          (getTag cap \<and> Access_System_Registers (getPerms cap))"
     and "ExecutableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Execute (getPerms cap) then MemSegmentCap cap else {})"
+         (if getTag cap \<and> Permit_Execute (getPerms cap) 
+          then MemSegmentCap cap else {})"
     and "LoadableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Load (getPerms cap) then MemSegmentCap cap else {})"
+         (if getTag cap \<and> Permit_Load (getPerms cap) 
+          then MemSegmentCap cap else {})"
     and "CapLoadableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Load_Capability (getPerms cap) then MemSegmentCap cap else {})"
+         (if getTag cap \<and> Permit_Load_Capability (getPerms cap) 
+          then MemSegmentCap cap else {})"
     and "StorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store (getPerms cap) then MemSegmentCap cap else {})"
+         (if getTag cap \<and> Permit_Store (getPerms cap) 
+          then MemSegmentCap cap else {})"
     and "CapStorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store_Capability (getPerms cap) then MemSegmentCap cap else {})"
+         (if getTag cap \<and> Permit_Store_Capability (getPerms cap) 
+          then MemSegmentCap cap else {})"
     and "LocalCapStorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) \<and>
-             Permit_Store_Capability (getPerms cap)
+         (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) 
           then MemSegmentCap cap else {})"
     and "SealableTypes (Generalise cap) = 
          (if getTag cap \<and> Permit_Seal (getPerms cap) 
