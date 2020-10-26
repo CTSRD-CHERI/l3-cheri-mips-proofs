@@ -346,8 +346,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
         using StorablePhysAddresses_le[OF gperm]
         by auto
       thus ?thesis
-        using AbstractionImpliesDomainCrossMemoryInvariant[OF abstraction]
-        using DomainCrossMemoryInvariantE[OF _ trace intra inter _ no_sys valid]
+        using MemoryInvariant[OF abstraction trace intra inter _ no_sys valid]
         by metis
     qed
   show "getMemTag (GetCapAddress a) s' = getMemTag (GetCapAddress a) s" 
@@ -373,16 +372,14 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
         using StorablePhysCapAddresses_le[OF gperm]
         by auto
       hence "getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"  
-        using AbstractionImpliesDomainCrossMemCapInvariant[OF abstraction]
-        using DomainCrossMemCapInvariantE[OF _ trace intra inter _ no_sys valid]
+        using MemCapInvariant[OF abstraction trace intra inter _ no_sys valid]
         by metis
       thus ?thesis
         unfolding getMemTag_def
         by auto
     qed
   show "getSCAPR cd s' = getSCAPR cd s" if "cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31" for cd
-    using AbstractionImpliesDomainCrossSystemRegInvariant[OF abstraction]
-    using DomainCrossSystemRegInvariantE[OF _ trace intra inter no_sys _ _ _ valid]
+    using SystemRegisterInvariant[OF abstraction trace intra inter no_sys _ _ _ valid]
     using that
     by metis   
   show "getBase (getPCC s') + getPC s' \<in> ExceptionPCs \<union> InvokableAddresses segment s"

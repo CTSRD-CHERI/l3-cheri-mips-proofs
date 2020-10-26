@@ -779,28 +779,6 @@ qed
 
 subsection \<open>Invariance of system registers\<close>
 
-definition SameDomainSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
-  "SameDomainSystemRegInvariant sem \<equiv>
-   \<forall>s s' trace cd.
-   ((trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> 
-    getStateIsValid s) \<longrightarrow> 
-    getSCAPR cd s' = getSCAPR cd s"
-
-lemma SameDomainSystemRegInvariantE [elim]:
-  assumes "SameDomainSystemRegInvariant sem"
-      and "(trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "cd \<noteq> 0" "cd \<noteq> 1"
-      and "getStateIsValid s"
-  shows "getSCAPR cd s' = getSCAPR cd s"
-using assms
-unfolding SameDomainSystemRegInvariant_def
-by auto
-
 lemma SystemRegisterInvariant_aux:
   assumes abstraction: "CanBeSimulated sem"
       and no_access: "\<not> Access_System_Registers (getPerms (getPCC s))"
@@ -840,611 +818,460 @@ next
   show ?thesis by auto
 qed
 
-theorem AbstractionImpliesSameDomainSystemRegInvariant:
+lemma SystemRegisterInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
-  shows "SameDomainSystemRegInvariant sem"
-unfolding SameDomainSystemRegInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace 
-  fix cd :: "5 word"
-  assume valid: "getStateIsValid s"
-     and trace: "(trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and system: "cd \<noteq> 0" "cd \<noteq> 1"
-  show "getSCAPR cd s' = getSCAPR cd s"
-    using trace intra
-    proof (induct trace arbitrary: s')
-      case (Cons step trace)
-      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                      and r\<^sub>2: "(step, s') \<in> sem r"
-        by auto
-      have ih: "getSCAPR cd r = getSCAPR cd s"
-        using Cons(1)[OF r\<^sub>1] Cons(3)
-        by auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
-        by auto
-      have no_ex2: "step \<noteq> SwitchDomain RaiseException"
-        using Cons(3)
-        by auto
-      have "ReachablePermissions r \<le> ReachablePermissions s"
-        using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 _ no_access valid]
-        using Cons(3)
-        by auto
-      from SystemRegisterAccess_le[OF this]
-      have no_access2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-        using no_access by auto
-      note pcc = CanBeSimulatedE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
-      hence "getPCC r \<in> TransUsableCaps r"
-        by auto
-      hence "Generalise (getPCC r) \<le> ReachablePermissions r"
-        by auto
-      from SystemRegisterAccess_le[OF this]
-      have "\<not> SystemRegisterAccess (Generalise (getPCC r))"
-        using no_access2 by auto
-      hence "\<not> Access_System_Registers (getPerms (getPCC r))"
-        using pcc
-        by (auto simp: Generalise_accessors)
-      hence "getSCAPR cd s' = getSCAPR cd r" 
-        using SystemRegisterInvariant_aux[OF abstraction _ system valid2 r\<^sub>2 no_ex2]
-        by auto
-      thus ?case
-        using ih by auto
-    qed simp
-qed
-
-definition DomainCrossSystemRegInvariant :: "Semantics \<Rightarrow> bool" where
-  "DomainCrossSystemRegInvariant sem \<equiv>
-   \<forall>s s' trace step cd.
-   ((step # trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> PreservesDomain step \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31 \<and>
-    getStateIsValid s) \<longrightarrow> 
-    getSCAPR cd s' = getSCAPR cd s"
-
-lemma DomainCrossSystemRegInvariantE [elim]:
-  assumes "DomainCrossSystemRegInvariant sem"
-      and "(step # trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "\<not> PreservesDomain step"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "cd \<noteq> 0" "cd \<noteq> 1" "cd \<noteq> 31"
-      and "getStateIsValid s"
+      and trace: "(trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and system: "cd \<noteq> 0" "cd \<noteq> 1"
+      and valid: "getStateIsValid s"
   shows "getSCAPR cd s' = getSCAPR cd s"
-using assms
-unfolding DomainCrossSystemRegInvariant_def
-by auto
+using trace intra
+proof (induct trace arbitrary: s')
+  case (Cons step trace)
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+                  and r\<^sub>2: "(step, s') \<in> sem r"
+    by auto
+  have ih: "getSCAPR cd r = getSCAPR cd s"
+    using Cons(1)[OF r\<^sub>1] Cons(3)
+    by auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have no_ex2: "step \<noteq> SwitchDomain RaiseException"
+    using Cons(3)
+    by auto
+  have "ReachablePermissions r \<le> ReachablePermissions s"
+    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 _ no_access valid]
+    using Cons(3)
+    by auto
+  from SystemRegisterAccess_le[OF this]
+  have no_access2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+    using no_access by auto
+  note pcc = CanBeSimulatedE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
+  hence "getPCC r \<in> TransUsableCaps r"
+    by auto
+  hence "Generalise (getPCC r) \<le> ReachablePermissions r"
+    by auto
+  from SystemRegisterAccess_le[OF this]
+  have "\<not> SystemRegisterAccess (Generalise (getPCC r))"
+    using no_access2 by auto
+  hence "\<not> Access_System_Registers (getPerms (getPCC r))"
+    using pcc
+    by (auto simp: Generalise_accessors)
+  hence "getSCAPR cd s' = getSCAPR cd r" 
+    using SystemRegisterInvariant_aux[OF abstraction _ system valid2 r\<^sub>2 no_ex2]
+    by auto
+  thus ?case
+    using ih by auto
+qed simp
 
-theorem AbstractionImpliesDomainCrossSystemRegInvariant:
+theorem SystemRegisterInvariant:
   assumes abstraction: "CanBeSimulated sem"
-  shows "DomainCrossSystemRegInvariant sem"
-unfolding DomainCrossSystemRegInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace step
-  fix cd :: "5 word"
-  assume valid: "getStateIsValid s"
-     and trace: "(step # trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and inter: "\<not> PreservesDomain step"
-     and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and system: "cd \<noteq> 0" "cd \<noteq> 1"
-     and non_eppc: "cd \<noteq> 31"
-  show "getSCAPR cd s' = getSCAPR cd s"
-    proof -
-      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                 and r\<^sub>2: "(step, s') \<in> sem r"
-        using trace by auto
-      obtain crossing where step: "step = SwitchDomain crossing"
-        using inter by (cases step) auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+      and trace: "(step # trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and inter: "\<not> PreservesDomain step"
+      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and system: "cd \<noteq> 0" "cd \<noteq> 1" 
+      and non_eppc: "cd \<noteq> 31"
+      and valid: "getStateIsValid s"
+  shows "getSCAPR cd s' = getSCAPR cd s"
+proof -
+  obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+             and r\<^sub>2: "(step, s') \<in> sem r"
+    using trace by auto
+  obtain crossing where step: "step = SwitchDomain crossing"
+    using inter by (cases step) auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have "getSCAPR cd s' = getSCAPR cd r"
+    proof (cases crossing)
+      case RaiseException
+      hence "(SwitchDomain RaiseException, s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
+      have "getSCAPR cd s' = SignalExceptionSCAPR cd r"
         by auto
-      have "getSCAPR cd s' = getSCAPR cd r"
-        proof (cases crossing)
-          case RaiseException
-          hence "(SwitchDomain RaiseException, s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
-          have "getSCAPR cd s' = SignalExceptionSCAPR cd r"
-            by auto
-          thus ?thesis
-            unfolding SignalExceptionSCAPR_def
-            using non_eppc
-            by auto
-        next
-          case (InvokeCapability cd cd')
-          hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
-          show ?thesis by auto
-        qed
-      have "getSCAPR cd r = getSCAPR cd s"
-        using AbstractionImpliesSameDomainSystemRegInvariant[OF abstraction]
-        using SameDomainSystemRegInvariantE[OF _ r\<^sub>1 intra no_access system valid]
-        by metis
       thus ?thesis
-        using `getSCAPR cd s' = getSCAPR cd r`
+        unfolding SignalExceptionSCAPR_def
+        using non_eppc
         by auto
+    next
+      case (InvokeCapability cd cd')
+      hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
+      show ?thesis by auto
     qed
+  have "getSCAPR cd r = getSCAPR cd s"
+    using SystemRegisterInvariant_intra[OF abstraction r\<^sub>1 intra no_access system valid]
+    by simp
+  thus ?thesis
+    using `getSCAPR cd s' = getSCAPR cd r`
+    by auto
 qed
 
 subsection \<open>Invariance of capabilities in memory\<close>
 
-definition SameDomainMemCapInvariant :: "Semantics \<Rightarrow> bool" where
-  "SameDomainMemCapInvariant sem \<equiv>
-   \<forall>s s' trace a.
-   ((trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    getStateIsValid s) \<longrightarrow>
-    getMemCap a s' = getMemCap a s"
-
-lemma SameDomainMemCapInvariantE [elim]:
-  assumes "SameDomainMemCapInvariant sem"
-      and "(trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "getStateIsValid s"
-  shows "getMemCap a s' = getMemCap a s"
-using assms
-unfolding SameDomainMemCapInvariant_def
-by auto
-
-theorem AbstractionImpliesSameDomainMemCapInvariant:
+lemma MemCapInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
-  shows "SameDomainMemCapInvariant sem"
-unfolding SameDomainMemCapInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace a
-  assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and valid: "getStateIsValid s"
-     and trace: "(trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-  show "getMemCap a s' = getMemCap a s"
-    using trace intra
-    proof (induct trace arbitrary: s')
-      case (Cons step trace)
-      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                      and r\<^sub>2: "(step, s') \<in> sem r"
-        by auto
-      have intra2: "IntraDomainTrace trace"
-        using Cons by auto
-      have ih: "getMemCap a r = getMemCap a s"
-        using Cons(1)[OF r\<^sub>1] intra2
-        by auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
-        by auto
-      have no_ex2: "step \<noteq> SwitchDomain RaiseException"
-        using Cons(3)
-        by auto
-      have perms: "ReachablePermissions r \<le> ReachablePermissions s"
-        using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
-        by auto
-      from SystemRegisterAccess_le[OF this]
-      have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-        using no_sys by auto
-      have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
-        using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
-        by auto
-      have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
-        using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
-        by auto
-      from StorablePhysCapAddresses_le[OF perms]
-      have no_access2: "a \<notin> StorablePhysCapAddresses (ReachablePermissions r) r"
-        using getPhysicalCapAddresses_eqI_getPhysicalAddress[OF addrTrans]
-        using no_access
-        unfolding StorablePhysCapAddresses_def
-        by auto
-      hence "getMemCap a s' = getMemCap a r"
-        proof -
-          obtain actions where "step = PreserveDomain actions"
-            using Cons(3)
-            by (cases step) auto
-          hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
-            using r\<^sub>2
-            by auto
-          have "\<not> (\<exists>action. action \<in> actions \<and>
-                            LocMem a \<in> CapDerivationTargets action)" 
-            proof (clarify)
-              fix action
-              assume action: "action \<in> actions" 
-                 and target: "LocMem a \<in> CapDerivationTargets action"
-              thus False
-                proof (cases action)
-                  case (StoreDataAction auth a' l)
-                  hence "StoreDataAction auth a' l \<in> actions"
-                    using action 
-                    by auto
-                  note restrict = 
-                       CanBeSimulatedE_StoreData[OF abstraction intra_suc _ this valid2]
-                  have a: "a = GetCapAddress a'"
-                    using target StoreDataAction
-                    by auto
-                  have "getCapReg auth r \<in> ReachableCaps r"
-                    using ReachableCaps_CapReg
-                          [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
-                    using restrict StoreDataAction
-                    by (cases auth) auto
-                  hence "getCapReg auth r \<in> TransUsableCaps r"
-                    using restrict 
-                    by auto
-                  hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
-                    by auto
-                  have "StoreDataProp r (PreserveDomain actions) s'"
-                    using CanBeSimulatedE[OF abstraction intra_suc]
-                    by auto
-                  from StoreDataPropE_mem
-                       [OF this _ _ valid2, 
-                        where a=a' and a'=a' and auth=auth and l=l and actions=actions]
-                  obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
-                                     "getPhysicalAddress (vAddr, STORE) r = Some a'"
-                    using action StoreDataAction target restrict
-                    by auto
-                  hence "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
-                    using a restrict
-                    by (auto simp: Generalise_accessors 
-                             intro: getPhysicalCapAddressesI)
-                  hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
-                    using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
-                    by auto
-                  thus False
-                    using no_access2
-                    unfolding StorablePhysCapAddresses_def Let_def
-                    unfolding getPhysicalCapAddresses_distrib_union
-                    by simp
-                next
-                  case (StoreCapAction auth cd a')
-                  hence "StoreCapAction auth cd a \<in> actions"
-                    using action target
-                    by auto
-                  note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ this valid2]
-                  have "getCapReg auth r \<in> ReachableCaps r"
-                    using ReachableCaps_CapReg
-                          [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
-                    using store StoreCapAction
-                    by (cases auth) auto
-                  hence "getCapReg auth r \<in> TransUsableCaps r"
-                    using store 
-                    by auto
-                  hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
-                    by auto
-                  have "StoreCapProp r (PreserveDomain actions) s'"
-                    using CanBeSimulatedE[OF abstraction intra_suc]
-                    by auto
-                  from StoreCapPropE_mem
-                       [OF this _ _ valid2, 
-                        where a=a and a'="ExtendCapAddress a" and actions=actions]
-                  obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
-                                     "getPhysicalAddress (vAddr, STORE) r = Some (ExtendCapAddress a)"
-                    using action StoreCapAction target
-                    by auto
-                  from getPhysicalCapAddressesI_word_cat[OF this(2) this(1)]
-                  have "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
-                    using store
-                    unfolding word_size
-                    by (auto simp: Generalise_accessors
-                             intro: getPhysicalCapAddressesI)
-                  hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
-                    using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
-                    by auto
-                  thus False
-                    using no_access2
-                    unfolding StorablePhysCapAddresses_def Let_def
-                    unfolding getPhysicalCapAddresses_distrib_union
-                    by simp
-                qed simp_all
-            qed
-          hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocMem a \<notin> CapDerivationTargets prov"
-            by auto
-          from CanBeSimulatedE_CapabilityInvariant[OF abstraction intra_suc _ this valid2]
-          show ?thesis by auto
-        qed
-      thus ?case using ih by auto
-    qed simp
-qed
-
-definition DomainCrossMemCapInvariant :: "Semantics \<Rightarrow> bool" where
-  "DomainCrossMemCapInvariant sem \<equiv>
-   \<forall>s s' trace step a.
-   ((step # trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> PreservesDomain step \<and>
-    a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    getStateIsValid s) \<longrightarrow>
-    getMemCap a s' = getMemCap a s"
-
-lemma DomainCrossMemCapInvariantE [elim]:
-  assumes "DomainCrossMemCapInvariant sem"
-      and "(step # trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "\<not> PreservesDomain step"
-      and "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "getStateIsValid s"
+      and trace: "(trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and valid: "getStateIsValid s"
   shows "getMemCap a s' = getMemCap a s"
-using assms
-unfolding DomainCrossMemCapInvariant_def
-by auto
-
-theorem AbstractionImpliesDomainCrossMemCapInvariant:
-  assumes abstraction: "CanBeSimulated sem"
-  shows "DomainCrossMemCapInvariant sem"
-unfolding DomainCrossMemCapInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace step a
-  assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and valid: "getStateIsValid s"
-     and trace: "(step # trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and inter: "\<not> PreservesDomain step"
-     and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-  show "getMemCap a s' = getMemCap a s"
+using trace intra
+proof (induct trace arbitrary: s')
+  case (Cons step trace)
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+                  and r\<^sub>2: "(step, s') \<in> sem r"
+    by auto
+  have intra2: "IntraDomainTrace trace"
+    using Cons by auto
+  have ih: "getMemCap a r = getMemCap a s"
+    using Cons(1)[OF r\<^sub>1] intra2
+    by auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have no_ex2: "step \<noteq> SwitchDomain RaiseException"
+    using Cons(3)
+    by auto
+  have perms: "ReachablePermissions r \<le> ReachablePermissions s"
+    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
+    by auto
+  from SystemRegisterAccess_le[OF this]
+  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+    using no_sys by auto
+  have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
+    using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
+    by auto
+  have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
+    using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
+    by auto
+  from StorablePhysCapAddresses_le[OF perms]
+  have no_access2: "a \<notin> StorablePhysCapAddresses (ReachablePermissions r) r"
+    using getPhysicalCapAddresses_eqI_getPhysicalAddress[OF addrTrans]
+    using no_access
+    unfolding StorablePhysCapAddresses_def
+    by auto
+  hence "getMemCap a s' = getMemCap a r"
     proof -
-      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                 and r\<^sub>2: "(step, s') \<in> sem r"
-        using trace by auto
-      obtain crossing where step: "step = SwitchDomain crossing"
-        using inter by (cases step) auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+      obtain actions where "step = PreserveDomain actions"
+        using Cons(3)
+        by (cases step) auto
+      hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
+        using r\<^sub>2
         by auto
-      have "getMemCap a s' = getMemCap a r"
-        proof (cases crossing)
-          case RaiseException
-          hence "(SwitchDomain RaiseException, s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
-          show ?thesis
-            unfolding getMemCap_def
-            by auto
-        next
-          case (InvokeCapability cd cd')
-          hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
-          show ?thesis
-            unfolding getMemCap_def
-            by auto
+      have "\<not> (\<exists>action. action \<in> actions \<and>
+                        LocMem a \<in> CapDerivationTargets action)" 
+        proof (clarify)
+          fix action
+          assume action: "action \<in> actions" 
+             and target: "LocMem a \<in> CapDerivationTargets action"
+          thus False
+            proof (cases action)
+              case (StoreDataAction auth a' l)
+              hence "StoreDataAction auth a' l \<in> actions"
+                using action 
+                by auto
+              note restrict = 
+                   CanBeSimulatedE_StoreData[OF abstraction intra_suc _ this valid2]
+              have a: "a = GetCapAddress a'"
+                using target StoreDataAction
+                by auto
+              have "getCapReg auth r \<in> ReachableCaps r"
+                using ReachableCaps_CapReg
+                      [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
+                using restrict StoreDataAction
+                by (cases auth) auto
+              hence "getCapReg auth r \<in> TransUsableCaps r"
+                using restrict 
+                by auto
+              hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+                by auto
+              have "StoreDataProp r (PreserveDomain actions) s'"
+                using CanBeSimulatedE[OF abstraction intra_suc]
+                by auto
+              from StoreDataPropE_mem
+                   [OF this _ _ valid2, 
+                    where a=a' and a'=a' and auth=auth and l=l and actions=actions]
+              obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
+                                 "getPhysicalAddress (vAddr, STORE) r = Some a'"
+                using action StoreDataAction target restrict
+                by auto
+              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+                using a restrict
+                by (auto simp: Generalise_accessors 
+                         intro: getPhysicalCapAddressesI)
+              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+                using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
+                by auto
+              thus False
+                using no_access2
+                unfolding StorablePhysCapAddresses_def Let_def
+                unfolding getPhysicalCapAddresses_distrib_union
+                by simp
+            next
+              case (StoreCapAction auth cd a')
+              hence "StoreCapAction auth cd a \<in> actions"
+                using action target
+                by auto
+              note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ this valid2]
+              have "getCapReg auth r \<in> ReachableCaps r"
+                using ReachableCaps_CapReg
+                      [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
+                using store StoreCapAction
+                by (cases auth) auto
+              hence "getCapReg auth r \<in> TransUsableCaps r"
+                using store 
+                by auto
+              hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+                by auto
+              have "StoreCapProp r (PreserveDomain actions) s'"
+                using CanBeSimulatedE[OF abstraction intra_suc]
+                by auto
+              from StoreCapPropE_mem
+                   [OF this _ _ valid2, 
+                    where a=a and a'="ExtendCapAddress a" and actions=actions]
+              obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
+                                 "getPhysicalAddress (vAddr, STORE) r = Some (ExtendCapAddress a)"
+                using action StoreCapAction target
+                by auto
+              from getPhysicalCapAddressesI_word_cat[OF this(2) this(1)]
+              have "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+                using store
+                unfolding word_size
+                by (auto simp: Generalise_accessors
+                         intro: getPhysicalCapAddressesI)
+              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+                using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
+                by auto
+              thus False
+                using no_access2
+                unfolding StorablePhysCapAddresses_def Let_def
+                unfolding getPhysicalCapAddresses_distrib_union
+                by simp
+            qed simp_all
         qed
-      have "getMemCap a r = getMemCap a s"
-        using AbstractionImpliesSameDomainMemCapInvariant[OF abstraction]
-        using SameDomainMemCapInvariantE[OF _ r\<^sub>1 intra no_access no_sys valid]
-        by metis
-      thus ?thesis
-        using `getMemCap a s' = getMemCap a r`
+      hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocMem a \<notin> CapDerivationTargets prov"
+        by auto
+      from CanBeSimulatedE_CapabilityInvariant[OF abstraction intra_suc _ this valid2]
+      show ?thesis by auto
+    qed
+  thus ?case using ih by auto
+qed simp
+
+theorem MemCapInvariant:
+  assumes abstraction: "CanBeSimulated sem"
+      and trace: "(step # trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and inter: "\<not> PreservesDomain step"
+      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and valid: "getStateIsValid s"
+  shows "getMemCap a s' = getMemCap a s"
+proof -
+  obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+             and r\<^sub>2: "(step, s') \<in> sem r"
+    using trace by auto
+  obtain crossing where step: "step = SwitchDomain crossing"
+    using inter by (cases step) auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have "getMemCap a s' = getMemCap a r"
+    proof (cases crossing)
+      case RaiseException
+      hence "(SwitchDomain RaiseException, s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
+      show ?thesis
+        unfolding getMemCap_def
+        by auto
+    next
+      case (InvokeCapability cd cd')
+      hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
+      show ?thesis
+        unfolding getMemCap_def
         by auto
     qed
+  have "getMemCap a r = getMemCap a s"
+    using MemCapInvariant_intra[OF abstraction r\<^sub>1 intra no_access no_sys valid]
+    by simp
+  thus ?thesis
+    using `getMemCap a s' = getMemCap a r`
+    by auto
 qed
 
 subsection \<open>Invariance of data\<close>
 
-definition SameDomainMemoryInvariant :: "Semantics \<Rightarrow> bool" where
-  "SameDomainMemoryInvariant sem \<equiv>
-   \<forall>s s' trace a.
-   ((trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    a \<notin> StorablePhysAddresses (ReachablePermissions s) s \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    getStateIsValid s) \<longrightarrow>
-    getMemData a s' = getMemData a s"
-
-lemma SameDomainMemoryInvariantE [elim]:
-  assumes "SameDomainMemoryInvariant sem"
-      and "(trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "getStateIsValid s"
-  shows "getMemData a s' = getMemData a s"
-using assms
-unfolding SameDomainMemoryInvariant_def
-by auto
-
-theorem AbstractionImpliesSameDomainMemoryInvariant:
+lemma MemoryInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
-  shows "SameDomainMemoryInvariant sem"
-unfolding SameDomainMemoryInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace step a
-  assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and valid: "getStateIsValid s"
-     and trace: "(trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-  show "getMemData a s' = getMemData a s"
-    using trace intra
-    proof (induct trace arbitrary: s')
-      case (Cons step trace)
-      then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                      and r\<^sub>2: "(step, s') \<in> sem r"
-        by auto
-      have intra2: "IntraDomainTrace trace"
-        using Cons by auto
-      have ih: "getMemData a r = getMemData a s"
-        using Cons(1)[OF r\<^sub>1] Cons(3)
-        by auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
-        by auto
-      have no_ex2: "step \<noteq> SwitchDomain RaiseException"
-        using Cons(3)
-        by auto
-      have perms: "ReachablePermissions r \<le> ReachablePermissions s"
-        using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
-        by auto
-      from SystemRegisterAccess_le[OF this]
-      have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-        using no_sys by auto
-      have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
-        using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
-        by auto
-      have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
-        using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
-        by auto
-      from StorablePhysAddresses_le[OF perms]
-      have no_access2: "a \<notin> StorablePhysAddresses (ReachablePermissions r) r"
-        using getPhysicalAddresses_eqI_getPhysicalAddress[OF addrTrans]
-        using no_access
-        unfolding StorablePhysAddresses_def
-        by auto
-      hence "getMemData a s' = getMemData a r"
-        proof -
-          obtain actions where "step = PreserveDomain actions"
-            using Cons(3)
-            by (cases step) auto
-          hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
-            using r\<^sub>2
-            by auto
-          have no_store_data: 
-            "\<not> (\<exists>auth a' l. StoreDataAction auth a' l \<in> actions \<and> a \<in> MemSegment a' l)" 
-            proof (clarify)
-              fix auth a' l
-              assume prov: "StoreDataAction auth a' l \<in> actions" 
-                 and addr: "a \<in> MemSegment a' l "
-              hence "l \<noteq> 0"
-                by auto
-              note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
-              have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
-                using store addr
-                by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
-              have "getCapReg auth r \<in> ReachableCaps r"
-                using ReachableCaps_CapReg
-                      [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
-                using store `l \<noteq> 0`
-                by (cases auth) auto
-              hence "getCapReg auth r \<in> TransUsableCaps r"
-                using store 
-                by auto
-              hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
-                by auto
-              note StorableAddresses_le[OF this]
-              from getPhysicalAddresses_le[OF this]
-              show False
-                using no_access2 *
-                unfolding StorablePhysAddresses_def
-                by auto
-            qed
-          have no_store_cap: 
-            "\<not> (\<exists>auth cd a'. StoreCapAction auth cd a' \<in> actions \<and> 
-                             a \<in> MemSegment (ExtendCapAddress a') 32)" 
-            proof (clarify)
-              fix auth cd a'
-              assume prov: "StoreCapAction auth cd a' \<in> actions" 
-                 and addr: "a \<in> MemSegment (ExtendCapAddress a') 32"
-              note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
-              have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
-                using store addr
-                by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
-              have "getCapReg auth r \<in> ReachableCaps r"
-                using ReachableCaps_CapReg
-                      [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
-                using store
-                by (cases auth) auto
-              hence "getCapReg auth r \<in> TransUsableCaps r"
-                using store 
-                by auto
-              hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
-                by auto
-              note StorableAddresses_le[OF this]
-              from getPhysicalAddresses_le[OF this]
-              show False
-                using no_access2 *
-                unfolding StorablePhysAddresses_def
-                by auto
-            qed
-          have "\<And>prov. prov \<in> actions \<Longrightarrow> a \<notin> WrittenAddresses prov"
-            unfolding WrittenAddresses_def
-            using no_store_data no_store_cap
-            by (auto split: DomainAction.splits)
-          from CanBeSimulatedE_MemoryInvariant[OF abstraction intra_suc _ this valid2]
-          show ?thesis 
-            by auto
-        qed
-      thus ?case
-        using ih by auto
-    qed simp
-qed
-
-definition DomainCrossMemoryInvariant :: "Semantics \<Rightarrow> bool" where
-  "DomainCrossMemoryInvariant sem \<equiv>
-   \<forall>s s' trace step a.
-   ((step # trace, s') \<in> Traces sem s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> PreservesDomain step \<and>
-    a \<notin> StorablePhysAddresses (ReachablePermissions s) s \<and>
-    \<not> SystemRegisterAccess (ReachablePermissions s) \<and>
-    getStateIsValid s) \<longrightarrow>
-    getMemData a s' = getMemData a s"
-
-lemma DomainCrossMemoryInvariantE [elim]:
-  assumes "DomainCrossMemoryInvariant sem"
-      and "(step # trace, s') \<in> Traces sem s"
-      and "IntraDomainTrace trace"
-      and "\<not> PreservesDomain step"
-      and "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-      and "\<not> SystemRegisterAccess (ReachablePermissions s)"
-      and "getStateIsValid s"
+      and trace: "(trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and valid: "getStateIsValid s"
   shows "getMemData a s' = getMemData a s"
-using assms
-unfolding DomainCrossMemoryInvariant_def
-by auto
-
-theorem AbstractionImpliesDomainCrossMemoryInvariant:
-  assumes abstraction: "CanBeSimulated sem"
-  shows "DomainCrossMemoryInvariant sem"      
-unfolding DomainCrossMemoryInvariant_def
-proof (intro allI impI, elim conjE)
-  fix s s' trace step a
-  assume no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
-     and valid: "getStateIsValid s"
-     and trace: "(step # trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and inter: "\<not> PreservesDomain step"
-     and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-  show "getMemData a s' = getMemData a s"
+using trace intra
+proof (induct trace arbitrary: s')
+  case (Cons step trace)
+  then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+                  and r\<^sub>2: "(step, s') \<in> sem r"
+    by auto
+  have intra2: "IntraDomainTrace trace"
+    using Cons by auto
+  have ih: "getMemData a r = getMemData a s"
+    using Cons(1)[OF r\<^sub>1] Cons(3)
+    by auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have no_ex2: "step \<noteq> SwitchDomain RaiseException"
+    using Cons(3)
+    by auto
+  have perms: "ReachablePermissions r \<le> ReachablePermissions s"
+    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
+    by auto
+  from SystemRegisterAccess_le[OF this]
+  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+    using no_sys by auto
+  have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
+    using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
+    by auto
+  have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
+    using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
+    by auto
+  from StorablePhysAddresses_le[OF perms]
+  have no_access2: "a \<notin> StorablePhysAddresses (ReachablePermissions r) r"
+    using getPhysicalAddresses_eqI_getPhysicalAddress[OF addrTrans]
+    using no_access
+    unfolding StorablePhysAddresses_def
+    by auto
+  hence "getMemData a s' = getMemData a r"
     proof -
-      obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
-                 and r\<^sub>2: "(step, s') \<in> sem r"
-        using trace by auto
-      obtain crossing where step: "step = SwitchDomain crossing"
-        using inter by (cases step) auto
-      have valid2: "getStateIsValid r"
-        using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+      obtain actions where "step = PreserveDomain actions"
+        using Cons(3)
+        by (cases step) auto
+      hence intra_suc: "(PreserveDomain actions, s') \<in> sem r"
+        using r\<^sub>2
         by auto
-      have "getMemData a s' = getMemData a r"
-        proof (cases crossing)
-          case RaiseException
-          hence "(SwitchDomain RaiseException, s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
-          show ?thesis
-            unfolding getMemData_def
+      have no_store_data: 
+        "\<not> (\<exists>auth a' l. StoreDataAction auth a' l \<in> actions \<and> a \<in> MemSegment a' l)" 
+        proof (clarify)
+          fix auth a' l
+          assume prov: "StoreDataAction auth a' l \<in> actions" 
+             and addr: "a \<in> MemSegment a' l "
+          hence "l \<noteq> 0"
             by auto
-        next
-          case (InvokeCapability cd cd')
-          hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
-            using r\<^sub>2 step by auto
-          from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
-          show ?thesis
-            unfolding getMemData_def
+          note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
+          have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+            using store addr
+            by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
+          have "getCapReg auth r \<in> ReachableCaps r"
+            using ReachableCaps_CapReg
+                  [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
+            using store `l \<noteq> 0`
+            by (cases auth) auto
+          hence "getCapReg auth r \<in> TransUsableCaps r"
+            using store 
+            by auto
+          hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+            by auto
+          note StorableAddresses_le[OF this]
+          from getPhysicalAddresses_le[OF this]
+          show False
+            using no_access2 *
+            unfolding StorablePhysAddresses_def
             by auto
         qed
-      have "getMemData a r = getMemData a s"
-        using AbstractionImpliesSameDomainMemoryInvariant[OF abstraction]
-        using SameDomainMemoryInvariantE[OF _ r\<^sub>1 intra no_access no_sys valid]
-        by metis
-      thus ?thesis
-        using `getMemData a s' = getMemData a r`
+      have no_store_cap: 
+        "\<not> (\<exists>auth cd a'. StoreCapAction auth cd a' \<in> actions \<and> 
+                         a \<in> MemSegment (ExtendCapAddress a') 32)" 
+        proof (clarify)
+          fix auth cd a'
+          assume prov: "StoreCapAction auth cd a' \<in> actions" 
+             and addr: "a \<in> MemSegment (ExtendCapAddress a') 32"
+          note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
+          have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+            using store addr
+            by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
+          have "getCapReg auth r \<in> ReachableCaps r"
+            using ReachableCaps_CapReg
+                  [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
+            using store
+            by (cases auth) auto
+          hence "getCapReg auth r \<in> TransUsableCaps r"
+            using store 
+            by auto
+          hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+            by auto
+          note StorableAddresses_le[OF this]
+          from getPhysicalAddresses_le[OF this]
+          show False
+            using no_access2 *
+            unfolding StorablePhysAddresses_def
+            by auto
+        qed
+      have "\<And>prov. prov \<in> actions \<Longrightarrow> a \<notin> WrittenAddresses prov"
+        unfolding WrittenAddresses_def
+        using no_store_data no_store_cap
+        by (auto split: DomainAction.splits)
+      from CanBeSimulatedE_MemoryInvariant[OF abstraction intra_suc _ this valid2]
+      show ?thesis 
         by auto
     qed
+  thus ?case
+    using ih by auto
+qed simp
+
+theorem MemoryInvariant:
+  assumes abstraction: "CanBeSimulated sem"
+      and trace: "(step # trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and inter: "\<not> PreservesDomain step"
+      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
+      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and valid: "getStateIsValid s"
+  shows "getMemData a s' = getMemData a s"
+proof -
+  obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
+             and r\<^sub>2: "(step, s') \<in> sem r"
+    using trace by auto
+  obtain crossing where step: "step = SwitchDomain crossing"
+    using inter by (cases step) auto
+  have valid2: "getStateIsValid r"
+    using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
+    by auto
+  have "getMemData a s' = getMemData a r"
+    proof (cases crossing)
+      case RaiseException
+      hence "(SwitchDomain RaiseException, s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
+      show ?thesis
+        unfolding getMemData_def
+        by auto
+    next
+      case (InvokeCapability cd cd')
+      hence "(SwitchDomain (InvokeCapability cd cd'), s') \<in> sem r"
+        using r\<^sub>2 step by auto
+      from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
+      show ?thesis
+        unfolding getMemData_def
+        by auto
+    qed
+  have "getMemData a r = getMemData a s"
+    using MemoryInvariant_intra[OF abstraction r\<^sub>1 intra no_access no_sys valid]
+    by metis
+  thus ?thesis
+    using `getMemData a s' = getMemData a r`
+    by auto
 qed
 
 (*<*)
