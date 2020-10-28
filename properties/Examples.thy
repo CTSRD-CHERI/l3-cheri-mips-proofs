@@ -12,13 +12,14 @@ begin
 
 section \<open>Reference monitor\<close>
 
-definition CapabilityAligned where
+definition CapabilityAligned :: "('a::len) word set \<Rightarrow> bool" where
   "CapabilityAligned addresses \<equiv>
    \<forall>a b. (a AND NOT mask 5 = b AND NOT mask 5) \<longrightarrow>
          a \<in> addresses \<longrightarrow>
          b \<in> addresses"
 
 lemma CapabilityAlignedE:
+  fixes addresses :: "('a::len) word set"
   assumes "CapabilityAligned addresses"
       and "a AND NOT mask 5 = b AND NOT mask 5"
       and "a \<in> addresses"
@@ -28,6 +29,7 @@ unfolding CapabilityAligned_def
 by blast
 
 lemma CapabilityAligned_CapAddressE:
+  fixes addresses :: "40 word set"
   assumes "CapabilityAligned addresses"
       and "GetCapAddress a = GetCapAddress b"
       and "a \<in> addresses"
@@ -190,10 +192,6 @@ definition InvokableCaps where
    {cap\<in>AccessibleCaps segment s. 
     getTag cap \<and> Permit_CCall (getPerms cap)}"
 
-definition InvokableAddresses where 
-  "InvokableAddresses segment s \<equiv>
-   {getBase cap + getOffset cap |cap. cap\<in>InvokableCaps segment s}"
-
 lemma GPerm_le_GPermOfSegment:
   shows "(Generalise cap \<le> GPermOfSegment segment types) =
          (\<not> getTag cap \<or>
@@ -235,72 +233,68 @@ definition ContainedObjectTypes where
            Permit_Unseal (getPerms cap))) \<longrightarrow>
          (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)"
 
-definition InvokableCapsNotUsable where 
-  "InvokableCapsNotUsable segment types s ==  
+definition InvokableCapsSetup where 
+  "InvokableCapsSetup segment types exit s ==  
    \<forall>cap. cap \<in> InvokableCaps segment s \<longrightarrow> 
-         getSealed cap \<and> getType cap \<notin> types"
+         getSealed cap \<and> getType cap \<notin> types \<and> getBase cap + getOffset cap \<in> exit"
 
-definition IsolatedState where
-  "IsolatedState segment types s \<equiv>
-   CapabilityAligned segment \<and>
+definition CapabilitySetup where
+  "CapabilitySetup segment types exit s \<equiv>
    NoSystemRegisterAccess segment types s \<and>
    ContainedCapBounds segment types s \<and>
    ContainedObjectTypes segment types s \<and>
-   InvokableCapsNotUsable segment types s \<and>
-   getStateIsValid s"
+   InvokableCapsSetup segment types exit s"
 
 definition IsolationGuarantees where
-  "IsolationGuarantees segment types s s' \<equiv>
-   (getBase (getPCC s') + getPC s' \<in> 
-    ExceptionPCs \<union> InvokableAddresses segment s) \<and>
+  "IsolationGuarantees segment exit s s' \<equiv>
+   (getBase (getPCC s') + getPC s' \<in> exit) \<and>
    (\<forall>a. a \<notin> getPhysicalAddresses segment STORE s \<longrightarrow> 
         (getMemData a s' = getMemData a s \<and>
          getMemTag (GetCapAddress a) s' = getMemTag (GetCapAddress a) s)) \<and>
    (\<forall>cd. (cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31) \<longrightarrow> 
          getSCAPR cd s' = getSCAPR cd s)"
 
-definition CompartmentIsolation :: "Semantics \<Rightarrow> bool" where
-  "CompartmentIsolation sem \<equiv>
-   \<forall>segment types s s' trace step.
-   (IsolatedState segment types s \<and>
-    IntraDomainTrace trace \<and>
-    \<not> PreservesDomain step \<and>
-    (step # trace, s') \<in> Traces sem s) \<longrightarrow>
-   IsolationGuarantees segment types s s'"
-
 lemma CompartmentIsolation:
   assumes abstraction: "CanBeSimulated sem"
-  shows "CompartmentIsolation sem"
-unfolding CompartmentIsolation_def 
-  IsolatedState_def
-  NoSystemRegisterAccess_def
-  ContainedCapBounds_def
-  ContainedObjectTypes_def
-  InvokableCapsNotUsable_def
-  IsolationGuarantees_def
-proof (intro allI impI, elim conjE, intro allI conjI impI)
-  fix segment types s s' trace step
+      and valid: "getStateIsValid s"
+      and aligned: "CapabilityAligned segment"
+      and ex: "ExceptionPCs \<subseteq> exit"
+      and caps: "CapabilitySetup segment types exit s"
+      and trace: "(step # trace, s') \<in> Traces sem s"
+      and intra: "IntraDomainTrace trace"
+      and inter: "\<not> PreservesDomain step"
+  shows "IsolationGuarantees segment exit s s'"
+unfolding IsolationGuarantees_def
+proof (intro conjI allI impI)
+  have systemreg: "\<forall>cap. cap \<in> UsableCaps segment types s \<longrightarrow> 
+                   \<not> Access_System_Registers (getPerms cap)"
+    using caps
+    unfolding CapabilitySetup_def NoSystemRegisterAccess_def
+    by simp
+  have segment: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
+                 (Permit_Execute (getPerms cap) \<or>
+                  Permit_Load (getPerms cap) \<or>
+                  Permit_Load_Capability (getPerms cap) \<or>
+                  Permit_Store (getPerms cap) \<or>
+                  Permit_Store_Capability (getPerms cap) \<or>
+                  Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
+                 MemSegmentCap cap \<subseteq> segment"
+    using caps
+    unfolding CapabilitySetup_def ContainedCapBounds_def
+    by simp
+  have types: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
+              (Permit_Seal (getPerms cap) \<or>
+               Permit_Unseal (getPerms cap))) \<longrightarrow>
+              (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)"
+    using caps
+    unfolding CapabilitySetup_def ContainedObjectTypes_def
+    by simp
+  have invokable: "\<forall>cap. cap \<in> InvokableCaps segment s \<longrightarrow> 
+                         getSealed cap \<and> getType cap \<notin> types \<and> getBase cap + getOffset cap \<in> exit"
+    using caps
+    unfolding CapabilitySetup_def InvokableCapsSetup_def
+    by simp
   define gPerm where "gPerm = GPermOfSegment segment types"
-  assume valid: "getStateIsValid s"
-     and aligned: "CapabilityAligned segment"
-     and trace: "(step # trace, s') \<in> Traces sem s"
-     and intra: "IntraDomainTrace trace"
-     and inter: "\<not> PreservesDomain step"
-     and systemreg: "\<forall>cap. cap \<in> UsableCaps segment types s \<longrightarrow> 
-                     \<not> Access_System_Registers (getPerms cap)"
-     and segment: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
-                   (Permit_Execute (getPerms cap) \<or>
-                    Permit_Load (getPerms cap) \<or>
-                    Permit_Load_Capability (getPerms cap) \<or>
-                    Permit_Store (getPerms cap) \<or>
-                    Permit_Store_Capability (getPerms cap) \<or>
-                    Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
-                   MemSegmentCap cap \<subseteq> segment"
-     and types: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
-                (Permit_Seal (getPerms cap) \<or>
-                 Permit_Unseal (getPerms cap))) \<longrightarrow>
-                (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)"
-     and invokable: "\<forall>cap. cap \<in> InvokableCaps segment s \<longrightarrow> getSealed cap \<and> getType cap \<notin> types"
   note [simp] = ReadableCaps_GPermOfSegment
   have closed: "PermIsClosed gPerm s"
     unfolding gPerm_def PermIsClosed_def ReadableCaps_GPermOfSegment
@@ -319,11 +313,6 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
         unfolding GPerm_le_GPermOfSegment
         by simp
      qed
-  have invokable: "InvokableCapsNotUnsealable gPerm s"
-    using invokable
-    unfolding gPerm_def InvokableCapsNotUnsealable_def
-    unfolding InvokableCaps_def
-    by auto
   note gPerm_def [simp]
   note gperm = ReachablePermissionsInClosedPerm[OF closed]
   have no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
@@ -382,7 +371,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
     using SystemRegisterInvariant[OF abstraction trace intra inter no_sys _ _ _ valid]
     using that
     by metis   
-  show "getBase (getPCC s') + getPC s' \<in> ExceptionPCs \<union> InvokableAddresses segment s"
+  show "getBase (getPCC s') + getPC s' \<in> exit"
     proof (cases crossing)
       case RaiseException
       hence "(SwitchDomain RaiseException, s') \<in> sem r"
@@ -391,6 +380,7 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
       have "getBase (getPCC s') + getPC s' \<in> ExceptionPCs"
         by auto
       thus ?thesis
+        using ex
         by auto
     next
       case (InvokeCapability cd cd')
@@ -400,19 +390,27 @@ proof (intro allI impI, elim conjE, intro allI conjI impI)
                                               where cd=cd and cd'=cd']
       have "getCAPR cd r \<in> ReachableCaps r"
         using invoke by auto
-      hence "getCAPR cd r \<in> ReachableCaps s"
+      hence reachable: "getCAPR cd r \<in> ReachableCaps s"
         using MonotonicityReachableCaps[OF abstraction r\<^sub>1 intra no_sys valid]
         by auto
-      from ReachableInvokableCapsAreReadable[OF this]
+      have "InvokableCapsNotUnsealable gPerm s"
+        using invokable
+        unfolding gPerm_def InvokableCapsNotUnsealable_def
+        unfolding InvokableCaps_def
+        by auto
+      from InvokableCapsNotUnsealable_le[OF gperm this]
       have "getCAPR cd r \<in> ReadableCaps (ReachablePermissions s) s"
-        using InvokableCapsNotUnsealable_le[OF gperm invokable]
+        using ReachableInvokableCapsAreReadable[OF reachable]
         using invoke
         by metis
-      hence "getBase (getCAPR cd r ) + getOffset (getCAPR cd r ) \<in> InvokableAddresses segment s"
+      hence "getCAPR cd r \<in> InvokableCaps segment s"
         using ReadableCaps_le[OF gperm] invoke
-        unfolding InvokableAddresses_def InvokableCaps_def
+        unfolding InvokableCaps_def
         by auto
-      hence "getBase (getPCC s') + getPC s' \<in> InvokableAddresses segment s"
+      hence "getBase (getCAPR cd r ) + getOffset (getCAPR cd r ) \<in> exit"
+        using invokable
+        by auto
+      hence "getBase (getPCC s') + getPC s' \<in> exit"
         using invoke
         by auto
       thus ?thesis
