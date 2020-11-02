@@ -119,20 +119,20 @@ lemma GPermOfSegment_simp [simp]:
 unfolding GPermOfSegment_def
 by simp_all
 
-definition AccessibleCaps where 
-  "AccessibleCaps segment s \<equiv>
+definition GrantedCaps where 
+  "GrantedCaps segment s \<equiv>
    {getCapReg r s |r. RegisterIsAlwaysAccessible r} \<union>
    {getMemCap (GetCapAddress a) s |a. a \<in> getPhysicalAddresses segment LOAD s}"
 
 lemma ReadableCaps_GPermOfSegment:
   shows "ReadableCaps (GPermOfSegment segment types) s = 
-         {cap. cap \<in> AccessibleCaps segment s \<and> getTag cap}"
+         {cap. cap \<in> GrantedCaps segment s \<and> getTag cap}"
 proof (intro equalityI; clarify, (intro conjI)?)
   fix cap
-  assume "cap \<in> AccessibleCaps segment s"
+  assume "cap \<in> GrantedCaps segment s"
      and "getTag cap"
   thus "cap \<in> ReadableCaps (GPermOfSegment segment types) s"
-    unfolding AccessibleCaps_def
+    unfolding GrantedCaps_def
     proof (elim UnE; clarify)
       fix r
       assume "RegisterIsAlwaysAccessible r"
@@ -151,14 +151,14 @@ next
   fix cap
   assume readable: "cap \<in> ReadableCaps (GPermOfSegment segment types) s"
   thus "getTag cap" by auto
-  show "cap \<in> AccessibleCaps segment s"
+  show "cap \<in> GrantedCaps segment s"
     using readable
     unfolding ReadableCaps_def
     proof clarify
       fix loc
       assume loc: "loc \<in> ReadableLocations (GPermOfSegment segment types) s"
          and tag: "getTag (getCap loc s)"
-      show "getCap loc s \<in> AccessibleCaps segment s"
+      show "getCap loc s \<in> GrantedCaps segment s"
         proof (cases loc)
           case (LocReg r)
           hence "RegisterIsAlwaysAccessible r"
@@ -166,7 +166,7 @@ next
             by auto
           thus ?thesis
             using loc tag LocReg
-            unfolding AccessibleCaps_def
+            unfolding GrantedCaps_def
             by auto
         next
           case (LocMem a)
@@ -175,7 +175,7 @@ next
             by (auto simp: getPhysicalCapAddresses_def)
           thus ?thesis
             using loc tag LocMem
-            unfolding AccessibleCaps_def
+            unfolding GrantedCaps_def
             by auto
         qed
     qed
@@ -183,13 +183,13 @@ qed
 
 definition UsableCaps where 
   "UsableCaps segment types s \<equiv>
-   {cap\<in>AccessibleCaps segment s. 
+   {cap\<in>GrantedCaps segment s. 
     getTag cap \<and>
     (\<not> getSealed cap \<or> getType cap \<in> types)}"
 
 definition InvokableCaps where 
   "InvokableCaps segment s \<equiv>
-   {cap\<in>AccessibleCaps segment s. 
+   {cap\<in>GrantedCaps segment s. 
     getTag cap \<and> Permit_CCall (getPerms cap)}"
 
 lemma GPerm_le_GPermOfSegment:
@@ -300,7 +300,7 @@ proof (intro conjI allI impI)
     unfolding gPerm_def PermIsClosed_def ReadableCaps_GPermOfSegment
     proof clarsimp
       fix cap
-      assume "cap \<in> AccessibleCaps segment s"
+      assume "cap \<in> GrantedCaps segment s"
              "getTag cap"
              "getSealed cap \<longrightarrow> getType cap \<in> types"
       hence "cap \<in> UsableCaps segment types s"
