@@ -25,3 +25,8 @@ of the proofs.
 
 "latex" contains the files necessary to export human readable versions
 of the security properties.
+
+# Licence
+
+The proofs are made available under the BSD three-clause licence in
+LICENCE.
