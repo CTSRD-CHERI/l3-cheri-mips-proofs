@@ -18,8 +18,6 @@ from Generators.GenUndefinednessLemma import *
 from Generators.GenExceptionSignalledInvariant import *
 from Generators.GenExceptionLemma import *
 from Generators.GenValidStateInvariant import *
-from Generators.GenCU0Invariant import *
-from Generators.GenKernelModeInvariant import *
 from Generators.GenAddressTranslationInvariant import *
 from Generators.GenMemoryInvariant import *
 from Generators.GenCapInvariant import *
@@ -35,8 +33,6 @@ generators = \
    ExceptionSignalledInvariantGenerator(),
    ExceptionLemmaGenerator(),
    ValidStateInvariantGenerator(),
-   CU0InvariantGenerator(),
-   KernelModeInvariantGenerator(),
    AddressTranslationInvariantGenerator(),
    MemoryInvariantGenerator(),
    CapInvariantGenerator(),

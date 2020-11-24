@@ -1,6 +1,6 @@
 (*  Title: L3_Lib.thy
     Original author: Anthony Fox, University of Cambridge
-    Contributions by: Kyndylan Nienhuis <kyndylan.nienhuis@cl.cam.ac.uk>
+    Contributions by: Kyndylan Nienhuis, University of Cambridge
 
 L3 operations.
 *)
