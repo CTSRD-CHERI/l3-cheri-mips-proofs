@@ -114,7 +114,7 @@ theorem SemanticsSealCap:
   fixes s auth
   defines "t \<equiv> ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s))"
   assumes prov: "SealCapAction auth cd cd' \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "Permit_Seal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
@@ -132,11 +132,10 @@ unfolding t_def SemanticsSealPost_def Let_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary SealCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "SealCapProp s lbl s'"
+corollary SealCapInstantiation [simp]:
+  shows "SealCapProp NextStates"
 unfolding SealCapProp_def
-using assms SemanticsSealCap
+using SemanticsSealCap
 by auto
 
 (*<*)

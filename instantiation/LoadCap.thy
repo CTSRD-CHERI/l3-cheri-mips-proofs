@@ -243,7 +243,7 @@ qed
 
 theorem SemanticsLoadCap:
   assumes prov: "LoadCapAction auth a cd \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "Permit_Load_Capability (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
@@ -264,11 +264,10 @@ unfolding getPhysicalAddressFunc_def getPhysicalAddresses_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary LoadCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "LoadCapProp s lbl s'"
+corollary LoadCapInstantiation [simp]:
+  shows "LoadCapProp NextStates"
 unfolding LoadCapProp_def
-using assms SemanticsLoadCap
+using SemanticsLoadCap
 by metis
 
 (*<*)

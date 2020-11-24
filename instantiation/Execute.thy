@@ -207,11 +207,10 @@ unfolding NextStates_def
 unfolding StateIsValid_def EmptyGhostState_def
 by (auto simp: ValueAndStatePart_simp add.commute split: if_splits)
 
-corollary ExecuteInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "ExecuteProp s lbl s'"
+corollary ExecuteInstantiation [simp]:
+  shows "ExecuteProp NextStates"
 unfolding ExecuteProp_def
-using assms SemanticsExecute
+using SemanticsExecute
 by auto
 
 (*<*)

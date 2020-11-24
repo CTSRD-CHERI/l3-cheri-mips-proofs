@@ -254,7 +254,7 @@ qed
 
 theorem SemanticsStoreCap:
   assumes prov: "StoreCapAction auth cd a \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "Permit_Store (getPerms (getCapReg auth s))"
         "Permit_Store_Capability (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
@@ -278,18 +278,16 @@ unfolding getPhysicalAddressFunc_def getPhysicalAddresses_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary StoreCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "StoreCapProp s lbl s'"
+corollary StoreCapInstantiation [simp]:
+  shows "StoreCapProp NextStates"
 unfolding StoreCapProp_def
-using assms SemanticsStoreCap
+using SemanticsStoreCap
 by metis
 
-corollary StoreLocalCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "StoreLocalCapProp s lbl s'"
+corollary StoreLocalCapInstantiation [simp]:
+  shows "StoreLocalCapProp NextStates"
 unfolding StoreLocalCapProp_def
-using assms SemanticsStoreCap
+using SemanticsStoreCap
 by metis
 
 (*<*)

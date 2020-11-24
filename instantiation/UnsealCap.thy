@@ -109,7 +109,7 @@ qed
 
 theorem SemanticsUnsealCap:
   assumes prov: "UnsealCapAction auth cd cd' \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "Permit_Unseal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
@@ -127,11 +127,10 @@ unfolding SemanticsUnsealPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary UnsealCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "UnsealCapProp s lbl s'"
+corollary UnsealCapInstantiation [simp]:
+  shows "UnsealCapProp NextStates"
 unfolding UnsealCapProp_def
-using assms SemanticsUnsealCap
+using SemanticsUnsealCap
 by auto
 
 (*<*)

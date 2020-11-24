@@ -197,11 +197,10 @@ unfolding NextStates_def Next_NextWithGhostState
 unfolding StateIsValid_def EmptyGhostState_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
-corollary InvokeCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "InvokeCapProp s lbl s'"
+corollary InvokeCapInstantiation [simp]:
+  shows "InvokeCapProp NextStates"
 unfolding InvokeCapProp_def
-using assms SemanticsInvokeCap
+using SemanticsInvokeCap
 by auto
 
 (*<*)

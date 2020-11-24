@@ -1842,12 +1842,11 @@ unfolding getBranchToPccCap_def
 unfolding getBranchDelayPccCap_def
 by auto
 
-corollary ExceptionInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "ExceptionProp s lbl s'"
+corollary ExceptionInstantiation [simp]:
+  shows "ExceptionProp NextStates"
 unfolding ExceptionProp_def
-using assms SemanticsException
-by auto 
+using SemanticsException
+by auto
 
 (*<*)
 end

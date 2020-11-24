@@ -21,7 +21,7 @@ section \<open>System register access\<close>
 lemma NumberedRegisterIsAccessible:
   assumes reg: "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "getSpecial_register_accessible cd s"
 proof -
   obtain ac where ac: "ac \<in> actions"
@@ -90,19 +90,16 @@ proof -
     qed
 qed
 
-corollary SystemRegisterInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "SystemRegisterProp s lbl s'"
+corollary SystemRegisterInstantiation [simp]:
+  shows "SystemRegisterProp NextStates"
 unfolding SystemRegisterProp_def
 proof clarify
-  fix actions action cd
+  fix s s' actions action cd
   assume reg: "cd \<in> CapDerivationRegisters action"
      and action: "action \<in> actions"
      and system: "cd \<noteq> 0" "cd \<noteq> 1"
      and valid: "getStateIsValid s"
-     and lbl: "lbl = PreserveDomain actions"
-  have suc: "(PreserveDomain actions, s') \<in> NextStates s"
-    using assms lbl by auto
+     and suc: "(KeepDomain actions, s') \<in> NextStates s"
   have "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
     using reg action by auto
   from NumberedRegisterIsAccessible[OF this valid suc]

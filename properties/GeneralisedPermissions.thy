@@ -628,7 +628,7 @@ lemma RegisterIsAlwaysAccessible_simps [simp]:
   shows "RegisterIsAlwaysAccessible RegPCC"
     and "RegisterIsAlwaysAccessible RegBranchDelayPCC"
     and "RegisterIsAlwaysAccessible RegBranchToPCC"
-    and "RegisterIsAlwaysAccessible (RegGeneral cd)"
+    and "RegisterIsAlwaysAccessible (RegNormal cd)"
     and "RegisterIsAlwaysAccessible (RegSpecial 0)"
     and "RegisterIsAlwaysAccessible (RegSpecial 1)"
 unfolding RegisterIsAlwaysAccessible_def
@@ -736,8 +736,8 @@ by auto
 
 subsection \<open>Generalised permissions of capabilities\<close>
 
-definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
-  "Generalise cap \<equiv> 
+definition getGPerm :: "Capability \<Rightarrow> GeneralisedPerm" where
+  "getGPerm cap \<equiv> 
    if getTag cap
    then let perms = getPerms cap in
          \<lparr>SystemRegisterAccess = Access_System_Registers perms,
@@ -746,61 +746,63 @@ definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
           CapLoadableAddresses = if Permit_Load_Capability perms then MemSegmentCap cap else {},
           StorableAddresses = if Permit_Store perms then MemSegmentCap cap else {},
           CapStorableAddresses = if Permit_Store_Capability perms then MemSegmentCap cap else {},
-          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms then MemSegmentCap cap else {},
-          SealableTypes = if Permit_Seal perms then {t. ucast t \<in> MemSegmentCap cap} else {},
-          UnsealableTypes = if Permit_Unseal perms then {t. ucast t \<in> MemSegmentCap cap} else {}\<rparr>
+          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms \<and> Permit_Store_Capability perms 
+                                then MemSegmentCap cap else {},
+          SealableTypes = if Permit_Seal perms 
+                          then {t. ucast t \<in> MemSegmentCap cap} else {},
+          UnsealableTypes = if Permit_Unseal perms 
+                            then {t. ucast t \<in> MemSegmentCap cap} else {}\<rparr>
    else bot"
 
-lemma Generalise_accessors:
-  shows "SystemRegisterAccess (Generalise cap) = 
+lemma getGPerm_accessors:
+  shows "SystemRegisterAccess (getGPerm cap) = 
          (getTag cap \<and> Access_System_Registers (getPerms cap))"
-    and "ExecutableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Execute (getPerms cap) 
+    and "ExecutableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Execute (getPerms cap) then MemSegmentCap cap else {})"
+    and "LoadableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Load (getPerms cap) then MemSegmentCap cap else {})"
+    and "CapLoadableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Load_Capability (getPerms cap) then MemSegmentCap cap else {})"
+    and "StorableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Store (getPerms cap) then MemSegmentCap cap else {})"
+    and "CapStorableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Store_Capability (getPerms cap) then MemSegmentCap cap else {})"
+    and "LocalCapStorableAddresses (getGPerm cap) = 
+         (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) \<and>
+             Permit_Store_Capability (getPerms cap)
           then MemSegmentCap cap else {})"
-    and "LoadableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Load (getPerms cap) 
-          then MemSegmentCap cap else {})"
-    and "CapLoadableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Load_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
-    and "StorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store (getPerms cap) 
-          then MemSegmentCap cap else {})"
-    and "CapStorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
-    and "LocalCapStorableAddresses (Generalise cap) = 
-         (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
-    and "SealableTypes (Generalise cap) = 
+    and "SealableTypes (getGPerm cap) = 
          (if getTag cap \<and> Permit_Seal (getPerms cap) 
           then {t. ucast t \<in> MemSegmentCap cap} else {})"
-    and "UnsealableTypes (Generalise cap) = 
+    and "UnsealableTypes (getGPerm cap) = 
          (if getTag cap \<and> Permit_Unseal (getPerms cap) 
           then {t. ucast t \<in> MemSegmentCap cap} else {})"
-unfolding Generalise_def Let_def
+unfolding getGPerm_def Let_def
 by simp_all
 
-lemma Generalise_setMember_simp [simp]:
-  shows "Generalise (setSealed (cap, v1)) = Generalise cap"
-    and "Generalise (setType (cap, v2)) = Generalise cap"
-    and "Generalise (setOffset (cap, v3)) = Generalise cap"
-    and "Generalise (setUPerms (cap, v5)) = Generalise cap"
-    and "Generalise (setTag (cap, False)) = bot"
-unfolding Generalise_def
+lemma getGPerm_setMember_simp [simp]:
+  shows "getGPerm (setSealed (cap, v1)) = getGPerm cap"
+    and "getGPerm (setType (cap, v2)) = getGPerm cap"
+    and "getGPerm (setOffset (cap, v3)) = getGPerm cap"
+    and "getGPerm (setUPerms (cap, v5)) = getGPerm cap"
+    and "getGPerm (setTag (cap, False)) = bot"
+unfolding getGPerm_def
 by (simp_all cong: cong)
 
-lemma Generalise_le [intro]:
+lemma getGPerm_le [intro]:
   assumes "cap' \<le> cap"
-  shows "Generalise cap' \<le> Generalise cap"
+  shows "getGPerm cap' \<le> getGPerm cap"
 proof (cases "getTag cap'")
   case False
-  hence "Generalise cap' = bot"
-    unfolding Generalise_def
+  hence "getGPerm cap' = bot"
+    unfolding getGPerm_def
     by simp
   thus ?thesis by auto
 next
   case True
+  have if_subsetI: "(if b then x else {}) \<subseteq> (if b' then x' else {})"
+  if "b \<longrightarrow> b'" "x \<subseteq> x'" for b b' and x x' :: "'a set"
+    using that by auto
   have tag: "getTag cap" 
   and segment: "MemSegmentCap cap' \<subseteq> MemSegmentCap cap" 
   and perms: "getPerms cap' \<le> getPerms cap"
@@ -818,42 +820,42 @@ next
     using True tag perms *
     unfolding less_eq_GeneralisedPerm_ext_def
     unfolding less_eq_Perms_ext_alt
-    by (strong_cong_simp add: Generalise_accessors)
+    by (strong_cong_simp add: getGPerm_accessors)
 qed
 
-definition GeneraliseOfCaps where
-  "GeneraliseOfCaps caps \<equiv> Sup {Generalise cap |cap. cap \<in> caps}"
+definition getGPermOfCaps where
+  "getGPermOfCaps caps \<equiv> Sup {getGPerm cap |cap. cap \<in> caps}"
 
-lemma GeneraliseOfCaps_empty [simp]:
-  shows "GeneraliseOfCaps {} = bot"
-unfolding GeneraliseOfCaps_def
+lemma getGPermOfCaps_empty [simp]:
+  shows "getGPermOfCaps {} = bot"
+unfolding getGPermOfCaps_def
 by simp
 
-lemma GeneraliseOfCaps_singleton [simp]:
-  shows "GeneraliseOfCaps {cap} = Generalise cap"
-unfolding GeneraliseOfCaps_def
+lemma getGPermOfCaps_singleton [simp]:
+  shows "getGPermOfCaps {cap} = getGPerm cap"
+unfolding getGPermOfCaps_def
 by simp
 
-lemma GeneraliseOfCaps_accessors [simp]:
-  shows "SystemRegisterAccess (GeneraliseOfCaps caps) = (\<exists>cap\<in>caps. SystemRegisterAccess (Generalise cap))"
-    and "ExecutableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. ExecutableAddresses (Generalise cap))"
-    and "LoadableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. LoadableAddresses (Generalise cap))"
-    and "CapLoadableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. CapLoadableAddresses (Generalise cap))"
-    and "StorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. StorableAddresses (Generalise cap))"
-    and "CapStorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. CapStorableAddresses (Generalise cap))"
-    and "LocalCapStorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. LocalCapStorableAddresses (Generalise cap))"
-    and "SealableTypes (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. SealableTypes (Generalise cap))"
-    and "UnsealableTypes (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. UnsealableTypes (Generalise cap))"
-    and "more (GeneraliseOfCaps caps) = Sup (more ` Generalise ` caps)"
-unfolding GeneraliseOfCaps_def
+lemma getGPermOfCaps_accessors [simp]:
+  shows "SystemRegisterAccess (getGPermOfCaps caps) = (\<exists>cap\<in>caps. SystemRegisterAccess (getGPerm cap))"
+    and "ExecutableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. ExecutableAddresses (getGPerm cap))"
+    and "LoadableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. LoadableAddresses (getGPerm cap))"
+    and "CapLoadableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. CapLoadableAddresses (getGPerm cap))"
+    and "StorableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. StorableAddresses (getGPerm cap))"
+    and "CapStorableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. CapStorableAddresses (getGPerm cap))"
+    and "LocalCapStorableAddresses (getGPermOfCaps caps) = (\<Union>cap\<in>caps. LocalCapStorableAddresses (getGPerm cap))"
+    and "SealableTypes (getGPermOfCaps caps) = (\<Union>cap\<in>caps. SealableTypes (getGPerm cap))"
+    and "UnsealableTypes (getGPermOfCaps caps) = (\<Union>cap\<in>caps. UnsealableTypes (getGPerm cap))"
+    and "more (getGPermOfCaps caps) = Sup (more ` getGPerm ` caps)"
+unfolding getGPermOfCaps_def
 by auto
 
-lemma GeneraliseOfCaps_subset [elim!]:
+lemma getGPermOfCaps_subset [elim!]:
   assumes "caps \<subseteq> caps'"
-  shows "GeneraliseOfCaps caps \<le> GeneraliseOfCaps caps'"
+  shows "getGPermOfCaps caps \<le> getGPermOfCaps caps'"
 using assms
 unfolding less_eq_GeneralisedPerm_ext_def
-unfolding GeneraliseOfCaps_def
+unfolding getGPermOfCaps_def
 unfolding Sup_GeneralisedPerm_ext_def
 by auto
 

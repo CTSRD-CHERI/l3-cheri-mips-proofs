@@ -25,32 +25,10 @@ begin
 
 (*>*)
 
-theorem CheriInstantiation:
-  shows "CanBeSimulated NextStates"
-unfolding CanBeSimulated_def
-proof clarify
-  fix s lbl s'
-  assume as: "(lbl, s') \<in> NextStates s"
-  show "(lbl, s') \<in> AbstractSemantics s"
-    unfolding AbstractSemantics_def
-    using AddressTranslationInstantiation[OF as]
-    using ExceptionInstantiation[OF as]
-    using ExecuteInstantiation[OF as]
-    using CapabilityInvariantInstantiation[OF as]
-    using InvokeCapInstantiation[OF as]
-    using LoadCapInstantiation[OF as]
-    using LoadDataInstantiation[OF as]
-    using MemoryInvariantInstantiation[OF as]
-    using RestrictCapInstantiation[OF as]
-    using SealCapInstantiation[OF as]
-    using StoreCapInstantiation[OF as]
-    using StoreLocalCapInstantiation[OF as]
-    using StoreDataInstantiation[OF as]
-    using UnsealCapInstantiation[OF as]
-    using SystemRegisterInstantiation[OF as]
-    using ValidStateInstantiation[OF as]
-    by auto
-qed
+corollary CheriInstantiation [simp]:
+  shows "CheriAbstraction NextStates"
+unfolding CheriAbstraction_def
+by simp
 
 (*<*)
 end

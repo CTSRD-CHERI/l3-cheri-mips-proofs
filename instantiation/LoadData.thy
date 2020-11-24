@@ -699,7 +699,7 @@ qed
 theorem SemanticsLoadData:
   assumes prov: "LoadDataAction auth a l \<in> actions"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(KeepDomain actions, s') \<in> NextStates s"
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
@@ -719,11 +719,10 @@ unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary LoadDataInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "LoadDataProp s lbl s'"
+corollary LoadDataInstantiation [simp]:
+  shows "LoadDataProp NextStates"
 unfolding LoadDataProp_def
-using assms SemanticsLoadData
+using SemanticsLoadData
 by metis
 
 (*<*)

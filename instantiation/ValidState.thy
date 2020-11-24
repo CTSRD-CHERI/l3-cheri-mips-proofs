@@ -1567,10 +1567,11 @@ by (PrePost intro: ValidStateInvariantI[THEN PrePost_post_weakening])
 
 lemma ValidStateInvariant_Unpredictable:
   assumes "getStateIsValid s"
-      and "s' \<in> UnpredictableNext s"
+      and suc: "s' \<in> UnpredictableNext s"
   shows "getStateIsValid s'"
 using assms
-by auto
+unfolding UnpredictableNext_def StateIsValid_def
+by (auto simp add: ValueAndStatePart_simp)
 
 theorem InvarianceValidState:
   assumes "getStateIsValid s"
@@ -1583,11 +1584,10 @@ unfolding NextStates_def Next_NextWithGhostState
 unfolding StateIsValid_def EmptyGhostState_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
-corollary ValidStateInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
-  shows "ValidStateProp s lbl s'"
+corollary ValidStateInstantiation [simp]:
+  shows "ValidStateProp NextStates"
 unfolding ValidStateProp_def
-using assms InvarianceValidState
+using InvarianceValidState
 by auto 
 
 (*<*)

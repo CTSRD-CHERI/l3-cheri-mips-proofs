@@ -47,10 +47,10 @@ definition CapDerivations :: "DomainAction \<Rightarrow> (CapLocation \<times> C
   "CapDerivations p \<equiv>
    case p of StoreDataAction _ a l \<Rightarrow> {(LocMem (GetCapAddress a), LocMem (GetCapAddress a))}
            | RestrictCapAction r r' \<Rightarrow> {(LocReg r, LocReg r')}
-           | LoadCapAction _ a cd \<Rightarrow> {(LocMem a, LocReg (RegGeneral cd))}
-           | StoreCapAction _ cd a \<Rightarrow> {(LocReg (RegGeneral cd), LocMem a)}
-           | SealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}
-           | UnsealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}
+           | LoadCapAction _ a cd \<Rightarrow> {(LocMem a, LocReg (RegNormal cd))}
+           | StoreCapAction _ cd a \<Rightarrow> {(LocReg (RegNormal cd), LocMem a)}
+           | SealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}
+           | UnsealCapAction _ cd cd' \<Rightarrow> {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}
            | _ \<Rightarrow> {}"
 
 lemma CapDerivations_simps [simp]:
@@ -60,13 +60,13 @@ lemma CapDerivations_simps [simp]:
     and "CapDerivations (RestrictCapAction r r') = 
          {(LocReg r, LocReg r')}"
     and "CapDerivations (LoadCapAction auth a cd) = 
-         {(LocMem a, LocReg (RegGeneral cd))}"
+         {(LocMem a, LocReg (RegNormal cd))}"
     and "CapDerivations (StoreCapAction auth cd a) = 
-         {(LocReg (RegGeneral cd), LocMem a)}"
+         {(LocReg (RegNormal cd), LocMem a)}"
     and "CapDerivations (SealCapAction auth cd cd') = 
-         {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}"
+         {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}"
     and "CapDerivations (UnsealCapAction auth cd cd') = 
-         {(LocReg (RegGeneral cd), LocReg (RegGeneral cd'))}"
+         {(LocReg (RegNormal cd), LocReg (RegNormal cd'))}"
 unfolding CapDerivations_def
 by simp_all
 
@@ -78,9 +78,9 @@ lemma CapDerivationSources_simps [simp]:
     and "CapDerivationSources (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
     and "CapDerivationSources (RestrictCapAction r r') = {LocReg r}"
     and "CapDerivationSources (LoadCapAction auth a cd) = {LocMem a}"
-    and "CapDerivationSources (StoreCapAction auth cd a) = {LocReg (RegGeneral cd)}"
-    and "CapDerivationSources (SealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
-    and "CapDerivationSources (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
+    and "CapDerivationSources (StoreCapAction auth cd a) = {LocReg (RegNormal cd)}"
+    and "CapDerivationSources (SealCapAction auth cd cd') = {LocReg (RegNormal cd)}"
+    and "CapDerivationSources (UnsealCapAction auth cd cd') = {LocReg (RegNormal cd)}"
 unfolding CapDerivationSources_def
 by simp_all
 
@@ -91,10 +91,10 @@ lemma CapDerivationTargets_simps [simp]:
   shows "CapDerivationTargets (LoadDataAction auth a' l) = {}"
     and "CapDerivationTargets (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
     and "CapDerivationTargets (RestrictCapAction r r') = {LocReg r'}"
-    and "CapDerivationTargets (LoadCapAction auth a cd) = {LocReg (RegGeneral cd)}"
+    and "CapDerivationTargets (LoadCapAction auth a cd) = {LocReg (RegNormal cd)}"
     and "CapDerivationTargets (StoreCapAction auth cd a) = {LocMem a}"
-    and "CapDerivationTargets (SealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
-    and "CapDerivationTargets (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
+    and "CapDerivationTargets (SealCapAction auth cd cd') = {LocReg (RegNormal cd')}"
+    and "CapDerivationTargets (UnsealCapAction auth cd cd') = {LocReg (RegNormal cd')}"
 unfolding CapDerivationTargets_def
 by simp_all
 
@@ -149,30 +149,35 @@ datatype DomainSwitch =
 
 subsection \<open>Instruction intention\<close>
 
-datatype AbstractStep = 
-  PreserveDomain "DomainAction set" |
+datatype InstructionIntention = 
+  KeepDomain "DomainAction set" |
   SwitchDomain DomainSwitch
 
-primrec PreservesDomain where
-  "PreservesDomain (PreserveDomain actions) = True" |
-  "PreservesDomain (SwitchDomain crossing) = False"
+primrec KeepsDomain where
+  "KeepsDomain (KeepDomain actions) = True" |
+  "KeepsDomain (SwitchDomain crossing) = False"
+
+abbreviation "SwitchesDomain step \<equiv> \<not> KeepsDomain step"
 
 section \<open>Properties\<close>
 
-type_synonym Semantics = "state \<Rightarrow> (AbstractStep \<times> state) set"
+type_synonym Semantics = "state \<Rightarrow> (InstructionIntention \<times> state) set"
 
-definition ExecuteProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "ExecuteProp s lbl s' \<equiv>
+definition ExecuteProp :: "Semantics \<Rightarrow> bool" where
+  "ExecuteProp semantics \<equiv>
+   \<forall>s s' step.
    (getStateIsValid s \<and> 
-    lbl \<noteq> SwitchDomain RaiseException) \<longrightarrow>
+    (step, s') \<in> semantics s \<and>
+    step \<noteq> SwitchDomain RaiseException) \<longrightarrow>
    (getTag (getPCC s) \<and>
     \<not> getSealed (getPCC s) \<and>
     Permit_Execute (getPerms (getPCC s)) \<and>
     getBase (getPCC s) + getPC s \<in> MemSegmentCap (getPCC s))"
 
 lemma ExecutePropE [elim]:
-  assumes "ExecuteProp s lbl s'"
-      and "lbl \<noteq> SwitchDomain RaiseException"
+  assumes "ExecuteProp semantics"
+      and "(step, s') \<in> semantics s"
+      and "step \<noteq> SwitchDomain RaiseException"
       and "getStateIsValid s"
   shows "getTag (getPCC s)"
     and "\<not> getSealed (getPCC s)"
@@ -180,13 +185,13 @@ lemma ExecutePropE [elim]:
     and "getBase (getPCC s) + getPC s \<in> MemSegmentCap (getPCC s)"
 using assms
 unfolding ExecuteProp_def
-by auto
+by fast+
 
-definition LoadDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "LoadDataProp s lbl s' \<equiv>
-   \<forall>actions auth a l.
+definition LoadDataProp :: "Semantics \<Rightarrow> bool" where
+  "LoadDataProp semantics \<equiv>
+   \<forall>s s' actions auth a l.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     LoadDataAction auth a l \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -195,8 +200,8 @@ definition LoadDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s)"
 
 lemma LoadDataPropE [elim]:
-  assumes "LoadDataProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "LoadDataProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "LoadDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -206,11 +211,11 @@ lemma LoadDataPropE [elim]:
     and "MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
 using assms
 unfolding LoadDataProp_def
-by auto
+by fast+
 
 lemma LoadDataPropE_mem:
-  assumes "LoadDataProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "LoadDataProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "LoadDataAction auth a l \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment a l"
@@ -218,13 +223,13 @@ lemma LoadDataPropE_mem:
   where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
 using LoadDataPropE[OF assms(1-4)] assms(5)
-by auto
+by fast
 
-definition StoreDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "StoreDataProp s lbl s' \<equiv>
-   \<forall>actions auth a l.
+definition StoreDataProp :: "Semantics \<Rightarrow> bool" where
+  "StoreDataProp semantics \<equiv>
+   \<forall>s s' actions auth a l.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     StoreDataAction auth a l \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -235,8 +240,8 @@ definition StoreDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
      getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s))"
 
 lemma StoreDataPropE [elim]:
-  assumes "StoreDataProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreDataProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -248,11 +253,11 @@ lemma StoreDataPropE [elim]:
          getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
 using assms
 unfolding StoreDataProp_def
-by auto
+by fast+
 
 lemma StoreDataPropE_mem:
-  assumes "StoreDataProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreDataProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment a l"
@@ -260,40 +265,40 @@ lemma StoreDataPropE_mem:
   where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, STORE) s = Some a'"
 using StoreDataPropE[OF assms(1-4)] assms(5)
-by auto
+by fast
 
 lemma StoreDataPropE_cap [elim]:
-  assumes "StoreDataProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreDataProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
   shows "getMemCap (GetCapAddress a) s' \<le> getMemCap (GetCapAddress a) s"
 using StoreDataPropE[OF assms] 
 by (cases "getTag (getMemCap (GetCapAddress a) s')") auto
 
-definition RestrictCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "RestrictCapProp s lbl s' \<equiv>
-   \<forall>actions r r'.
+definition RestrictCapProp :: "Semantics \<Rightarrow> bool" where
+  "RestrictCapProp semantics \<equiv>
+   \<forall>s s' actions r r'.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     RestrictCapAction r r' \<in> actions) \<longrightarrow>
    getCapReg r' s' \<le> getCapReg r s"
 
 lemma RestrictCapPropE [elim]:
-  assumes "RestrictCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "RestrictCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "RestrictCapAction r r' \<in> actions"
       and "getStateIsValid s"
   shows "getCapReg r' s' \<le> getCapReg r s"
 using assms
 unfolding RestrictCapProp_def
-by auto
+by fast+
 
-definition LoadCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "LoadCapProp s lbl s' \<equiv>
-   \<forall>actions auth cd a.
+definition LoadCapProp :: "Semantics \<Rightarrow> bool" where
+  "LoadCapProp semantics \<equiv>
+   \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     LoadCapAction auth a cd \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -304,8 +309,8 @@ definition LoadCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
     getCAPR cd s' \<le> getMemCap a s)"
 
 lemma LoadCapPropE [elim]:
-  assumes "LoadCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "LoadCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "LoadCapAction auth a cd \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -317,11 +322,11 @@ lemma LoadCapPropE [elim]:
     and "getCAPR cd s' \<le> getMemCap a s"
 using assms
 unfolding LoadCapProp_def
-by auto
+by fast+
 
 lemma LoadCapPropE_mem:
-  assumes "LoadCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "LoadCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "LoadCapAction auth a cd \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment (ExtendCapAddress a) 32"
@@ -329,13 +334,13 @@ lemma LoadCapPropE_mem:
   where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
 using LoadCapPropE[OF assms(1-4)] assms(5)
-by auto
+by fast
 
-definition StoreCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "StoreCapProp s lbl s' \<equiv>
-   \<forall>actions auth cd a.
+definition StoreCapProp :: "Semantics \<Rightarrow> bool" where
+  "StoreCapProp semantics \<equiv>
+   \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     StoreCapAction auth cd a \<in> actions) \<longrightarrow>
    (getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
@@ -346,8 +351,8 @@ definition StoreCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     getMemCap a s' = getCAPR cd s)"
 
 lemma StoreCapPropE [elim]:
-  assumes "StoreCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -359,11 +364,11 @@ lemma StoreCapPropE [elim]:
     and "getMemCap a s' = getCAPR cd s"
 using assms
 unfolding StoreCapProp_def
-by auto
+by fast+
 
 lemma StoreCapPropE_mem:
-  assumes "StoreCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getStateIsValid s"
       and "a' \<in> MemSegment (ExtendCapAddress a) 32"
@@ -371,21 +376,21 @@ lemma StoreCapPropE_mem:
   where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, STORE) s = Some a'"
 using StoreCapPropE[OF assms(1-4)] assms(5)
-by auto
+by fast
 
-definition StoreLocalCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "StoreLocalCapProp s lbl s' \<equiv>
-   \<forall>actions auth cd a.
+definition StoreLocalCapProp :: "Semantics \<Rightarrow> bool" where
+  "StoreLocalCapProp semantics \<equiv>
+   \<forall>s s' actions auth cd a.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     StoreCapAction auth cd a \<in> actions \<and>
     getTag (getCAPR cd s) \<and>
     \<not> Global (getPerms (getCAPR cd s))) \<longrightarrow>
    Permit_Store_Local_Capability (getPerms (getCapReg auth s))"
 
 lemma StoreLocalCapPropE [elim]:
-  assumes "StoreLocalCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "StoreLocalCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "StoreCapAction auth cd a \<in> actions"
       and "getTag (getCAPR cd s)"
       and "\<not> Global (getPerms (getCAPR cd s))"
@@ -393,13 +398,13 @@ lemma StoreLocalCapPropE [elim]:
   shows "Permit_Store_Local_Capability (getPerms (getCapReg auth s))"
 using assms
 unfolding StoreLocalCapProp_def
-by auto
+by fast+
 
-definition SealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "SealCapProp s lbl s' \<equiv>
-   \<forall>actions auth cd cd'.
+definition SealCapProp :: "Semantics \<Rightarrow> bool" where
+  "SealCapProp semantics \<equiv>
+   \<forall>s s' actions auth cd cd'.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     SealCapAction auth cd cd' \<in> actions) \<longrightarrow>
    (let t = ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s)) in
     getTag (getCapReg auth s) \<and>
@@ -412,8 +417,8 @@ definition SealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
 lemma SealCapPropE [elim]:
   fixes s auth
   defines "t \<equiv> ucast (getBase (getCapReg auth s)) + ucast (getOffset (getCapReg auth s))"
-  assumes "SealCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "SealCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "SealCapAction auth cd cd' \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -424,13 +429,13 @@ lemma SealCapPropE [elim]:
     and "getCAPR cd' s' = setType (setSealed ((getCAPR cd s), True), t)"
 using assms
 unfolding SealCapProp_def Let_def
-by auto
+by fast+
 
-definition UnsealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "UnsealCapProp s lbl s' \<equiv>
-   \<forall>actions auth cd cd'.
+definition UnsealCapProp :: "Semantics \<Rightarrow> bool" where
+  "UnsealCapProp semantics \<equiv>
+   \<forall>s s' actions auth cd cd'.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     UnsealCapAction auth cd cd' \<in> actions) \<longrightarrow>
    (Permit_Unseal (getPerms (getCapReg auth s)) \<and>
     getTag (getCapReg auth s) \<and>
@@ -440,8 +445,8 @@ definition UnsealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
     getCAPR cd' s' \<le> setType (setSealed ((getCAPR cd s), False), 0))"
 
 lemma UnsealCapPropE [elim]:
-  assumes "UnsealCapProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "UnsealCapProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "UnsealCapAction auth cd cd' \<in> actions"
       and "getStateIsValid s"
   shows "getTag (getCapReg auth s)"
@@ -452,33 +457,33 @@ lemma UnsealCapPropE [elim]:
     and "getCAPR cd' s' \<le> setType (setSealed ((getCAPR cd s), False), 0)"
 using assms
 unfolding UnsealCapProp_def
-by auto
+by fast+
 
-definition SystemRegisterProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "SystemRegisterProp s lbl s' \<equiv>
-   \<forall>actions cd.
+definition SystemRegisterProp :: "Semantics \<Rightarrow> bool" where
+  "SystemRegisterProp semantics \<equiv>
+   \<forall>s s' actions cd.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>
+    (KeepDomain actions, s') \<in> semantics s \<and>
     (cd \<noteq> 0 \<and> cd \<noteq> 1) \<and>
     cd \<in> \<Union> (CapDerivationRegisters ` actions)) \<longrightarrow>
    Access_System_Registers (getPerms (getPCC s))"
 
 lemma SystemRegisterPropE [elim]:
-  assumes "SystemRegisterProp s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "SystemRegisterProp semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
       and "cd \<noteq> 0" "cd \<noteq> 1"
       and "getStateIsValid s"
   shows "Access_System_Registers (getPerms (getPCC s))"
 using assms
 unfolding SystemRegisterProp_def
-by auto
+by fast+
 
-definition InvokeCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "InvokeCapProp s lbl s' \<equiv>
-   \<forall>cd cd'. 
+definition InvokeCapProp :: "Semantics \<Rightarrow> bool" where
+  "InvokeCapProp semantics \<equiv>
+   \<forall>s s' cd cd'. 
    (getStateIsValid s \<and>
-    (lbl = SwitchDomain (InvokeCapability cd cd'))) \<longrightarrow>
+    (SwitchDomain (InvokeCapability cd cd'), s') \<in> semantics s) \<longrightarrow>
    (let codeCap = getCAPR cd s in
     let dataCap = getCAPR cd' s in
     getTag codeCap \<and>
@@ -503,8 +508,8 @@ lemma InvokeCapPropE [elim]:
   fixes cd cd' s cb cb' a
   defines "codeCap \<equiv> getCAPR cd s"
       and "dataCap \<equiv> getCAPR cd' s"
-  assumes "InvokeCapProp s lbl s'"
-      and "lbl = SwitchDomain (InvokeCapability cd cd')"
+  assumes "InvokeCapProp semantics"
+      and "(SwitchDomain (InvokeCapability cd cd'), s') \<in> semantics s"
       and "getStateIsValid s"
   shows "getTag codeCap"
     and "getTag dataCap"
@@ -525,12 +530,13 @@ lemma InvokeCapPropE [elim]:
     and "getMEM a s' = getMEM a s"
 using assms
 unfolding InvokeCapProp_def Let_def
-by auto
+by fast+
 
-definition ExceptionProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "ExceptionProp s lbl s' \<equiv>
+definition ExceptionProp :: "Semantics \<Rightarrow> bool" where
+  "ExceptionProp semantics \<equiv>
+   \<forall>s s'.
    (getStateIsValid s \<and>
-    (lbl = SwitchDomain RaiseException)) \<longrightarrow>
+    (SwitchDomain RaiseException, s') \<in> semantics s) \<longrightarrow>
    (getCP0StatusEXL s' \<and>
     getBase (getPCC s') + getPC s' \<in> ExceptionPCs \<and>
     getPCC s' = getKCC s \<and>
@@ -541,8 +547,8 @@ definition ExceptionProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
     BranchDelayPCC s' = None)"
 
 lemma ExceptionPropE [elim]:
-  assumes "ExceptionProp s lbl s'"
-      and "lbl = SwitchDomain RaiseException"
+  assumes "ExceptionProp semantics"
+      and "(SwitchDomain RaiseException, s') \<in> semantics s"
       and "getStateIsValid s"
   shows "getCP0StatusEXL s'"
     and "getBase (getPCC s') + getPC s' \<in> ExceptionPCs"
@@ -556,66 +562,112 @@ using assms
 unfolding ExceptionProp_def
 by fast+
 
-definition MemoryInvariant :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "MemoryInvariant s lbl s' \<equiv>
-   \<forall>actions a.
+definition MemoryInvariant :: "Semantics \<Rightarrow> bool" where
+  "MemoryInvariant semantics \<equiv>
+   \<forall>s s' actions a.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>   
+    (KeepDomain actions, s') \<in> semantics s \<and>   
     (\<nexists>prov. prov \<in> actions \<and> a \<in> WrittenAddresses prov)) \<longrightarrow>
    (getMemData a s' = getMemData a s)"
 
 lemma MemoryInvariantE [elim]:
-  assumes "MemoryInvariant s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "MemoryInvariant semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "\<And>prov. prov \<in> actions \<Longrightarrow> a \<notin> WrittenAddresses prov"
       and "getStateIsValid s"
   shows "getMemData a s' = getMemData a s"
 using assms
 unfolding MemoryInvariant_def
-by auto
+by fast+
 
-definition CapabilityInvariant :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "CapabilityInvariant s lbl s' \<equiv>
-   \<forall>actions loc.
+definition CapabilityInvariant :: "Semantics \<Rightarrow> bool" where
+  "CapabilityInvariant semantics \<equiv>
+   \<forall>s s' actions loc.
    (getStateIsValid s \<and>
-    (lbl = PreserveDomain actions) \<and>   
+    (KeepDomain actions, s') \<in> semantics s \<and>   
     (\<nexists>prov. prov \<in> actions \<and> loc \<in> CapDerivationTargets prov)) \<longrightarrow> 
    (getCap loc s' = getCap loc s)"
 
 lemma CapabilityInvariantE [elim]:
-  assumes "CapabilityInvariant s lbl s'"
-      and "lbl = PreserveDomain actions"
+  assumes "CapabilityInvariant semantics"
+      and "(KeepDomain actions, s') \<in> semantics s"
       and "\<And>prov. prov \<in> actions \<Longrightarrow> loc \<notin> CapDerivationTargets prov"
       and "getStateIsValid s"
   shows "getCap loc s' = getCap loc s"
 using assms
 unfolding CapabilityInvariant_def
-by auto
+by fast+
 
-definition ValidStateProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "ValidStateProp s lbl s' \<equiv>
-   getStateIsValid s \<longrightarrow>
+definition ValidStateProp :: "Semantics \<Rightarrow> bool" where
+  "ValidStateProp semantics \<equiv>
+   \<forall>s s' step.
+   (getStateIsValid s \<and> (step, s') \<in> semantics s) \<longrightarrow>
    getStateIsValid s'"
 
 lemma ValidStatePropE [elim]:
-  assumes "ValidStateProp s lbl s'"
+  assumes "ValidStateProp semantics"
+      and "(step, s') \<in> semantics s"
       and "getStateIsValid s"
   shows "getStateIsValid s'"
 using assms
 unfolding ValidStateProp_def
-by auto
+by fast+
 
-definition AddressTranslationProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "AddressTranslationProp s lbl s' \<equiv>
-   \<forall>a.
+(* definition CU0AccessProp :: "Semantics \<Rightarrow> bool" where
+  "CU0AccessProp semantics \<equiv>
+   \<forall>s s' step.
+   (getStateIsValid s \<and>
+    \<not> getCP0StatusCU0 s \<and>
+    \<not> getKernelMode s \<and>
+    (step, s') \<in> semantics s) \<longrightarrow>
+   \<not> getCP0StatusCU0 s'"
+
+lemma CU0AccessPropE [elim]:
+  assumes "CU0AccessProp semantics"
+      and "(step, s') \<in> semantics s"
+      and "\<not> getCP0StatusCU0 s"
+      and "\<not> getKernelMode s"
+      and "getStateIsValid s"
+  shows "\<not> getCP0StatusCU0 s'"
+using assms
+unfolding CU0AccessProp_def
+by fast+
+
+definition KernelModeProp :: "Semantics \<Rightarrow> bool" where
+  "KernelModeProp semantics \<equiv>
+   \<forall>s s' step.
+   (getStateIsValid s \<and>
+    \<not> getCP0StatusCU0 s \<and>
+    \<not> getKernelMode s \<and>
+    (step, s') \<in> semantics s \<and>
+    step \<noteq> SwitchDomain RaiseException) \<longrightarrow>
+   \<not> getKernelMode s'"
+
+lemma KernelModePropE [elim]:
+  assumes "KernelModeProp semantics"
+      and "(step, s') \<in> semantics s"
+      and "step \<noteq> SwitchDomain RaiseException"
+      and "\<not> getCP0StatusCU0 s"
+      and "\<not> getKernelMode s"
+      and "getStateIsValid s"
+  shows "\<not> getKernelMode s'"
+using assms
+unfolding KernelModeProp_def
+by fast+ *)
+
+definition AddressTranslationProp :: "Semantics \<Rightarrow> bool" where
+  "AddressTranslationProp semantics \<equiv>
+   \<forall>s s' step a.
    (getStateIsValid s \<and>
     \<not> Access_System_Registers (getPerms (getPCC s)) \<and>
-    lbl \<noteq> SwitchDomain RaiseException) \<longrightarrow>
+    (step, s') \<in> semantics s \<and>
+    step \<noteq> SwitchDomain RaiseException) \<longrightarrow>
    getPhysicalAddress a s' = getPhysicalAddress a s"
 
 lemma AddressTranslationPropE [elim]:
-  assumes "AddressTranslationProp s lbl s'"
-      and "lbl \<noteq> SwitchDomain RaiseException"
+  assumes "AddressTranslationProp semantics"
+      and "(step, s') \<in> semantics s"
+      and "step \<noteq> SwitchDomain RaiseException"
       and "\<not> Access_System_Registers (getPerms (getPCC s))"
       and "getStateIsValid s"
   shows "getPhysicalAddress a s' = getPhysicalAddress a s"
@@ -623,75 +675,63 @@ using assms
 unfolding AddressTranslationProp_def
 by fast+
 
-definition AbstractSemantics :: Semantics where
-  "AbstractSemantics s \<equiv> {(lbl, s') | lbl s'.  
-   ExecuteProp s lbl s' \<and>
-   LoadDataProp s lbl s' \<and>
-   StoreDataProp s lbl s' \<and>
-   RestrictCapProp s lbl s' \<and>
-   LoadCapProp s lbl s' \<and>
-   StoreCapProp s lbl s' \<and>
-   StoreLocalCapProp s lbl s' \<and>
-   SealCapProp s lbl s' \<and>
-   UnsealCapProp s lbl s' \<and>
-   SystemRegisterProp s lbl s' \<and> 
-   InvokeCapProp s lbl s' \<and>
-   ExceptionProp s lbl s' \<and>
-   MemoryInvariant s lbl s' \<and>
-   CapabilityInvariant s lbl s' \<and>
-   ValidStateProp s lbl s' \<and>
-   AddressTranslationProp s lbl s'}"
+definition CheriAbstraction :: "Semantics \<Rightarrow> bool" where
+  "CheriAbstraction semantics \<equiv>
+   ExecuteProp semantics \<and>
+   LoadDataProp semantics \<and>
+   StoreDataProp semantics \<and>
+   RestrictCapProp semantics \<and>
+   LoadCapProp semantics \<and>
+   StoreCapProp semantics \<and>
+   StoreLocalCapProp semantics \<and>
+   SealCapProp semantics \<and>
+   UnsealCapProp semantics \<and>
+   SystemRegisterProp semantics \<and> 
+   InvokeCapProp semantics \<and>
+   ExceptionProp semantics \<and>
+   MemoryInvariant semantics \<and>
+   CapabilityInvariant semantics \<and>
+   ValidStateProp semantics \<and>
+   AddressTranslationProp semantics"
 
-lemma AbstractSemanticsE [elim!]:
-  assumes "(lbl, s') \<in> AbstractSemantics s"
-  shows "ExecuteProp s lbl s'"
-    and "LoadDataProp s lbl s'"
-    and "StoreDataProp s lbl s'"
-    and "RestrictCapProp s lbl s'"
-    and "LoadCapProp s lbl s'"
-    and "StoreCapProp s lbl s'"
-    and "StoreLocalCapProp s lbl s'"
-    and "SealCapProp s lbl s'"
-    and "UnsealCapProp s lbl s'"
-    and "SystemRegisterProp s lbl s'"
-    and "InvokeCapProp s lbl s'"
-    and "ExceptionProp s lbl s'"
-    and "MemoryInvariant s lbl s'"
-    and "CapabilityInvariant s lbl s'"
-    and "ValidStateProp s lbl s'"
-    and "AddressTranslationProp s lbl s'"
+lemma CheriAbstractionE [elim!]:
+  assumes "CheriAbstraction semantics"
+  shows "ExecuteProp semantics"
+    and "LoadDataProp semantics"
+    and "StoreDataProp semantics"
+    and "RestrictCapProp semantics"
+    and "LoadCapProp semantics"
+    and "StoreCapProp semantics"
+    and "StoreLocalCapProp semantics"
+    and "SealCapProp semantics"
+    and "UnsealCapProp semantics"
+    and "SystemRegisterProp semantics"
+    and "InvokeCapProp semantics"
+    and "ExceptionProp semantics"
+    and "MemoryInvariant semantics"
+    and "CapabilityInvariant semantics"
+    and "ValidStateProp semantics"
+    and "AddressTranslationProp semantics"
 using assms
-unfolding AbstractSemantics_def
+unfolding CheriAbstraction_def
 by auto
 
-definition CanBeSimulated :: "Semantics \<Rightarrow> bool" where
-  "CanBeSimulated semantics \<equiv>
-   \<forall>s lbl s'. (lbl, s') \<in> semantics s \<longrightarrow> (lbl, s') \<in> AbstractSemantics s"
-
-lemma CanBeSimulatedE [elim!]:
-  assumes "CanBeSimulated semantics"
-      and "(lbl, s') \<in> semantics s"
-  shows "(lbl, s') \<in> AbstractSemantics s"
-using assms
-unfolding CanBeSimulated_def
-by auto
-
-lemmas CanBeSimulatedE_Execute = ExecutePropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(1)]]
-lemmas CanBeSimulatedE_LoadData = LoadDataPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(2)]]
-lemmas CanBeSimulatedE_StoreData = StoreDataPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(3)]]
-lemmas CanBeSimulatedE_RestrictRegCap = RestrictCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(4)]]
-lemmas CanBeSimulatedE_LoadCap = LoadCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(5)]]
-lemmas CanBeSimulatedE_StoreCap = StoreCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(6)]]
-lemmas CanBeSimulatedE_StoreLocalCap = StoreLocalCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(7)]]
-lemmas CanBeSimulatedE_SealCap = SealCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(8)]]
-lemmas CanBeSimulatedE_UnsealCap = UnsealCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(9)]]
-lemmas CanBeSimulatedE_SystemRegister = SystemRegisterPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(10)]]
-lemmas CanBeSimulatedE_InvokeCap = InvokeCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(11)]]
-lemmas CanBeSimulatedE_Exception = ExceptionPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(12)]]
-lemmas CanBeSimulatedE_MemoryInvariant = MemoryInvariantE[OF CanBeSimulatedE[THEN AbstractSemanticsE(13)]]
-lemmas CanBeSimulatedE_CapabilityInvariant = CapabilityInvariantE[OF CanBeSimulatedE[THEN AbstractSemanticsE(14)]]
-lemmas CanBeSimulatedE_ValidState = ValidStatePropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(15)]]
-lemmas CanBeSimulatedE_AddressTranslation = AddressTranslationPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(16)]]
+lemmas CheriAbstractionE_Execute = ExecutePropE[OF CheriAbstractionE(1)]
+lemmas CheriAbstractionE_LoadData = LoadDataPropE[OF CheriAbstractionE(2)]
+lemmas CheriAbstractionE_StoreData = StoreDataPropE[OF CheriAbstractionE(3)]
+lemmas CheriAbstractionE_RestrictRegCap = RestrictCapPropE[OF CheriAbstractionE(4)]
+lemmas CheriAbstractionE_LoadCap = LoadCapPropE[OF CheriAbstractionE(5)]
+lemmas CheriAbstractionE_StoreCap = StoreCapPropE[OF CheriAbstractionE(6)]
+lemmas CheriAbstractionE_StoreLocalCap = StoreLocalCapPropE[OF CheriAbstractionE(7)]
+lemmas CheriAbstractionE_SealCap = SealCapPropE[OF CheriAbstractionE(8)]
+lemmas CheriAbstractionE_UnsealCap = UnsealCapPropE[OF CheriAbstractionE(9)]
+lemmas CheriAbstractionE_SystemRegister = SystemRegisterPropE[OF CheriAbstractionE(10)]
+lemmas CheriAbstractionE_InvokeCap = InvokeCapPropE[OF CheriAbstractionE(11)]
+lemmas CheriAbstractionE_Exception = ExceptionPropE[OF CheriAbstractionE(12)]
+lemmas CheriAbstractionE_MemoryInvariant = MemoryInvariantE[OF CheriAbstractionE(13)]
+lemmas CheriAbstractionE_CapabilityInvariant = CapabilityInvariantE[OF CheriAbstractionE(14)]
+lemmas CheriAbstractionE_ValidState = ValidStatePropE[OF CheriAbstractionE(15)]
+lemmas CheriAbstractionE_AddressTranslation = AddressTranslationPropE[OF CheriAbstractionE(16)]
 
 section \<open>Derived properties\<close>
 
@@ -725,19 +765,19 @@ lemma ProvenanceCases:
   | (Loaded) auth a cd where
     "LoadCapAction auth a cd \<in> actions"
     "loc = LocMem a"
-    "loc' = LocReg (RegGeneral cd)"
+    "loc' = LocReg (RegNormal cd)"
   | (Stored) auth cd a where
     "StoreCapAction auth cd a \<in> actions"
-    "loc = LocReg (RegGeneral cd)"
+    "loc = LocReg (RegNormal cd)"
     "loc' = LocMem a"
   | (Sealed) auth cd cd' where
     "SealCapAction auth cd cd' \<in> actions"
-    "loc = LocReg (RegGeneral cd)"
-    "loc' = LocReg (RegGeneral cd')"
+    "loc = LocReg (RegNormal cd)"
+    "loc' = LocReg (RegNormal cd')"
   | (Unsealed) auth cd cd' where
     "UnsealCapAction auth cd cd' \<in> actions"
-    "loc = LocReg (RegGeneral cd)"
-    "loc' = LocReg (RegGeneral cd')"
+    "loc = LocReg (RegNormal cd)"
+    "loc' = LocReg (RegNormal cd')"
   | (Unchanged)
     "loc' \<notin> \<Union> (CapDerivationTargets ` actions)"
     "loc = loc'"
