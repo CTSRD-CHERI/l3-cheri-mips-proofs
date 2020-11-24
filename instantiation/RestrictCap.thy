@@ -2104,7 +2104,7 @@ definition ClearRegLoopPre where
                               | RegBranchDelayPCC \<Rightarrow>
                                 (case branchTo of None \<Rightarrow> return (cap_loc' \<le> cap)
                                                 | Some (_, x) \<Rightarrow> return (x \<le> cap))
-                              | RegNormal cd \<Rightarrow>
+                              | RegGeneral cd \<Rightarrow>
                                 return ((\<exists>i\<in>set l. cd = word_of_int (int i) \<and> cond i) \<or>
                                         (cap_loc' \<le> cap))
                               | _ \<Rightarrow> return (cap_loc' \<le> cap)))))"
@@ -2327,8 +2327,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLC [SemanticsRestrict_InstructionI]:
 proof (intro PrePostI)
   fix s
   assume pre: "ValuePart ?pre s"
-  have [simp]: "r = (case v of (cd, cb, rt, offset) \<Rightarrow> RegNormal cd)"
-               "r' = (case v of (cd, cb, rt, offset) \<Rightarrow> RegNormal cd)"
+  have [simp]: "r = (case v of (cd, cb, rt, offset) \<Rightarrow> RegGeneral cd)"
+               "r' = (case v of (cd, cb, rt, offset) \<Rightarrow> RegGeneral cd)"
     using pre
     unfolding CLCActions_def
     by (auto simp: ValueAndStatePart_simp
@@ -2365,8 +2365,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLLC [SemanticsRestrict_InstructionI]:
 proof (intro PrePostI)
   fix s
   assume pre: "ValuePart ?pre s"
-  have [simp]: "r = (case v of (cd, cb) \<Rightarrow> RegNormal cd)"
-               "r' = (case v of (cd, cb) \<Rightarrow> RegNormal cd)"
+  have [simp]: "r = (case v of (cd, cb) \<Rightarrow> RegGeneral cd)"
+               "r' = (case v of (cd, cb) \<Rightarrow> RegGeneral cd)"
     using pre
     unfolding CLLCActions_def
     by (auto simp: ValueAndStatePart_simp
@@ -2601,7 +2601,7 @@ qed
 theorem SemanticsRestrictCap:
   assumes prov: "RestrictCapAction r r' \<in> actions"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getCapReg r' s' \<le> getCapReg r s"
         "getRegisterIsAccessible r s"
         "getRegisterIsAccessible r' s"
@@ -2615,10 +2615,11 @@ using SemanticsExecute[OF suc] prov
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary RestrictCapInstantiation [simp]:
-  shows "RestrictCapProp NextStates"
+corollary RestrictCapInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "RestrictCapProp s lbl s'"
 unfolding RestrictCapProp_def
-using SemanticsRestrictCap
+using assms SemanticsRestrictCap
 by auto
 
 (*<*)

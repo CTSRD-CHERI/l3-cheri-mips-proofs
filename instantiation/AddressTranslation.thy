@@ -1303,10 +1303,11 @@ unfolding NextStates_def
 unfolding PhysicalAddressFuncEquals_def
 by (cases a) (auto simp: ValueAndStatePart_simp split: if_splits)
 
-corollary AddressTranslationInstantiation [simp]:
-  shows "AddressTranslationProp NextStates"
+corollary AddressTranslationInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "AddressTranslationProp s lbl s'"
 unfolding AddressTranslationProp_def
-using InvarianceAddressTranslation
+using assms InvarianceAddressTranslation
 by auto 
 
 (*<*)

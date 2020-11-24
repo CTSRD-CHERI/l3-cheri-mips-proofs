@@ -145,7 +145,7 @@ lemma CapInvariant_write'CAPR [CapInvariantI]:
   shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
-                   return (loc \<noteq> LocReg (RegNormal (snd v)) \<or> snd v = 0)))  
+                   return (loc \<noteq> LocReg (RegGeneral (snd v)) \<or> snd v = 0)))  
                  (write'CAPR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
@@ -332,15 +332,15 @@ by CapInvariant
 lemma CapInvariant_LoadCap_aux_PhysicalAddress:
   shows "PrePost (bind (read_state (getPhysicalAddress (fst v, LOAD)))
                        (\<lambda>a. case a of None \<Rightarrow> return True 
-                                     | Some _ \<Rightarrow> return (loc \<noteq> LocReg (RegNormal cd))))
+                                     | Some _ \<Rightarrow> return (loc \<noteq> LocReg (RegGeneral cd))))
                  (LoadCap v) 
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b
                       read_state isUnpredictable \<or>\<^sub>b
-                      return (loc \<noteq> LocReg (RegNormal cd)))"
+                      return (loc \<noteq> LocReg (RegGeneral cd)))"
 proof -
   note [CapInvariantI del] = CapInvariant_AddressTranslation
   note [CapInvariantI] =
-    PrePost_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocReg (RegNormal cd))"]
+    PrePost_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocReg (RegGeneral cd))"]
   show ?thesis
     unfolding LoadCap_alt_def
     by CapInvariant
@@ -1565,7 +1565,7 @@ definition ClearRegLoopPre where
                                                | Some (_, x) \<Rightarrow> x)
                           else if loc = LocReg RegBranchToPCC then nullCap
                           else cap') in
-                 return (\<not> (\<exists>i\<in>set l. loc = LocReg (RegNormal (word_of_int (int i))) \<and> cond i) \<and>
+                 return (\<not> (\<exists>i\<in>set l. loc = LocReg (RegGeneral (word_of_int (int i))) \<and> cond i) \<and>
                          v = cap))))"
 
 lemma ClearRegLoopPre_TakeBranchPre:
@@ -1573,7 +1573,7 @@ lemma ClearRegLoopPre_TakeBranchPre:
   assumes "ValuePart (CapInvariantTakeBranchPre loc cap) s"
       and "\<And>i. i \<in> set l \<Longrightarrow>
                cond i \<Longrightarrow> 
-               loc = LocReg (RegNormal (word_of_int (int i))) \<Longrightarrow> 
+               loc = LocReg (RegGeneral (word_of_int (int i))) \<Longrightarrow> 
                False"
   shows "ValuePart (ClearRegLoopPre cond l loc cap) s"
 using assms
@@ -1640,7 +1640,7 @@ lemma CapInvariant_dfn'CClearLo_aux:
   fixes v :: "16 word"
   assumes "ValuePart (CapInvariantTakeBranchPre loc cap) s"
       and "\<And>x. v !! unat x \<Longrightarrow> 
-               loc = LocReg (RegNormal x) \<Longrightarrow> 
+               loc = LocReg (RegGeneral x) \<Longrightarrow> 
                False"
   shows "ValuePart (ClearRegLoopPre (op !! v) (seq 0 15) loc cap) s"
 using assms(1)
@@ -1648,7 +1648,7 @@ proof (elim ClearRegLoopPre_TakeBranchPre)
   fix i
   assume test_bit: "v !! i" 
   assume seq: "i \<in> set (seq 0 15)"
-  assume loc: "loc = LocReg (RegNormal (word_of_int (int i)))"
+  assume loc: "loc = LocReg (RegGeneral (word_of_int (int i)))"
   have [simp]: "int i mod 32 = int i"
     using test_bit_size[OF test_bit]
     unfolding word_size zmod_trival_iff
@@ -1683,7 +1683,7 @@ lemma CapInvariant_dfn'CClearHi_aux:
   fixes v :: "16 word"
   assumes "ValuePart (CapInvariantTakeBranchPre loc cap) s"
       and "\<And>x. v !! unat (x - 16) \<Longrightarrow> 
-               loc = LocReg (RegNormal x) \<Longrightarrow> 
+               loc = LocReg (RegGeneral x) \<Longrightarrow> 
                False"
   shows "ValuePart (ClearRegLoopPre (\<lambda>i. v !! (i - 16)) (seq 16 31) loc cap) s"
 using assms(1)
@@ -1691,7 +1691,7 @@ proof (elim ClearRegLoopPre_TakeBranchPre)
   fix i
   assume test_bit: "v !! (i - 16)" 
   assume seq: "i \<in> set (seq 16 31)"
-  assume loc: "loc = LocReg (RegNormal (word_of_int (int i)))"
+  assume loc: "loc = LocReg (RegGeneral (word_of_int (int i)))"
   have range: "16 \<le> i" "i \<le> 31"
     using seq
     unfolding set_seq
@@ -2257,7 +2257,7 @@ by CapInvariant
 theorem CapabilityCapInvariant:
   assumes prov: "loc \<notin> \<Union> (CapDerivationTargets ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getCap loc s' = getCap loc s"
 using assms
 using CapInvariant_NextWithGhostState
@@ -2268,10 +2268,11 @@ unfolding CapInvariantPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary CapabilityInvariantInstantiation [simp]:
-  shows "CapabilityInvariant NextStates"
+corollary CapabilityInvariantInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "CapabilityInvariant s lbl s'"
 unfolding CapabilityInvariant_def
-using CapabilityCapInvariant
+using assms CapabilityCapInvariant
 by auto blast?
 
 (*<*)

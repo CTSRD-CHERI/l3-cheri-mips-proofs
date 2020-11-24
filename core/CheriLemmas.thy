@@ -40,17 +40,6 @@ lemma ExtendCapAddress_GetCapAddress_simp [simp]:
 unfolding GetCapAddress_def ExtendCapAddress_def
 by auto
 
-subsection \<open>Tag of @{const bitsToCap}\<close>
-
-lemma tag_bitsToCap_simp [simp]:
-  shows "getTag (bitsToCap x) = False"
-unfolding getTag_def
-unfolding bitsToCap_def
-unfolding rec'Capability_def
-unfolding Capability.make_def
-using test_bit_size[where w="_::256 word"]
-by (auto simp: nth_ucast word_size)
-
 subsection \<open>Permissions\<close>
 
 lemma Perms_truncate_simp [simp]:
@@ -136,9 +125,9 @@ apply (simp add: nth_word_extract)
 apply auto
 by arith
 
-thm word_cat_bl
+(* thm word_cat_bl
 thm word_rep_drop
-thm slice_take
+thm slice_take *)
 
 lemma word_cat_slice_11_slice_8_reg'Perms:
   shows "(slice 12 (reg'Perms x)::20 word) = Reserved x"
@@ -214,16 +203,48 @@ lemma Capability_truncate_members [simp]:
     and "uperms (Capability.truncate cap) = uperms cap"
 unfolding Capability.truncate_def
 by simp_all
+
+lemma NullCap_members [simp]:
+  shows "base nullCap = 0"
+    and "length nullCap = max_word"
+    and "cursor nullCap = 0"
+    and "otype nullCap = 0"
+    and "perms nullCap = 0"
+    and "reserved nullCap = 0"
+    and "sealed nullCap = False"
+    and "tag nullCap = False"
+    and "uperms nullCap = 0"
+unfolding nullCap_def
+by simp_all
   
 lemma NullCap_simps [simp]:
   shows "getTag nullCap = False"
-unfolding getTag_def nullCap_def
-by simp
+    and "getBase nullCap = 0"
+    and "getLength nullCap = max_word"
+    and "getSealed nullCap = False"
+unfolding getTag_def
+  getBase_def
+  getLength_def
+  getSealed_def
+by simp_all
+
+lemma DefaultCap_members [simp]:
+  shows "base defaultCap = 0"
+    and "length defaultCap = max_word"
+    and "cursor defaultCap = 0"
+    and "otype defaultCap = 0"
+    and "perms defaultCap = max_word"
+    and "reserved defaultCap = 0"
+    and "sealed defaultCap = False"
+    and "tag defaultCap = True"
+    and "uperms defaultCap = max_word"
+unfolding defaultCap_def
+by simp_all
   
 lemma DefaultCap_simps [simp]:
   shows "getTag defaultCap"
     and "getBase defaultCap = 0"
-    and "getLength defaultCap = NOT 0"
+    and "getLength defaultCap = max_word"
     and "getSealed defaultCap = False"
 unfolding defaultCap_def
   getTag_def
@@ -444,6 +465,54 @@ next
   thus ?l
     unfolding setBounds_def getLength_def getOffset_def
     by auto
+qed
+
+subsection \<open>Capability-word conversion\<close>
+
+lemma bitsToCaps_members:
+  fixes x :: "256 word"
+  defines "y \<equiv> x XOR word_cat (max_word::64 word) (0::192 word)"
+  shows "tag (bitsToCap x) = False"
+    and "length (bitsToCap x) = word_extract 255 192 y"
+    and "base (bitsToCap x) = word_extract 191 128 y"
+    and "cursor (bitsToCap x) = word_extract 127 64 y"
+    and "reserved (bitsToCap x) = word_extract 63 56 y"
+    and "otype (bitsToCap x) = word_extract 55 32 y"
+    and "uperms (bitsToCap x) = word_extract 31 16 y"
+    and "perms (bitsToCap x) = word_extract 15 1 y"
+    and "sealed (bitsToCap x) = x !! 0"
+unfolding bitsToCap_def
+unfolding rec'Capability_def
+unfolding Capability.make_def
+unfolding reg'Capability_def
+unfolding y_def
+using test_bit_size[where w="_::256 word"]
+by (auto simp: nth_ucast nth_word_cat 
+               word_ops_nth_size word_size word_extract_ucast_up)
+
+lemma tag_bitsToCap_simp [simp]:
+  shows "getTag (bitsToCap x) = False"
+unfolding getTag_def bitsToCaps_members
+by simp
+
+lemma capToBits_bitsToCap [simp]:
+  shows "capToBits (bitsToCap x) = x"
+proof -
+  have "word_cat (word_extract 15 (Suc 0) x::15 word) b = 
+        (word_extract 15 0 x::16 word)" 
+  if "x !! 0 = b !! 0"
+  for b :: "1 word" and x :: "256 word"
+    using that
+    by (intro word_eqI)
+       (auto simp del: word_extract_start_zero
+             simp: word_size nth_word_cat nth_word_extract)
+  thus ?thesis
+    unfolding capToBits_def
+    unfolding reg'Capability_def
+    by (auto simp add: word_bool_alg.xor_assoc
+                          word_size word_ops_nth_size nth_word_cat
+                          bitsToCaps_members
+                          word_cat_word_extract_ucast)
 qed
 
 section \<open>Value and state part lemmas\<close>
@@ -2717,7 +2786,7 @@ datatype CapRegister =
     RegPCC
   | RegBranchDelayPCC
   | RegBranchToPCC
-  | RegNormal RegisterAddress
+  | RegGeneral RegisterAddress
   | RegSpecial RegisterAddress
 
 lemmas Commute_CapRegisterI [Commute_compositeI] =
@@ -2729,9 +2798,9 @@ lemmas ValuePart_CapRegister [ValueAndStatePart_simp] =
 lemmas StatePart_CapRegister [ValueAndStatePart_simp] =
   CapRegister.case_distrib[where h="\<lambda>x. StatePart x _"]
 
-fun IsNormalRegister where
-  "IsNormalRegister (RegNormal cd) = True" |
-  "IsNormalRegister x = False"
+fun IsGeneralRegister where
+  "IsGeneralRegister (RegGeneral cd) = True" |
+  "IsGeneralRegister x = False"
 
 fun IsSpecialRegister where
   "IsSpecialRegister (RegSpecial cd) = True" |
@@ -2743,14 +2812,14 @@ definition getCapReg :: "CapRegister \<Rightarrow> state \<Rightarrow> Capabilit
       RegPCC \<Rightarrow> getPCC s 
     | RegBranchDelayPCC \<Rightarrow> getBranchDelayPccCap s
     | RegBranchToPCC \<Rightarrow> getBranchToPccCap s
-    | RegNormal cd \<Rightarrow> getCAPR cd s
+    | RegGeneral cd \<Rightarrow> getCAPR cd s
     | RegSpecial cd \<Rightarrow> getSCAPR cd s)"
 
 lemma getCapReg_loc_simps [simp]:
   shows "getCapReg RegPCC = getPCC"
     and "getCapReg RegBranchDelayPCC = getBranchDelayPccCap"
     and "getCapReg RegBranchToPCC = getBranchToPccCap"
-    and "getCapReg (RegNormal cd) = getCAPR cd"
+    and "getCapReg (RegGeneral cd) = getCAPR cd"
     and "getCapReg (RegSpecial cd) = getSCAPR cd"
 unfolding getCapReg_def
 by simp_all
@@ -2805,7 +2874,7 @@ by (cases loc) simp_all
 
 lemma getCapReg_setCAPR_simp [simp]:
   shows "getCapReg loc (setCAPR v s) = 
-         (if loc = RegNormal (snd v) \<and> snd v \<noteq> 0 then fst v else getCapReg loc s)"
+         (if loc = RegGeneral (snd v) \<and> snd v \<noteq> 0 then fst v else getCapReg loc s)"
 unfolding getCapReg_def
 by (cases loc) simp_all
 
@@ -2904,7 +2973,7 @@ by (cases loc) simp_all
 
 lemma getCap_setCAPR_simp [simp]:
   shows "getCap loc (setCAPR v s) = 
-         (if loc = LocReg (RegNormal (snd v)) \<and> snd v \<noteq> 0 then fst v else getCap loc s)"
+         (if loc = LocReg (RegGeneral (snd v)) \<and> snd v \<noteq> 0 then fst v else getCap loc s)"
 unfolding getCap_def
 by (cases loc) simp_all
 
@@ -2941,7 +3010,7 @@ lemma RegisterIsAccessible_simps [simp]:
   shows "RegisterIsAccessible RegPCC = return True"
     and "RegisterIsAccessible RegBranchDelayPCC = return True"
     and "RegisterIsAccessible RegBranchToPCC = return True"
-    and "RegisterIsAccessible (RegNormal cd) = return True"
+    and "RegisterIsAccessible (RegGeneral cd) = return True"
     and "RegisterIsAccessible (RegSpecial cd) = special_register_accessible cd"
 unfolding RegisterIsAccessible_def
 by simp_all
@@ -3001,6 +3070,16 @@ lemma getMemData_getMEM:
 using assms
 unfolding getMemData_def
 by simp
+
+lemma getMemData_getMemCap:
+  shows "getMemData a s =
+     (let upper = slice (log2 CAPBYTEWIDTH) a in
+      let lower = a AND mask (log2 CAPBYTEWIDTH) in
+      let big_endian = lower XOR mask 3 in 
+      extract_byte (unat big_endian) (capToBits (getMemCap upper s)))"
+unfolding getMemData_def getMemCap_def
+unfolding DataType.case_distrib[where h=capToBits]
+by strong_cong_simp
 
 subsection \<open>\<open>getMemTag\<close>\<close>
 
@@ -4042,30 +4121,22 @@ section \<open>Semantics of unpredictable operations\<close>
 
 definition UnpredictableNext :: "state \<Rightarrow> state set" where
   "UnpredictableNext s \<equiv> 
-   {s' |s'. (\<forall>a. getMemData a s' = getMemData a s) \<and>
-            (\<forall>a. getMemCap a s' = getMemCap a s) \<and>
+   {s' |s'. (\<forall>a. getMemCap a s' = getMemCap a s) \<and>
             (getPCC s' = getPCC s) \<and>
-            (getBranchDelay s' = getBranchDelay s) \<and>
             (BranchDelayPCC s' = BranchDelayPCC s) \<and>
             (\<forall>cd. getCAPR cd s' = getCAPR cd s) \<and>
             (\<forall>cd. getSCAPR cd s' = getSCAPR cd s) \<and>
             (\<forall>vAddr. getPhysicalAddress vAddr s' = getPhysicalAddress vAddr s) \<and>
-            (getCP0ConfigBE s' = getCP0ConfigBE s) \<and>
-            (getCP0StatusRE s' = getCP0StatusRE s) \<and>
-            getEmptyGhostState s'}"
+            getStateIsValid s'}"
 
 lemma UnpredictableNextI [intro]:
-  assumes "\<And>a. getMemData a s' = getMemData a s"
-      and "\<And>a. getMemCap a s' = getMemCap a s"
+  assumes "\<And>a. getMemCap a s' = getMemCap a s"
       and "getPCC s' = getPCC s"
-      and "getBranchDelay s' = getBranchDelay s"
       and "BranchDelayPCC s' = BranchDelayPCC s"
       and "\<And>cd. getCAPR cd s' = getCAPR cd s"
       and "\<And>cd. getSCAPR cd s' = getSCAPR cd s"
       and "\<And>vAddr. getPhysicalAddress vAddr s' = getPhysicalAddress vAddr s"
-      and "getCP0ConfigBE s' = getCP0ConfigBE s"
-      and "getCP0StatusRE s' = getCP0StatusRE s"
-      and "getEmptyGhostState s'"
+      and "getStateIsValid s'"
   shows "s' \<in> UnpredictableNext s"
 using assms
 unfolding UnpredictableNext_def
@@ -4073,19 +4144,22 @@ by auto
 
 lemma UnpredictableNextE [elim!]:
   assumes "s' \<in> UnpredictableNext s"
-  shows "getMemData a s' = getMemData a s"
-    and "getMemCap a' s' = getMemCap a' s"
+  shows "getMemCap a s' = getMemCap a s"
     and "getPCC s' = getPCC s"
-    and "getBranchDelay s' = getBranchDelay s"
     and "BranchDelayPCC s' = BranchDelayPCC s"
     and "getCAPR cd s' = getCAPR cd s"
     and "getSCAPR cd' s' = getSCAPR cd' s"
-    and "getCP0ConfigBE s' = getCP0ConfigBE s"
-    and "getCP0StatusRE s' = getCP0StatusRE s"
-    and "getEmptyGhostState s'"
+    and "getStateIsValid s'"
 using assms
 unfolding UnpredictableNext_def
 by (auto split: prod.splits)
+
+lemma UnpredictableNextE_getMemData [elim!]:
+  assumes "s' \<in> UnpredictableNext s"
+  shows "getMemData a s' = getMemData a s"
+using UnpredictableNextE[OF assms]
+using getMemData_getMemCap
+by auto
 
 lemma UnpredictableNextE_getBranchDelayPccCap [elim!]:
   assumes "s' \<in> UnpredictableNext s"
@@ -4094,13 +4168,19 @@ using UnpredictableNextE[OF assms]
 unfolding getBranchDelayPccCap_def
 by auto
 
+lemma UnpredictableNextE_getEmptyGhostState [elim!]:
+  assumes "s' \<in> UnpredictableNext s"
+  shows "getEmptyGhostState s'"
+using UnpredictableNextE[OF assms]
+by auto
+
 lemma UnpredictableNextE_getCapReg [elim]:
   assumes unpred: "s' \<in> UnpredictableNext s"
       and ghost: "getEmptyGhostState s"
   shows "getCapReg r s' = getCapReg r s"
 proof -
   have ghost2: "getEmptyGhostState s'"
-    using UnpredictableNextE[OF unpred]
+    using UnpredictableNextE_getEmptyGhostState[OF unpred]
     by simp
   show ?thesis
     using UnpredictableNextE[OF unpred]

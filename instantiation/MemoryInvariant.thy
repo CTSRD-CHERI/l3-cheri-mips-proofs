@@ -2218,7 +2218,7 @@ by MemoryInvariant
 theorem MemoryInvariant:
   assumes prov: "a \<notin> \<Union> (WrittenAddresses ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(KeepDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getMemData a s' = getMemData a s"
 using assms
 using PrePostE[where s=s,
@@ -2228,10 +2228,11 @@ unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
-corollary MemoryInvariantInstantiation [simp]:
-  shows "MemoryInvariant NextStates"
+corollary MemoryInvariantInstantiation:
+  assumes "(lbl, s') \<in> NextStates s"
+  shows "MemoryInvariant s lbl s'"
 unfolding MemoryInvariant_def
-using MemoryInvariant
+using assms MemoryInvariant
 by auto blast?
 
 (*<*)
