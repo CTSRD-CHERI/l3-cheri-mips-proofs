@@ -29,3 +29,7 @@ security properties defined before.
 "scripts" contains the python scripts that are used to generate part
 of the proofs.
 
+# Licence
+
+The proofs are made available under the BSD three-clause licence in
+LICENCE.
