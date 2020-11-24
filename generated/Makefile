@@ -8,7 +8,7 @@ default: update_source generate-p256 generate-c128concentrate
 # caused by an outdated version of L3.
 
 update_l3:
-	wget -O ~/l3.tar.bz2 http://www.cl.cam.ac.uk/~acjf3/l3/l3.tar.bz2
+	wget -O ~/l3.tar.bz2 https://acjf3.github.io/l3/l3.tar.bz2
 	cd ~ && tar -xjvf l3.tar.bz2
 	rm ~/l3.tar.bz2
 	echo "Run Make in the new directory and update PATH variable in .profile."
