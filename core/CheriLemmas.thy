@@ -3241,7 +3241,7 @@ definition AddressTranslationPartial where
 abbreviation "getAddressTranslationPartial v \<equiv> ValuePart (AddressTranslationPartial v)"
 
 text \<open>The following should be a schematic goal where the entire right side of the equation is the
-schematic variable. Bur, for some reason, auto cannot figure out how to instantiate \<open>?x\<close> if it tries
+schematic variable. But, for some reason, auto cannot figure out how to instantiate \<open>?x\<close> if it tries
 to prove \<open>?x s = term\<close> where \<open>term\<close> contains occurrences of \<open>s\<close>. So for the moment we spell it out
 for auto, and hope that we can remove this at some point.\<close>
 
