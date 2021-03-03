@@ -207,6 +207,19 @@ lemma word_power_two_eq_zero [simp]:
 unfolding word_uint_eq_iff uint_power_two
 by simp
 
+lemma nth_power_two:
+fixes w :: "'a::len word"
+shows "(2 ^ n * w) !! i = (w !! (i - n) \<and> n \<le> i \<and> i < LENGTH('a))"
+using shiftl_t2n[where n=n and w=w, THEN sym]
+by (auto simp add: nth_shiftl word_size)
+
+lemma nth_double:
+fixes w :: "'a::len word"
+shows "(2 * w) !! i = (w !! (i - 1) \<and> i \<noteq> 0 \<and> i \<noteq> LENGTH('a))"
+using nth_power_two[where w=w and n=1 and i=i]
+using test_bit_size[where w=w and n="i - 1"]
+by (auto simp add: word_size)
+
 subsection \<open>Exhaustive enumeration of small words\<close>
 
 lemma exhaustive_1_word:
