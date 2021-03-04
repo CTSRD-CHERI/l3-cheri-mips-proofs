@@ -633,11 +633,23 @@ lemma GPR_read_only [simp]:
   shows "StatePart (GPR v) = (\<lambda>s. s)"
 by (intro StatePart_read_onlyI Commute_GPR) auto
 
+(* Code generation - override - write'GPR *)
+
 subsubsection \<open>@{const write'GPR}\<close>
 
 text \<open>The term @{term "ValuePart (write'GPR v)"} is simplified to @{term "\<lambda>_. ()"}.\<close>
 
 abbreviation "setGPR v \<equiv> StatePart (write'GPR v)"
+
+lemma getGPR_setGPR_simp [simp]:
+  shows "getGPR index' (setGPR x s) = 
+         (if index' = 0 then 0 
+          else if index' = snd x then fst x 
+          else getGPR index' s)"
+unfolding GPR_alt_def write'GPR_alt_def
+by (cases x) (simp add: ValuePart_bind StatePart_bind)
+
+(* Code generation - end override *)
 
 subsubsection \<open>@{const UserMode}\<close>
 
@@ -1460,6 +1472,35 @@ lemma getPCC_simps [simp]:
     and "getPCC (setExceptionSignalled x_ExceptionSignalled s) = getPCC s"
     and "getPCC (c_state_update x_c_state s) = getPCC s"
 by (rule Commute_read_state_update_stateE, Commute)+
+
+subsubsection \<open>@{const GPR}\<close>
+
+lemma getGPR_simps [simp]:
+  shows "getGPR cd (BranchToPCC_update x_BranchToPCC s) = getGPR cd s"
+    and "getGPR cd (BranchDelayPCC_update x_BranchDelayPCC s) = getGPR cd s"
+    and "getGPR cd (setPCC x_PCC s) = getGPR cd s"
+    and "getGPR cd (setCAPR x_SGPR s) = getGPR cd s"
+    and "getGPR cd (setSCAPR x_SGPR s) = getGPR cd s"
+    and "getGPR cd (setMEM x_MEM s) = getGPR cd s"
+    and "getGPR cd (the_MEM_update x_the_MEM s) = getGPR cd s"
+    and "getGPR cd (setBranchTo x_BranchTo s) = getGPR cd s"
+    and "getGPR cd (setBranchDelay x_BranchDelay s) = getGPR cd s"
+    and "getGPR cd (exception_update x_exception s) = getGPR cd s"
+    and "getGPR cd (setExceptionSignalled x_ExceptionSignalled s) = getGPR cd s"
+    and "getGPR cd (c_state_update x_c_state s) = getGPR cd s"
+by (rule Commute_read_state_update_stateE, Commute)+
+
+lemma getGPR_zero [simp]:
+  shows "getGPR 0 s = 0"
+unfolding GPR_alt_def
+by simp
+
+lemma Commute_getGPR_setGPR [Commute_compositeI]:
+  assumes "cd \<noteq> cd'"
+  shows "Commute (GPR cd) (write'GPR (cap, cd'))"
+using assms
+unfolding Commute_def
+by simp
 
 subsubsection \<open>@{const CAPR}\<close>
 
