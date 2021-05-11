@@ -3538,6 +3538,8 @@ proof -
           le_right_and_not_mask[where y=vAddr and 'b=12 and x=18446744072635809792])
 qed
 
+text \<open>The lower 12 bits of the translated address equal the lower 12 of the original address.\<close>
+
 lemma getPhysicalAddress_ucast12:
   assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
   shows "(ucast pAddr::12 word) = ucast vAddr"
@@ -3557,7 +3559,7 @@ proof -
     using assms by simp
 qed 
 
-lemma getPhysicalAddress_vAddr_and_mask_12:
+corollary getPhysicalAddress_vAddr_and_mask_12:
   assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
   shows "vAddr AND mask 12 = ucast pAddr AND mask 12"
 proof (intro word_eqI impI, unfold word_size)
@@ -3568,7 +3570,7 @@ proof (intro word_eqI impI, unfold word_size)
     by (auto simp: nth_ucast word_ao_nth word_size)
 qed
 
-lemma getPhysicalAddress_pAddr_and_mask_12:
+corollary getPhysicalAddress_pAddr_and_mask_12:
   assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
   shows "pAddr AND mask 12 = ucast vAddr AND mask 12"
 proof (intro word_eqI impI, unfold word_size)
@@ -3578,6 +3580,9 @@ proof (intro word_eqI impI, unfold word_size)
     using test_bit_cong[where x=n, OF getPhysicalAddress_ucast12[OF assms]]
     by (auto simp: nth_ucast word_ao_nth word_size)
 qed
+
+text \<open>The translation of the start of the page that contains an address vAddr, is given
+by clearing the lowest 12 bits of the translation of vAddr.\<close>
 
 lemma getPhysicalAddress_and_not_mask:
   shows "getPhysicalAddress (vAddr AND NOT mask 12, accessType) s = 
@@ -3617,6 +3622,36 @@ proof -
               word_bool_alg.conj_assoc[where x="NOT mask 12"])
        (auto split: option.splits prod.splits)
 qed
+
+corollary getPhysicalAddress_same_page:
+  assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
+  shows "(case getPhysicalAddress (vAddr, accessType) s 
+            of None \<Rightarrow> None
+             | Some pAddr \<Rightarrow> Some (pAddr AND NOT mask 12)) =
+         (case getPhysicalAddress (vAddr', accessType) s 
+            of None \<Rightarrow> None
+             | Some pAddr \<Rightarrow> Some (pAddr AND NOT mask 12))"
+using getPhysicalAddress_and_not_mask[where vAddr=vAddr]
+using getPhysicalAddress_and_not_mask[where vAddr=vAddr']
+using assms
+by auto
+
+corollary getPhysicalAddress_same_page_None:
+  assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
+      and "getPhysicalAddress (vAddr, accessType) s = None"
+  shows "getPhysicalAddress (vAddr', accessType) s = None"
+using getPhysicalAddress_same_page[where accessType=accessType and s=s, OF assms(1)]
+using assms(2)
+by (auto split: option.splits)
+
+corollary getPhysicalAddress_same_page_Some:
+  assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
+      and "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+      and "getPhysicalAddress (vAddr', accessType) s = Some pAddr'"
+  shows "pAddr AND NOT mask 12 = pAddr' AND NOT mask 12"
+using getPhysicalAddress_same_page[where accessType=accessType and s=s, OF assms(1)]
+using assms(2, 3)
+by (auto split: option.splits)
 
 lemma getPhysicalAddress_split:
   shows "getPhysicalAddress (vAddr, accessType) s = 
