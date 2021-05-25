@@ -516,6 +516,39 @@ begin
 
 end
 
+subsubsection \<open>Complete distributive lattice over generalised permissions\<close>
+
+instantiation "GeneralisedPerm_ext" :: (complete_distrib_lattice) complete_distrib_lattice
+begin
+  
+  instance
+    proof standard
+      fix x :: "'a GeneralisedPerm_ext" and A 
+      show "sup x (Inf A) = (INF a:A. sup x a)"
+        unfolding Inf_GeneralisedPerm_ext_def
+        unfolding sup_GeneralisedPerm_ext_def
+        using sup_Inf[where a="GeneralisedPerm.more x"]
+        by simp
+    next
+      fix x :: "'a GeneralisedPerm_ext" and A 
+      show "inf x (Sup A) = (SUP a:A. inf x a)"
+        unfolding Sup_GeneralisedPerm_ext_def
+        unfolding inf_GeneralisedPerm_ext_def
+        using inf_Sup[where a="GeneralisedPerm.more x"]
+        by simp
+    qed
+
+end
+
+subsubsection \<open>Complete boolean algebra over generalised permissions\<close>
+
+instantiation "GeneralisedPerm_ext" :: (complete_boolean_algebra) complete_boolean_algebra
+begin
+  
+  instance by standard
+
+end
+
 subsection \<open>Physical capability addresses\<close>
 
 definition getPhysicalCapAddresses :: 
