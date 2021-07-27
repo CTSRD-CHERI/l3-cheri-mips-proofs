@@ -42,7 +42,7 @@ When building on our proofs, it is recommended to build a heap image of our theo
 
 ## People and funding
 
-The security properties have been developed by [Kyndylan Nienhuis](https://www.cl.cam.ac.uk/~kn307/). These comprise all files except those in the directory named `generated`.
+The security properties have been developed by [Kyndylan Nienhuis](https://www.cl.cam.ac.uk/~kn307/). These comprise all files except those in the directory `generated`.
 
 - This work was supported by a Gates Cambridge Scholarship.
 
@@ -52,7 +52,7 @@ The security properties have been developed by [Kyndylan Nienhuis](https://www.c
 
 - This work was supported by the Defense Advanced Research Projects Agency (DARPA) and the Air Force Research Laboratory (AFRL), under contract FA8650-18-C-7809 (CIFV). The views, opinions, and/or findings contained in this paper are those of the authors and should not be interpreted as representing the official views or policies, either expressed or implied, of the Department of Defense or the U.S. Government. Approved for public release; distribution is unlimited.
 
-The L3 specification of CHERI-MIPS has been developed by [Alexandre Joannou](https://www.cl.cam.ac.uk/~aj443/), [Anthony Fox](https://acjf3.github.io/), [Michael Roe](https://www.cst.cam.ac.uk/people/mr101), and Matthew Naylor. The directory `generated` contains the Isabelle/HOL export, and the original L3 source can be found [here](https://github.com/acjf3/l3mips).
+The L3 specification of CHERI-MIPS has been developed by [Alexandre Joannou](https://www.cl.cam.ac.uk/~aj443/), [Anthony Fox](https://acjf3.github.io/), [Michael Roe](https://www.cst.cam.ac.uk/people/mr101), and Matthew Naylor. The directory `generated` contains the Isabelle/HOL export of the specification, and [this repository](https://github.com/acjf3/l3mips) contains its original L3 source.
 
 - This work was supported by EPSRC programme grant EP/K008528/1 (REMS: Rigorous Engineering for Mainstream Systems).
 
@@ -62,4 +62,4 @@ The L3 specification of CHERI-MIPS has been developed by [Alexandre Joannou](htt
 
 ## Licence
 
-The proofs are made available under the BSD three-clause licence in LICENCE.
+The security properties and the Isabelle/HOL export of the specification are made available under the BSD three-clause licence in [LICENCE](LICENCE).
