@@ -1,8 +1,8 @@
-The Isabelle proofs about CHERI-MIPS, comprising all files except
+The security properties for CHERI-MIPS, comprising all files except
 those in the directory named "generated", are subject to the licence
 below.
 
-Copyright (c) 2019-2020 by Kyndylan Nienhuis
+Copyright (c) 2019-2021 by Kyndylan Nienhuis
 
 All rights reserved.
 
@@ -14,12 +14,12 @@ met:
      notice, this list of conditions and the following disclaimer.
 
   2. Redistributions in binary form must reproduce the above copyright
-     notice, this list of conditions and the following disclaimer in 
-     the documentation and/or other materials provided with the 
+     notice, this list of conditions and the following disclaimer in
+     the documentation and/or other materials provided with the
      distribution.
 
   3. Neither the name of the copyright holder nor the names of its
-     contributors may be used to endorse or promote products derived 
+     contributors may be used to endorse or promote products derived
      from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -36,8 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-The export of the L3 model of CHERI-MIPS, comprising the files in the
-directory named "generated", are subject to the licence below.
+The export of the L3 specification of CHERI-MIPS, comprising the files
+in the directory named "generated", are subject to the licence below.
 
 Copyright 2011-2017 by Anthony Fox
 

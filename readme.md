@@ -20,9 +20,9 @@ This repository contains formal definitions and proofs of security properties fo
 
 Open the top-level file [Examples.thy](properties/Examples.thy) in Isabelle.
 
-## Folder structure
+## Directory structure
 
-- [`generated`](generated/) contains the Isabelle/HOL export of the L3 specification of CHERI-MIPS.
+- [`generated`](generated/) contains the Isabelle/HOL export of the L3 specification of CHERI-MIPS. The L3 source can be found [here](https://github.com/acjf3/l3mips).
 
 - [`core`](core/) contains generally useful lemmas about the L3 specification, such as commutativity lemmas, simplification rules, and automated proof tactics.
 
@@ -40,7 +40,26 @@ When building on our proofs, it is recommended to build a heap image of our theo
 - `(path to repo)/properties`
 - `(path to repo)/instantiation`
 
+## People and funding
+
+The security properties have been developed by [Kyndylan Nienhuis](https://www.cl.cam.ac.uk/~kn307/). These comprise all files except those in the directory named `generated`.
+
+- This work was supported by a Gates Cambridge Scholarship.
+
+- This work was supported by EPSRC programme grant EP/K008528/1 (REMS: Rigorous Engineering for Mainstream Systems).
+
+- This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement 789108, ELVER).
+
+- This work was supported by the Defense Advanced Research Projects Agency (DARPA) and the Air Force Research Laboratory (AFRL), under contract FA8650-18-C-7809 (CIFV). The views, opinions, and/or findings contained in this paper are those of the authors and should not be interpreted as representing the official views or policies, either expressed or implied, of the Department of Defense or the U.S. Government. Approved for public release; distribution is unlimited.
+
+The L3 specification of CHERI-MIPS has been developed by [Alexandre Joannou](https://www.cl.cam.ac.uk/~aj443/), [Anthony Fox](https://acjf3.github.io/), [Michael Roe](https://www.cst.cam.ac.uk/people/mr101), and Matthew Naylor. The directory `generated` contains the Isabelle/HOL export, and the original L3 source can be found [here](https://github.com/acjf3/l3mips).
+
+- This work was supported by EPSRC programme grant EP/K008528/1 (REMS: Rigorous Engineering for Mainstream Systems).
+
+- This project has received funding from the European Research Council (ERC) under the European Union’s Horizon 2020 research and innovation programme (grant agreement 789108, ELVER).
+
+- This work was supported by the Defense Advanced Research Projects Agency (DARPA) and the Air Force Research Laboratory (AFRL), under contracts FA8650-18-C-7809 (CIFV), HR0011-18-C-0016 (ECATS), FA8750-10-C-0237 (CTSRD), and FA8750-11-C-0249 (MRC2). The views, opinions, and/or findings contained in this paper are those of the authors and should not be interpreted as representing the official views or policies, either expressed or implied, of the Department of Defense or the U.S. Government. Approved for public release; distribution is unlimited.
+
 ## Licence
 
-The proofs are made available under the BSD three-clause licence in
-LICENCE.
+The proofs are made available under the BSD three-clause licence in LICENCE.
