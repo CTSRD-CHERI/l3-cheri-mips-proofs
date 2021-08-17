@@ -1,6 +1,6 @@
 The security properties for CHERI-MIPS, comprising all files except
-those in the directory named "generated", are subject to the licence
-below.
+those in the directory named "specification", are subject to the
+licence below.
 
 Copyright (c) 2019-2021 by Kyndylan Nienhuis
 
@@ -37,7 +37,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 The export of the L3 specification of CHERI-MIPS, comprising the files
-in the directory named "generated", are subject to the licence below.
+in the directory named "specification", are subject to the licence
+below.
 
 Copyright 2011-2017 by Anthony Fox
 
