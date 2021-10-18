@@ -261,7 +261,7 @@ lemma CompartmentIsolation:
       and ex: "ExceptionPCs \<subseteq> exit"
       and caps: "CapabilitySetup segment types exit s"
       and trace: "(step # trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and inter: "\<not> PreservesDomain step"
   shows "IsolationGuarantees segment exit s s'"
 unfolding IsolationGuarantees_def

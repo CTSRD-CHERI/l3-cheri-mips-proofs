@@ -16,12 +16,12 @@ subsection \<open>Traces\<close>
 
 type_synonym Trace = "AbstractStep list"
 
-primrec IntraDomainTrace :: "Trace \<Rightarrow> bool" where
-  "IntraDomainTrace [] = True" |
-  "IntraDomainTrace (h # t) = (PreservesDomain h \<and> IntraDomainTrace t)"
+primrec TracePreservesDomain :: "Trace \<Rightarrow> bool" where
+  "TracePreservesDomain [] = True" |
+  "TracePreservesDomain (h # t) = (PreservesDomain h \<and> TracePreservesDomain t)"
 
-lemma IntraDomainTraceE:
-  assumes "IntraDomainTrace trace"
+lemma TracePreservesDomainE:
+  assumes "TracePreservesDomain trace"
       and "step \<in> set trace"
   shows "PreservesDomain step"
 using assms
@@ -683,7 +683,7 @@ qed
 theorem MonotonicityAvailableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "AvailableCaps s' \<subseteq> AvailableCaps s"
@@ -722,7 +722,7 @@ qed simp
 corollary MonotonicityTransUsableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "TransUsableCaps s' \<subseteq> TransUsableCaps s"
@@ -732,7 +732,7 @@ by auto
 corollary MonotonicityAvailableAuthority:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "AvailableAuthority s' \<le> AvailableAuthority s"
@@ -745,7 +745,7 @@ subsection \<open>Invariance of address translation\<close>
 lemma TraceInvarianceAddressTranslation:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getTranslateAddr addr s' = getTranslateAddr addr s"
@@ -758,7 +758,7 @@ next
   then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
-  have intra2: "IntraDomainTrace trace"
+  have intra2: "TracePreservesDomain trace"
     using Cons by auto
   hence ih: "getTranslateAddr addr r = getTranslateAddr addr s"
     using Cons(1)[OF r\<^sub>1] 
@@ -821,7 +821,7 @@ qed
 lemma SystemRegisterInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_access: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and system: "cd \<noteq> 0" "cd \<noteq> 1"
       and valid: "getStateIsValid s"
@@ -869,7 +869,7 @@ qed simp
 theorem SystemRegisterInvariant:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(step # trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and inter: "\<not> PreservesDomain step"
       and no_access: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and system: "cd \<noteq> 0" "cd \<noteq> 1" 
@@ -917,7 +917,7 @@ subsection \<open>Invariance of capabilities in memory\<close>
 lemma MemCapInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_access: "a \<notin> StorablePhysCapAddresses (AvailableAuthority s) s"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
@@ -928,7 +928,7 @@ proof (induct trace arbitrary: s')
   then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
-  have intra2: "IntraDomainTrace trace"
+  have intra2: "TracePreservesDomain trace"
     using Cons by auto
   have ih: "getMemCap a r = getMemCap a s"
     using Cons(1)[OF r\<^sub>1] intra2
@@ -1067,7 +1067,7 @@ qed simp
 theorem MemCapInvariant:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(step # trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and inter: "\<not> PreservesDomain step"
       and no_access: "a \<notin> StorablePhysCapAddresses (AvailableAuthority s) s"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
@@ -1113,7 +1113,7 @@ subsection \<open>Invariance of data\<close>
 lemma MemoryInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and no_access: "a \<notin> StorablePhysAddresses (AvailableAuthority s) s"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
@@ -1124,7 +1124,7 @@ proof (induct trace arbitrary: s')
   then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
-  have intra2: "IntraDomainTrace trace"
+  have intra2: "TracePreservesDomain trace"
     using Cons by auto
   have ih: "getMemByte a r = getMemByte a s"
     using Cons(1)[OF r\<^sub>1] Cons(3)
@@ -1233,7 +1233,7 @@ qed simp
 theorem MemoryInvariant:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(step # trace, s') \<in> Traces sem s"
-      and intra: "IntraDomainTrace trace"
+      and intra: "TracePreservesDomain trace"
       and inter: "\<not> PreservesDomain step"
       and no_access: "a \<notin> StorablePhysAddresses (AvailableAuthority s) s"
       and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
