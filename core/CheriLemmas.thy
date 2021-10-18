@@ -3335,26 +3335,26 @@ unfolding AddressTranslationPartial_def
 using ValuePartMakePartial_defined assms
 by metis
 
-subsection \<open>@{term getTranslateAddr}\<close>
+subsection \<open>@{term TranslateAddr}\<close>
 
-definition PhysicalAddress :: 
+definition TranslateAddr :: 
   "VirtualAddress \<times> AccessType \<Rightarrow> state \<Rightarrow> PhysicalAddress option \<times> state" where
-  "PhysicalAddress v \<equiv> 
+  "TranslateAddr v \<equiv> 
    bind (read_state (getAddressTranslationPartial v))
         (\<lambda>x. return (case x of None \<Rightarrow> None | Some y \<Rightarrow> Some (fst y)))"
 
-abbreviation "getTranslateAddr v \<equiv> ValuePart (PhysicalAddress v)"
+abbreviation "getTranslateAddr v \<equiv> ValuePart (TranslateAddr v)"
 
-lemma PhysicalAddress_read_only [simp]:
-  shows "StatePart (PhysicalAddress v) = (\<lambda>s. s)"
-unfolding PhysicalAddress_def
+lemma TranslateAddr_read_only [simp]:
+  shows "StatePart (TranslateAddr v) = (\<lambda>s. s)"
+unfolding TranslateAddr_def
 by (simp add: ValueAndStatePart_simp) 
 
-lemma Commute_PhysicalAddress [Commute_compositeI]:
+lemma Commute_TranslateAddr [Commute_compositeI]:
   assumes "\<And>v. Commute (read_state (getAddressTranslationPartial v)) m"
-  shows "Commute (PhysicalAddress a) m"
+  shows "Commute (TranslateAddr a) m"
 using assms
-unfolding PhysicalAddress_def Commute_def
+unfolding TranslateAddr_def Commute_def
 by (strong_cong_simp add: ValueAndStatePart_simp)
 
 lemma getTranslateAddr_simps [simp]:
@@ -3373,7 +3373,7 @@ lemma getTranslateAddr_defined:
   assumes "\<not> getExceptionSignalled (StatePart (AddressTranslation v) s)"
       and "\<not> isUnpredictable (StatePart (AddressTranslation v) s)"
   shows "getTranslateAddr v s = Some (fst (ValuePart (AddressTranslation v) s))"
-unfolding PhysicalAddress_def
+unfolding TranslateAddr_def
 using getAddressTranslationPartial_defined[OF assms]
 by (simp add: ValueAndStatePart_simp)
 
@@ -3464,7 +3464,7 @@ proof (intro PrePostI)
     using PrePostE[OF assms(2), where s=s]
     using DefinedAddressTranslation_read_only[where v=v and s=s]
     unfolding h_def 
-    unfolding PhysicalAddress_def AddressTranslationPartial_def MakePartial_def
+    unfolding TranslateAddr_def AddressTranslationPartial_def MakePartial_def
     by (auto simp: ValueAndStatePart_simp 
              split: option.splits
              dest!: if_split[where P="\<lambda>x. x = _", THEN iffD1])
@@ -3548,7 +3548,7 @@ proof -
     unfolding mask_def by simp
   have "Some pAddr = getTranslateAddr (vAddr, accessType) s \<longrightarrow>
         (ucast pAddr::12 word) = ucast vAddr"
-    unfolding PhysicalAddress_def getAddressTranslationPartial_alt_def
+    unfolding TranslateAddr_def getAddressTranslationPartial_alt_def
     by (strong_cong_simp
              add: ValueAndStatePart_simp
                   ucast_or ucast_and ucast_shiftr ucast_shiftl
@@ -3610,7 +3610,7 @@ proof -
   have [simp]: "(x AND NOT mask 12) AND y = (x AND y) AND NOT mask 12" for x y :: "'b::len word"
     by (metis bitwise_semilattice_inf.inf_assoc word_bool_alg.conj.commute)
   show ?thesis
-    unfolding PhysicalAddress_def getAddressTranslationPartial_alt_def
+    unfolding TranslateAddr_def getAddressTranslationPartial_alt_def
     by (strong_cong_simp add: 
               ValueAndStatePart_simp
               slice_and slice_not 
