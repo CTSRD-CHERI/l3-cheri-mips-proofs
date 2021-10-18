@@ -1773,145 +1773,145 @@ section \<open>Hoare triples\<close>
 
 subsection \<open>Hoare triples\<close>
 
-definition PrePost where
-  "PrePost p m q \<equiv> 
+definition HoareTriple where
+  "HoareTriple p m q \<equiv> 
    \<forall>s. ValuePart p s \<longrightarrow> ValuePart (bind m q) s"
 
-lemma PrePostI:
+lemma HoareTripleI:
   assumes "\<And>s. ValuePart p s \<Longrightarrow> ValuePart (bind m q) s"
-  shows "PrePost p m q"
+  shows "HoareTriple p m q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by auto
 
-lemma PrePostE:
-  assumes "PrePost p m q"
+lemma HoareTripleE:
+  assumes "HoareTriple p m q"
       and "ValuePart p s"
   shows "ValuePart (bind m q) s"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by auto
 
-lemma PrePost_pre_strengthening:
-  assumes "PrePost p' m q"
+lemma HoareTriple_pre_strengthening:
+  assumes "HoareTriple p' m q"
       and "\<And>s. ValuePart p s \<Longrightarrow> ValuePart p' s"
-  shows   "PrePost p m q"
+  shows   "HoareTriple p m q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by simp
 
-lemma PrePost_post_weakening:
-  assumes "PrePost p m q'"
+lemma HoareTriple_post_weakening:
+  assumes "HoareTriple p m q'"
       and "\<And>a s. ValuePart (q' a) s \<Longrightarrow> ValuePart (q a) s"
-  shows   "PrePost p m q"
+  shows   "HoareTriple p m q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValuePart_bind)
 
-lemma PrePostIE:
-  assumes "PrePost p' m q'"
+lemma HoareTripleIE:
+  assumes "HoareTriple p' m q'"
       and "\<And>s. ValuePart p s \<Longrightarrow> ValuePart p' s"
       and "\<And>a s. ValuePart (q' a) s \<Longrightarrow> ValuePart (q a) s"
-  shows   "PrePost p m q"
-using PrePost_pre_strengthening
-  PrePost_post_weakening
+  shows   "HoareTriple p m q"
+using HoareTriple_pre_strengthening
+  HoareTriple_post_weakening
   assms
 by metis
 
-lemma PrePost_weakest_pre_any:
-  shows "PrePost (bind m q) m q"
-unfolding PrePost_def
+lemma HoareTriple_weakest_pre_any:
+  shows "HoareTriple (bind m q) m q"
+unfolding HoareTriple_def
 by simp
 
-lemma PrePost_weakest_pre_return:
-  shows "PrePost (q x) (return x) q"
-unfolding PrePost_def
+lemma HoareTriple_weakest_pre_return:
+  shows "HoareTriple (q x) (return x) q"
+unfolding HoareTriple_def
 by simp
 
-lemmas PrePost_weakest_pre_read_state =
-  PrePost_weakest_pre_any[where m="read_state f"] for f
+lemmas HoareTriple_weakest_pre_read_state =
+  HoareTriple_weakest_pre_any[where m="read_state f"] for f
 
-lemma PrePost_weakest_pre_read_only:
+lemma HoareTriple_weakest_pre_read_only:
   assumes "\<And>s. StatePart m s = s"
-  shows "PrePost (bind (read_state (ValuePart m)) q) m q"
+  shows "HoareTriple (bind (read_state (ValuePart m)) q) m q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValuePart_bind)
 
-lemmas PrePost_weakest_pre_update_state =
-  PrePost_weakest_pre_any[where m="update_state f"] for f
+lemmas HoareTriple_weakest_pre_update_state =
+  HoareTriple_weakest_pre_any[where m="update_state f"] for f
 
 text \<open>Introducing \<open>p'_simp\<close> in the lemma below might seem redundant, but it allows the proof method
 to simplify \<open>p'_simp\<close> before using it.\<close>
 
-lemma PrePost_weakest_pre_bind:
-  assumes "\<And>a. PrePost (p' a) (n a) q"
+lemma HoareTriple_weakest_pre_bind:
+  assumes "\<And>a. HoareTriple (p' a) (n a) q"
       and "p'_simp = p'"
-      and "PrePost p m p'_simp"
-  shows   "PrePost p (bind m n) q"
+      and "HoareTriple p m p'_simp"
+  shows   "HoareTriple p (bind m n) q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValuePart_bind StatePart_bind)
 
-lemma PrePost_weakest_pre_if:
-  assumes "PrePost p m q"
-      and "PrePost p' n q"
-  shows   "PrePost (if b then p else p') 
+lemma HoareTriple_weakest_pre_if:
+  assumes "HoareTriple p m q"
+      and "HoareTriple p' n q"
+  shows   "HoareTriple (if b then p else p') 
                    (if b then m else n) 
                    q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by auto
 
-lemma PrePost_weakest_pre_let:
-  assumes "\<And>y. PrePost (p y) (m y) q"
-  shows   "PrePost (let x = y in p x) 
+lemma HoareTriple_weakest_pre_let:
+  assumes "\<And>y. HoareTriple (p y) (m y) q"
+  shows   "HoareTriple (let x = y in p x) 
                    (let x = y in m x) 
                    q"
 using assms
 by auto
 
-lemma PrePost_weakest_pre_prod:
-  assumes "\<And>y z. PrePost (p y z) (m y z) q"
-  shows   "PrePost (case x of (y, z) \<Rightarrow> p y z) 
+lemma HoareTriple_weakest_pre_prod:
+  assumes "\<And>y z. HoareTriple (p y z) (m y z) q"
+  shows   "HoareTriple (case x of (y, z) \<Rightarrow> p y z) 
                    (case x of (y, z) \<Rightarrow> m y z) 
                    q"
 using assms
 by (cases x) simp
 
-lemma PrePost_weakest_pre_option:
-  assumes "PrePost p1 m1 q"
-      and "\<And>y. PrePost (p2 y) (m2 y) q"
-  shows   "PrePost (case x of None \<Rightarrow> p1 | Some y \<Rightarrow> p2 y)
+lemma HoareTriple_weakest_pre_option:
+  assumes "HoareTriple p1 m1 q"
+      and "\<And>y. HoareTriple (p2 y) (m2 y) q"
+  shows   "HoareTriple (case x of None \<Rightarrow> p1 | Some y \<Rightarrow> p2 y)
                    (case x of None \<Rightarrow> m1 | Some y \<Rightarrow> m2 y)
                    q"
 using assms
 by (cases x) auto
 
-lemma PrePost_weakest_pre_list:
-  assumes "PrePost p1 m1 q"
-      and "\<And>h t. PrePost (p2 h t) (m2 h t) q"
-  shows   "PrePost (case l of [] \<Rightarrow> p1 | h # t \<Rightarrow> p2 h t)
+lemma HoareTriple_weakest_pre_list:
+  assumes "HoareTriple p1 m1 q"
+      and "\<And>h t. HoareTriple (p2 h t) (m2 h t) q"
+  shows   "HoareTriple (case l of [] \<Rightarrow> p1 | h # t \<Rightarrow> p2 h t)
                    (case l of [] \<Rightarrow> m1 | h # t \<Rightarrow> m2 h t)
                    q"
 using assms
 by (cases l) auto
 
-lemma PrePost_weakest_pre_DataType:
-  assumes "\<And>cap. PrePost (p1 cap) (m1 cap) q"
-      and "\<And>v. PrePost (p2 v) (m2 v) q"
-  shows   "PrePost (case t of Cap cap \<Rightarrow> p1 cap | Raw v \<Rightarrow> p2 v) 
+lemma HoareTriple_weakest_pre_DataType:
+  assumes "\<And>cap. HoareTriple (p1 cap) (m1 cap) q"
+      and "\<And>v. HoareTriple (p2 v) (m2 v) q"
+  shows   "HoareTriple (case t of Cap cap \<Rightarrow> p1 cap | Raw v \<Rightarrow> p2 v) 
                    (case t of Cap cap \<Rightarrow> m1 cap | Raw v \<Rightarrow> m2 v) 
                    q"
 using assms
 by (cases t) auto
 
-lemma PrePost_weakest_pre_RegSet:
-  assumes "PrePost p1 m1 q"
-      and "PrePost p2 m2 q"
-      and "PrePost p3 m3 q"
-      and "PrePost p4 m4 q"
-  shows   "PrePost (case x of Lo_rs \<Rightarrow> p1
+lemma HoareTriple_weakest_pre_RegSet:
+  assumes "HoareTriple p1 m1 q"
+      and "HoareTriple p2 m2 q"
+      and "HoareTriple p3 m3 q"
+      and "HoareTriple p4 m4 q"
+  shows   "HoareTriple (case x of Lo_rs \<Rightarrow> p1
                             | Hi_rs \<Rightarrow> p2
                             | CLo_rs \<Rightarrow> p3
                             | CHi_rs \<Rightarrow> p4) 
@@ -1923,16 +1923,16 @@ lemma PrePost_weakest_pre_RegSet:
 using assms
 by (cases x) auto
 
-lemma PrePost_weakest_pre_CmpType:
-  assumes "PrePost p1 m1 q"
-      and "PrePost p2 m2 q"
-      and "PrePost p3 m3 q"
-      and "PrePost p4 m4 q"
-      and "PrePost p5 m5 q"
-      and "PrePost p6 m6 q"
-      and "PrePost p7 m7 q"
-      and "PrePost p8 m8 q"
-  shows   "PrePost (case x of EQ \<Rightarrow> p1
+lemma HoareTriple_weakest_pre_CmpType:
+  assumes "HoareTriple p1 m1 q"
+      and "HoareTriple p2 m2 q"
+      and "HoareTriple p3 m3 q"
+      and "HoareTriple p4 m4 q"
+      and "HoareTriple p5 m5 q"
+      and "HoareTriple p6 m6 q"
+      and "HoareTriple p7 m7 q"
+      and "HoareTriple p8 m8 q"
+  shows   "HoareTriple (case x of EQ \<Rightarrow> p1
                             | NE \<Rightarrow> p2
                             | LT \<Rightarrow> p3
                             | LE \<Rightarrow> p4
@@ -1952,91 +1952,91 @@ lemma PrePost_weakest_pre_CmpType:
 using assms
 by (cases x) auto
 
-lemmas PrePost_weakest_pre_cases_arity_1 =
-  PrePost_weakest_pre_let
-  PrePost_weakest_pre_prod
+lemmas HoareTriple_weakest_pre_cases_arity_1 =
+  HoareTriple_weakest_pre_let
+  HoareTriple_weakest_pre_prod
 
-lemmas PrePost_weakest_pre_cases_arity_2 =
-  PrePost_weakest_pre_if
-  PrePost_weakest_pre_option
-  PrePost_weakest_pre_list
-  PrePost_weakest_pre_DataType
+lemmas HoareTriple_weakest_pre_cases_arity_2 =
+  HoareTriple_weakest_pre_if
+  HoareTriple_weakest_pre_option
+  HoareTriple_weakest_pre_list
+  HoareTriple_weakest_pre_DataType
 
-lemmas PrePost_weakest_pre_cases =
-  PrePost_weakest_pre_cases_arity_1
-  PrePost_weakest_pre_cases_arity_2
-  PrePost_weakest_pre_RegSet
-  PrePost_weakest_pre_CmpType
+lemmas HoareTriple_weakest_pre_cases =
+  HoareTriple_weakest_pre_cases_arity_1
+  HoareTriple_weakest_pre_cases_arity_2
+  HoareTriple_weakest_pre_RegSet
+  HoareTriple_weakest_pre_CmpType
 
-lemmas PrePost_weakest_pre_foreach_loop =
-  PrePost_weakest_pre_any[where m="foreach_loop (l, m)"] for l m
+lemmas HoareTriple_weakest_pre_foreach_loop =
+  HoareTriple_weakest_pre_any[where m="foreach_loop (l, m)"] for l m
 
-lemmas PrePost_weakest_pre_foreach_loop_agg =
-  PrePost_weakest_pre_any[where m="foreach_loop_agg l v m"] for l v m
+lemmas HoareTriple_weakest_pre_foreach_loop_agg =
+  HoareTriple_weakest_pre_any[where m="foreach_loop_agg l v m"] for l v m
 
-lemma PrePost_splitValueAndStatePart:
-  assumes "\<And>a. PrePost (p a) m (\<lambda>_. q a)"
-  shows "PrePost (bind (read_state (ValuePart m)) p) m q"
+lemma HoareTriple_splitValueAndStatePart:
+  assumes "\<And>a. HoareTriple (p a) m (\<lambda>_. q a)"
+  shows "HoareTriple (bind (read_state (ValuePart m)) p) m q"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (auto simp: ValuePart_bind)
 
-lemmas PrePost_splitValueAndStatePart_foreach_loop_agg =
-  PrePost_splitValueAndStatePart[where m="foreach_loop_agg l v m"] for l v m
+lemmas HoareTriple_splitValueAndStatePart_foreach_loop_agg =
+  HoareTriple_splitValueAndStatePart[where m="foreach_loop_agg l v m"] for l v m
 
-lemma PrePost_weakest_pre_conj:
-  assumes "PrePost p\<^sub>1 m q\<^sub>1"
-      and "PrePost p\<^sub>2 m q\<^sub>2"
-  shows "PrePost (p\<^sub>1 \<and>\<^sub>b p\<^sub>2) m (\<lambda>a. (q\<^sub>1 a) \<and>\<^sub>b (q\<^sub>2 a))"
+lemma HoareTriple_weakest_pre_conj:
+  assumes "HoareTriple p\<^sub>1 m q\<^sub>1"
+      and "HoareTriple p\<^sub>2 m q\<^sub>2"
+  shows "HoareTriple (p\<^sub>1 \<and>\<^sub>b p\<^sub>2) m (\<lambda>a. (q\<^sub>1 a) \<and>\<^sub>b (q\<^sub>2 a))"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValueAndStatePart_simp)
 
-lemma PrePost_weakest_pre_disj:
-  assumes "PrePost p\<^sub>1 m q\<^sub>1"
-      and "PrePost p\<^sub>2 m q\<^sub>2"
-  shows "PrePost (p\<^sub>1 \<or>\<^sub>b p\<^sub>2) m (\<lambda>a. (q\<^sub>1 a) \<or>\<^sub>b (q\<^sub>2 a))"
+lemma HoareTriple_weakest_pre_disj:
+  assumes "HoareTriple p\<^sub>1 m q\<^sub>1"
+      and "HoareTriple p\<^sub>2 m q\<^sub>2"
+  shows "HoareTriple (p\<^sub>1 \<or>\<^sub>b p\<^sub>2) m (\<lambda>a. (q\<^sub>1 a) \<or>\<^sub>b (q\<^sub>2 a))"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValueAndStatePart_simp)
 
 text \<open>Negation and equality does not decompose in their parts. To compute the weakest precondition
 we just unfold those definitions.\<close>
 
-lemma PrePost_weakest_pre_not:
+lemma HoareTriple_weakest_pre_not:
   assumes "q' = (\<lambda>a. bind (read_state (ValuePart (q a))) 
                           (\<lambda>x. return (\<not> x)))"
-      and "PrePost p m q'"
-  shows "PrePost p m (\<lambda>a. \<not>\<^sub>b (q a))"
+      and "HoareTriple p m q'"
+  shows "HoareTriple p m (\<lambda>a. \<not>\<^sub>b (q a))"
 using assms
 unfolding NotMonadic_def UnaryLift_def
 by simp
 
-lemma PrePost_weakest_pre_equals:
+lemma HoareTriple_weakest_pre_equals:
   assumes "q' = (\<lambda>a. bind (read_state (ValuePart (q\<^sub>1 a))) 
                           (\<lambda>x. bind (read_state (ValuePart (q\<^sub>2 a))) 
                           (\<lambda>x'. return (x = x'))))"
-      and "PrePost p m q'"
-  shows "PrePost p m (\<lambda>a. (q\<^sub>1 a) =\<^sub>b (q\<^sub>2 a))"
+      and "HoareTriple p m q'"
+  shows "HoareTriple p m (\<lambda>a. (q\<^sub>1 a) =\<^sub>b (q\<^sub>2 a))"
 using assms
 unfolding EqMonadic_def BinaryLift_def
 by simp
 
-lemma PrePostE_read_states [elim]:
-  assumes "PrePost (read_state f) m (\<lambda>a. read_state (g a))"
+lemma HoareTripleE_read_states [elim]:
+  assumes "HoareTriple (read_state f) m (\<lambda>a. read_state (g a))"
       and "f s"
   shows "g (ValuePart m s) (StatePart m s)"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValuePart_bind)
 
 subsection \<open>Invariants\<close>
 
-abbreviation "IsInvariant p f \<equiv> PrePost p f (\<lambda>_. p)"
+abbreviation "IsInvariant p f \<equiv> HoareTriple p f (\<lambda>_. p)"
 
 lemma IsInvariant_def:
   shows "IsInvariant p f = (\<forall>s. ValuePart p s \<longrightarrow> ValuePart (bind f (\<lambda>_. p)) s)"
-unfolding PrePost_def ..
+unfolding HoareTriple_def ..
 
 lemma IsInvariant_constant [intro!, simp]:
   shows "IsInvariant (return x) m"
@@ -2095,10 +2095,10 @@ lemmas IsInvariant_Commute_swapped [elim!] =
   IsInvariant_Commute[OF Commute_is_symmetric[THEN iffD1]]
 
 lemmas IsInvariant_conj = 
-  PrePost_weakest_pre_conj[where p\<^sub>1=p and q\<^sub>1="\<lambda>_. p" and p\<^sub>2=q and q\<^sub>2="\<lambda>_. q"] for p q
+  HoareTriple_weakest_pre_conj[where p\<^sub>1=p and q\<^sub>1="\<lambda>_. p" and p\<^sub>2=q and q\<^sub>2="\<lambda>_. q"] for p q
 
 lemmas IsInvariant_disj = 
-  PrePost_weakest_pre_disj[where p\<^sub>1=p and q\<^sub>1="\<lambda>_. p" and p\<^sub>2=q and q\<^sub>2="\<lambda>_. q"] for p q
+  HoareTriple_weakest_pre_disj[where p\<^sub>1=p and q\<^sub>1="\<lambda>_. p" and p\<^sub>2=q and q\<^sub>2="\<lambda>_. q"] for p q
 
 method Invariant uses intro =
   assumption |
@@ -2323,11 +2323,11 @@ subsection \<open>Proving Hoare triples\<close>
 text \<open>Introducing \<open>q'_simp\<close> in the lemma below might seem redundant, but it allows the proof method
 to simplify \<open>q'_simp\<close> before using it.\<close>
 
-lemma PrePost_from_pushingBack:
+lemma HoareTriple_from_pushingBack:
   assumes "\<And>a. SwappingGives (update_state (StatePart m)) (q a) x (q' a)"
       and "q'_simp = (bind (read_state (ValuePart m)) q')"
-  shows "PrePost q'_simp m q"
-unfolding PrePost_def assms(2)
+  shows "HoareTriple q'_simp m q"
+unfolding HoareTriple_def assms(2)
 proof (intro allI impI)
   fix s
   assume *: "ValuePart (bind (read_state (ValuePart m)) q') s"
@@ -2345,36 +2345,36 @@ proof (intro allI impI)
     using * by simp
 qed
 
-lemma PrePost_update_state_from_pushingBack:
+lemma HoareTriple_update_state_from_pushingBack:
   assumes "SwappingGives (update_state f) q x q'"
-  shows "PrePost q' (update_state f) (\<lambda>_. q)"
+  shows "HoareTriple q' (update_state f) (\<lambda>_. q)"
 using assms
-unfolding SwappingGives_def PrePost_def
+unfolding SwappingGives_def HoareTriple_def
 by (simp add: ValuePart_bind StatePart_bind)
 
-lemma PrePost_from_StrengthenedPrefix:
+lemma HoareTriple_from_StrengthenedPrefix:
   assumes "StrengthenedPrefix m m' q"
-  shows "PrePost (bind m' q) m q"
+  shows "HoareTriple (bind m' q) m q"
 using assms
-unfolding StrengthenedPrefix_def PrePost_def .
+unfolding StrengthenedPrefix_def HoareTriple_def .
 
-lemmas PrePost_from_StrengthenedPrefix_cases_arity_2 =
-  PrePost_from_StrengthenedPrefix[where m="If _ _ _"]
-  PrePost_from_StrengthenedPrefix[where m="case_option _ _ _"]
-  PrePost_from_StrengthenedPrefix[where m="case_list _ _ _"]
-  PrePost_from_StrengthenedPrefix[where m="case_DataType _ _ _"]
+lemmas HoareTriple_from_StrengthenedPrefix_cases_arity_2 =
+  HoareTriple_from_StrengthenedPrefix[where m="If _ _ _"]
+  HoareTriple_from_StrengthenedPrefix[where m="case_option _ _ _"]
+  HoareTriple_from_StrengthenedPrefix[where m="case_list _ _ _"]
+  HoareTriple_from_StrengthenedPrefix[where m="case_DataType _ _ _"]
 
-lemmas PrePost_casesI = 
-  all_split[where P="\<lambda>x. PrePost p x q", THEN iffD2] for p q
+lemmas HoareTriple_casesI = 
+  all_split[where P="\<lambda>x. HoareTriple p x q", THEN iffD2] for p q
 
-method PrePost_cases =
-  rule PrePost_casesI; 
+method HoareTriple_cases =
+  rule HoareTriple_casesI; 
   (intro conjI impI allI)?;
-  PrePost_cases?
+  HoareTriple_cases?
      
-method ParametricPrePost methods f uses simp =
-  PrePost_cases?;
-  rule PrePost_pre_strengthening,
+method ParametricHoareTriple methods f uses simp =
+  HoareTriple_cases?;
+  rule HoareTriple_pre_strengthening,
   f, 
   strong_cong_simp_all add: ValueAndStatePart_simp simp
 
@@ -2392,39 +2392,39 @@ method ComputePre methods compositeI atomI uses intro simp =
       composite @{const return}).\<close>
   solves \<open>compositeI\<close> |
   -- \<open>If that did not work, we handle composites in a general way.\<close>
-  (rule PrePost_weakest_pre_return) |
-  (rule PrePost_weakest_pre_bind,
+  (rule HoareTriple_weakest_pre_return) |
+  (rule HoareTriple_weakest_pre_bind,
       ComputePre compositeI atomI intro: intro simp: simp,
       solves \<open>strong_cong_simp add: simp\<close>,
       ComputePre compositeI atomI intro: intro simp: simp) |
-  (rule PrePost_weakest_pre_cases;
+  (rule HoareTriple_weakest_pre_cases;
       ComputePre compositeI atomI intro: intro simp: simp) |
   -- \<open>If the loop is IsInvariant under the post condition we can remove the loop.\<close>
   (rule IsInvariant_foreach_loop,
-      ParametricPrePost \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
+      ParametricHoareTriple \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
       solves \<open>ComputePreAuto simp: simp\<close>) |
-  (rule PrePost_splitValueAndStatePart_foreach_loop_agg,
+  (rule HoareTriple_splitValueAndStatePart_foreach_loop_agg,
       rule IsInvariant_foreach_loop_agg,
-      ParametricPrePost \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
+      ParametricHoareTriple \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
       solves \<open>ComputePreAuto simp: simp\<close>) |
   -- \<open>Otherwise, we append the loop to the precondition.\<close>
-  (rule PrePost_weakest_pre_foreach_loop
-        PrePost_weakest_pre_foreach_loop_agg) |
+  (rule HoareTriple_weakest_pre_foreach_loop
+        HoareTriple_weakest_pre_foreach_loop_agg) |
 
   -- \<open>Then we try the supplied method for atoms (@{const read_state}, @{const update_state} and
       CHERI functions).\<close>
   solves \<open>atomI\<close> |
   -- \<open>We decompose the monadic connectives.\<close>
-  (rule PrePost_weakest_pre_conj PrePost_weakest_pre_disj;
+  (rule HoareTriple_weakest_pre_conj HoareTriple_weakest_pre_disj;
       ComputePre compositeI atomI intro: intro simp: simp) |
-  (rule PrePost_weakest_pre_not PrePost_weakest_pre_equals,
+  (rule HoareTriple_weakest_pre_not HoareTriple_weakest_pre_equals,
       solves \<open>strong_cong_simp add: simp\<close>,
       ComputePre compositeI atomI intro: intro simp: simp) |
   -- \<open>If that did not work, we handle atoms in a general way.\<close>
-  (rule PrePost_weakest_pre_read_state) |
-  (rule PrePost_update_state_from_pushingBack,
+  (rule HoareTriple_weakest_pre_read_state) |
+  (rule HoareTriple_update_state_from_pushingBack,
       solves \<open>PushBackwards intro: intro simp: simp\<close>) | 
-  (rule PrePost_from_pushingBack,
+  (rule HoareTriple_from_pushingBack,
       solves \<open>PushBackwards intro: intro simp: simp\<close>,
       solves \<open>strong_cong_simp add: simp\<close>)
 
@@ -2434,23 +2434,23 @@ purpose is to step through the method when debugging.\<close>
 method ComputePre_debug_step methods compositeI atomI uses intro simp = 
   (rule IsInvariant_constant[where x=True]) |
   solves \<open>compositeI\<close> |
-  (rule PrePost_weakest_pre_return) |
-  (rule PrePost_weakest_pre_bind) |
-  (rule PrePost_weakest_pre_cases) |
+  (rule HoareTriple_weakest_pre_return) |
+  (rule HoareTriple_weakest_pre_bind) |
+  (rule HoareTriple_weakest_pre_cases) |
   (rule IsInvariant_foreach_loop,
-      ParametricPrePost \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
+      ParametricHoareTriple \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
       solves \<open>ComputePreAuto simp: simp\<close>) |
-  (rule PrePost_splitValueAndStatePart_foreach_loop_agg,
+  (rule HoareTriple_splitValueAndStatePart_foreach_loop_agg,
       rule IsInvariant_foreach_loop_agg,
-      ParametricPrePost \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
+      ParametricHoareTriple \<open>ComputePre compositeI atomI intro: intro simp: simp\<close> simp: simp;
       solves \<open>ComputePreAuto simp: simp\<close>) |
   solves \<open>atomI\<close> |
-  (rule PrePost_weakest_pre_conj PrePost_weakest_pre_disj) |
-  (rule PrePost_weakest_pre_not PrePost_weakest_pre_equals) |
-  (rule PrePost_weakest_pre_read_state) |
-  (rule PrePost_update_state_from_pushingBack,
+  (rule HoareTriple_weakest_pre_conj HoareTriple_weakest_pre_disj) |
+  (rule HoareTriple_weakest_pre_not HoareTriple_weakest_pre_equals) |
+  (rule HoareTriple_weakest_pre_read_state) |
+  (rule HoareTriple_update_state_from_pushingBack,
       solves \<open>PushBackwards intro: intro\<close>) | 
-  (rule PrePost_from_pushingBack,
+  (rule HoareTriple_from_pushingBack,
       solves \<open>PushBackwards intro: intro\<close>,
       solves \<open>strong_cong_simp add: simp\<close>) | 
   solves \<open>strong_cong_simp add: simp\<close>
@@ -2469,9 +2469,9 @@ method ComputePreDefault_debug_step uses intro simp =
 
 method ComputePreNoExplosion methods compositeI atomI uses intro simp =
   ComputePre \<open>compositeI |
-              (rule PrePost_weakest_pre_cases_arity_1, 
+              (rule HoareTriple_weakest_pre_cases_arity_1, 
                   ComputePreNoExplosion compositeI atomI intro: intro simp: simp) |
-              (rule PrePost_from_StrengthenedPrefix_cases_arity_2,
+              (rule HoareTriple_from_StrengthenedPrefix_cases_arity_2,
                   solves \<open>StrengthenPrefix\<close>)\<close> 
               atomI
               intro: intro simp: simp
@@ -2482,17 +2482,17 @@ method ComputePreNoExplosionDefault uses intro simp =
                          fail 
                          intro: intro simp: simp
 
-method PrePost uses intro simp = 
-  ParametricPrePost \<open>ComputePreDefault intro: intro simp: simp\<close> simp: simp
+method HoareTriple uses intro simp = 
+  ParametricHoareTriple \<open>ComputePreDefault intro: intro simp: simp\<close> simp: simp
 
-method PrePostNoExplosion uses intro simp =
-  ParametricPrePost \<open>ComputePreNoExplosionDefault intro: intro simp: simp\<close> simp: simp
+method HoareTripleNoExplosion uses intro simp =
+  ParametricHoareTriple \<open>ComputePreNoExplosionDefault intro: intro simp: simp\<close> simp: simp
 
 subsubsection \<open>Tests\<close>
 
 text \<open>The purpose of the lemmas below is testing the proof method.\<close>
 
-lemma "PrePost (return True)
+lemma "HoareTriple (return True)
                (bind (write'CAPR (cap, cd)) (\<lambda>_. write'PCC y)) 
                (\<lambda>_. bind (CAPR cd) (\<lambda>a. return (a = (if cd = 0 then nullCap else cap))))"
 proof -
@@ -2504,34 +2504,34 @@ proof -
     unfolding monad_def Let_def
     by simp
   show ?thesis
-    by PrePost
+    by HoareTriple
 qed
 
 lemma "IsInvariant (bind (CAPR cd) (\<lambda>a. return (a = cap))) (write'PCC x)"
-by PrePost
+by HoareTriple
 
 lemma "IsInvariant (bind (read_state getPC) (\<lambda>a. return (a = pc))) (write'PCC x)"
-by PrePost
+by HoareTriple
 
 lemma "IsInvariant (bind (CAPR cd) (\<lambda>a. return (a = cap)) \<and>\<^sub>b
                   bind (read_state getPC) (\<lambda>a. return (a = pc))) 
                  (write'PCC x)"
-by PrePost
+by HoareTriple
 
 lemma 
   assumes "\<And>a. IsInvariant p (m a)"
   shows "IsInvariant p (foreach_loop (l, m))"
-by (PrePost intro: assms)
+by (HoareTriple intro: assms)
 
-lemma "PrePost (bind (CAPR cd) (\<lambda>a. return (a = cap))) 
+lemma "HoareTriple (bind (CAPR cd) (\<lambda>a. return (a = cap))) 
                (write'PCC x)
                (\<lambda>_. return True)"
-by PrePost 
+by HoareTriple 
 
-lemma "PrePost (return False) 
+lemma "HoareTriple (return False) 
                (write'PCC x)
                (\<lambda>_. bind (CAPR cd) (\<lambda>a. return (a = cap))) "
-by PrePost 
+by HoareTriple 
 
 (*<*)
 end

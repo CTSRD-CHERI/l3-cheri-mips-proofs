@@ -21,14 +21,14 @@ method UndefinedCases =
 (* Code generation - override - raise'exception *)
 
 lemma UndefinedCase_raise'exception:
-  shows "PrePost (return True)
+  shows "HoareTriple (return True)
                  (raise'exception (UNPREDICTABLE v))
                  (\<lambda>_. read_state isUnpredictable)"
-by PrePost
+by HoareTriple
 
 lemma UndefinedCase_raise'exception_IsInvariant [UndefinedCasesI]:
   shows "IsInvariant (read_state isUnpredictable) (raise'exception (UNPREDICTABLE v))"
-by PrePost
+by HoareTriple
 
 (* Code generation - end override *)
 

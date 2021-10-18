@@ -457,7 +457,7 @@ oops
 lemma ValidStateInvariant_write'CP0R [ValidStateInvariantI]:
   shows "IsInvariant ValidStateInvariant (write'CP0R v)" 
 unfolding write'CP0R_alt_def
-by (rule PrePost_pre_strengthening,
+by (rule HoareTriple_pre_strengthening,
     ComputePreDefault,
     strong_cong_simp add: ValueAndStatePart_simp)
 
@@ -1538,7 +1538,7 @@ by (Invariant intro: ValidStateInvariantI)
 (* Code generation - end *)
 
 lemma ValidStateInvariant_TakeBranch [ValidStateInvariantI]:
-  shows "PrePost (read_state getCP0ConfigBE \<and>\<^sub>b
+  shows "HoareTriple (read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE)
                  TakeBranch
                  (\<lambda>_. read_state isUnpredictable \<or>\<^sub>b
@@ -1549,10 +1549,10 @@ lemma ValidStateInvariant_TakeBranch [ValidStateInvariantI]:
                        ((read_state getBranchDelay =\<^sub>b return None) \<or>\<^sub>b
                         (read_state BranchDelayPCC =\<^sub>b return None))))"
 unfolding TakeBranch_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma ValidStateInvariant_NextWithGhostState:
-  shows "PrePost (read_state getCP0ConfigBE \<and>\<^sub>b
+  shows "HoareTriple (read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE)
                  NextWithGhostState
                  (\<lambda>_. read_state isUnpredictable \<or>\<^sub>b
@@ -1563,7 +1563,7 @@ lemma ValidStateInvariant_NextWithGhostState:
                        ((read_state getBranchDelay =\<^sub>b return None) \<or>\<^sub>b
                         (read_state BranchDelayPCC =\<^sub>b return None))))"
 unfolding NextWithGhostState_def
-by (PrePost intro: ValidStateInvariantI[THEN PrePost_post_weakening])
+by (HoareTriple intro: ValidStateInvariantI[THEN HoareTriple_post_weakening])
 
 lemma ValidStateInvariant_Unpredictable:
   assumes "getStateIsValid s"
@@ -1577,7 +1577,7 @@ theorem InvarianceValidState:
       and suc: "(step, s') \<in> NextStates s"
   shows "getStateIsValid s'"
 using assms
-using ValidStateInvariant_NextWithGhostState[THEN PrePostE[where s=s]]
+using ValidStateInvariant_NextWithGhostState[THEN HoareTripleE[where s=s]]
 using ValidStateInvariant_Unpredictable[where s=s and s'=s']
 unfolding NextStates_def Next_NextWithGhostState
 unfolding StateIsValid_def GhostStateIsValid_def

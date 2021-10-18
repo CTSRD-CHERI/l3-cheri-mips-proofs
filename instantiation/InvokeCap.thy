@@ -41,7 +41,7 @@ unfolding SemanticsInvokePost_def
 by (Commute intro: assms)
 
 lemma SemanticsInvoke_CCallFast:
-  shows "PrePost ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return dataCap =\<^sub>b read_state (getCAPR cd')) \<and>\<^sub>b
                   (return capr =\<^sub>b read_state (\<lambda>s cd. getCAPR cd s)) \<and>\<^sub>b
                   (return scapr =\<^sub>b read_state (\<lambda>s cd. getSCAPR cd s)) \<and>\<^sub>b
@@ -60,10 +60,10 @@ lemma SemanticsInvoke_CCallFast:
                        (read_state BranchToPCC =\<^sub>b return None)))"
 unfolding dfn'CCallFast_alt_def SemanticsInvokePost_def
 unfolding CheckBranch_alt_def
-by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening]) auto
+by (HoareTriple intro: nonExceptionCase_exceptions[THEN HoareTriple_post_weakening]) auto
 
 lemma SemanticsInvoke_Run_aux:
-  shows "PrePost ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return dataCap =\<^sub>b read_state (getCAPR cd')) \<and>\<^sub>b
                   (return capr =\<^sub>b read_state (\<lambda>s cd. getCAPR cd s)) \<and>\<^sub>b
                   (return scapr =\<^sub>b read_state (\<lambda>s cd. getSCAPR cd s)) \<and>\<^sub>b
@@ -81,12 +81,12 @@ lemma SemanticsInvoke_Run_aux:
                        (read_state getBranchDelay =\<^sub>b return None) \<and>\<^sub>b
                        (read_state getBranchTo =\<^sub>b return None) \<and>\<^sub>b
                        (read_state BranchToPCC =\<^sub>b return None)))"
-unfolding Run_alt_def RunActions_def PrePost_def
-using PrePostE[OF SemanticsInvoke_CCallFast]
+unfolding Run_alt_def RunActions_def HoareTriple_def
+using HoareTripleE[OF SemanticsInvoke_CCallFast]
 by (auto simp: ValueAndStatePart_simp split: all_split)
 
 lemmas SemanticsInvoke_Run =
-  PrePost_weakest_pre_disj[OF SemanticsInvoke_Run_aux
+  HoareTriple_weakest_pre_disj[OF SemanticsInvoke_Run_aux
                               UndefinedCase_Run]
 
 lemma SemanticsInvoke_Fetch:
@@ -101,15 +101,15 @@ lemma SemanticsInvoke_Fetch:
                    (return (case Decode w of COP2 (CHERICOP2 (CCallFast (cs, cb))) \<Rightarrow> 
                                              (cs = cd) \<and> (cb = cd')
                                            | _ \<Rightarrow> False))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch[THEN PrePost_post_weakening]) Commute+
+by (intro HoareTriple_Fetch[THEN HoareTriple_post_weakening]) Commute+
 
 lemma SemanticsInvoke_TakeBranch:
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b
                   (SemanticsInvokePost codeCap dataCap capr scapr mem \<and>\<^sub>b
                    (read_state getBranchDelay =\<^sub>b return None) \<and>\<^sub>b
@@ -128,10 +128,10 @@ lemma SemanticsInvoke_TakeBranch:
                        bind (read_state getPC) 
                             (\<lambda>x. return (x = getOffset codeCap))))"
 unfolding TakeBranch_def SemanticsInvokePost_def
-by PrePost (auto split: option.splits)
+by HoareTriple (auto split: option.splits)
 
 lemma SemanticsInvoke_NextWithGhostState:
-  shows "PrePost ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return codeCap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return dataCap =\<^sub>b read_state (getCAPR cd')) \<and>\<^sub>b
                   (return capr =\<^sub>b read_state (\<lambda>s cd. getCAPR cd s)) \<and>\<^sub>b
                   (return scapr =\<^sub>b read_state (\<lambda>s cd. getSCAPR cd s)) \<and>\<^sub>b
@@ -159,7 +159,7 @@ proof -
   show ?thesis
     unfolding NextWithGhostState_def 
     unfolding NextNonExceptionStep_def DomainActions_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening])
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening])
        (auto split: option.splits elim!: CCallFastInstructionParam_Some)
 qed
 
@@ -191,7 +191,7 @@ using SemanticsInvoke_NextWithGhostState
          [where codeCap=CodeCap and dataCap=DataCap and cd=cd and cd'=cd' and
                 capr="\<lambda>cd. getCAPR cd s" and scapr="\<lambda>cd. getSCAPR cd s" and
                 mem="\<lambda>a. getMEM a s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 unfolding CodeCap_def DataCap_def SemanticsInvokePost_def
 unfolding NextStates_def Next_NextWithGhostState
 unfolding StateIsValid_def GhostStateIsValid_def

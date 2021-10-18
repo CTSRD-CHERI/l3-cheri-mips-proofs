@@ -22,7 +22,7 @@ abbreviation (out) MemoryInvariantPost where
    (read_state (getMemByte addr) =\<^sub>b return val)"
   
 method MemoryInvariant uses intro =
-  PrePost intro: intro MemoryInvariantI[THEN PrePost_post_weakening]
+  HoareTriple intro: intro MemoryInvariantI[THEN HoareTriple_post_weakening]
 
 (* Code generation - start - memory invariant *)
 
@@ -35,7 +35,7 @@ method MemoryInvariant uses intro =
 (* Code generation - skip - SignalCapException_noReg *)
 
 lemma MemoryInvariant_dfn'ERET [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind ERETActions
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  dfn'ERET
@@ -77,7 +77,7 @@ proof (cases "(slice 5 addr::35 word) = slice 2 addr'")
   case False
   show ?thesis
     unfolding WriteData_alt_def write'MEM_alt_def 
-    by PrePost (auto simp: getMemByte_def Let_def MEM_def ValuePart_bind ucast_shiftr False)
+    by HoareTriple (auto simp: getMemByte_def Let_def MEM_def ValuePart_bind ucast_shiftr False)
 next
   case True
   have "(8::nat) dvd 32" by arith
@@ -131,20 +131,20 @@ next
     by (intro updateDwordInRaw_idem) auto
   show ?thesis
     unfolding WriteData_alt_def write'MEM_alt_def 
-    by PrePost (auto simp: getMemByte_def Let_def MEM_def ValuePart_bind ucast_shiftr)
+    by HoareTriple (auto simp: getMemByte_def Let_def MEM_def ValuePart_bind ucast_shiftr)
 qed
 
 (* We deliberately don't add the lemma to MemoryInvariantI. *)
 
 lemma MemoryInvariant_WriteData:
-  shows "PrePost (return (case v of (addr', val', msk) \<Rightarrow>
+  shows "HoareTriple (return (case v of (addr', val', msk) \<Rightarrow>
                           slice 3 a \<noteq> addr' \<or>
                           extract_byte (unat (a XOR mask 3) mod 8) msk = 0) \<and>\<^sub>b
                   (read_state (getMemByte a) =\<^sub>b return val)) 
                  (WriteData v)
                  (\<lambda>_. read_state (getMemByte a) =\<^sub>b return val)" 
-  (is "PrePost ?p ?m ?q")
-proof (intro PrePostI)
+  (is "HoareTriple ?p ?m ?q")
+proof (intro HoareTripleI)
   fix s
   assume as: "ValuePart ?p s"
   hence "extract_byte (unat (a XOR mask 3) mod 8) (snd (snd v)) = 0" 
@@ -154,7 +154,7 @@ proof (intro PrePostI)
   note aux = MemoryInvariant_WriteData_getMemByte[OF this]
   have "ValuePart (read_state (getMemByte a) =\<^sub>b return val) s"
     using as by (auto simp: ValueAndStatePart_simp)
-  note PrePostE[where s=s, OF aux this]
+  note HoareTripleE[where s=s, OF aux this]
   thus "ValuePart (bind (WriteData v) (\<lambda>_. read_state (getMemByte a) =\<^sub>b return val)) s"
     by (cases v) (simp add: ValueAndStatePart_simp)
 qed
@@ -171,12 +171,12 @@ unfolding getMemByte_def Let_def
 by auto
 
 lemma MemoryInvariant_WriteCap_aux:
-  shows "PrePost (return (slice (log2 CAPBYTEWIDTH) addr \<noteq> fst v) \<and>\<^sub>b
+  shows "HoareTriple (return (slice (log2 CAPBYTEWIDTH) addr \<noteq> fst v) \<and>\<^sub>b
                   (read_state (getMemByte addr) =\<^sub>b return val)) 
                  (WriteCap v)
                  (\<lambda>_. read_state (getMemByte addr) =\<^sub>b return val)"
 unfolding WriteCap_alt_def 
-by PrePost (auto intro!: MemoryInvariant_WriteCap_aux2)
+by HoareTriple (auto intro!: MemoryInvariant_WriteCap_aux2)
 
 lemma MemoryInvariant_WriteCap_unpred:
   shows "IsInvariant (read_state getExceptionSignalled \<or>\<^sub>b read_state isUnpredictable)
@@ -184,7 +184,7 @@ lemma MemoryInvariant_WriteCap_unpred:
 by Invariant
 
 lemmas MemoryInvariant_WriteCap [MemoryInvariantI] =
-  PrePost_weakest_pre_disj
+  HoareTriple_weakest_pre_disj
     [OF MemoryInvariant_WriteCap_aux
         MemoryInvariant_WriteCap_unpred]
 
@@ -285,7 +285,7 @@ lemma MemoryInvariant_WriteData_specific_Mem:
     and addr :: "40 word"
   defines "m \<equiv> 56 - (unat length * 8 + (unat (vAddr' AND mask 3)) * 8) + (8 + unat length * 8)"
       and "n \<equiv> 56 - (unat length * 8 + (unat (vAddr' AND mask 3)) * 8)"
-  shows "PrePost (return ((slice 3 addr::37 word) \<noteq> slice 3 addr' \<or>
+  shows "HoareTriple (return ((slice 3 addr::37 word) \<noteq> slice 3 addr' \<or>
                           ((unat length + unat vAddr' mod 8 < unat addr mod 8 \<or> 
                             unat addr mod 8 < unat vAddr' mod 8) \<and>
                            unat vAddr' mod 8 + unat length < 8)) \<and>\<^sub>b
@@ -294,7 +294,7 @@ lemma MemoryInvariant_WriteData_specific_Mem:
                  (\<lambda>_. read_state (getMemByte addr) =\<^sub>b return val)"
 unfolding m_def n_def
 using extract_byte_from_WriteData_mask
-by (intro PrePostIE[OF MemoryInvariant_WriteData])
+by (intro HoareTripleIE[OF MemoryInvariant_WriteData])
    (auto simp: ValueAndStatePart_simp)
 
 lemma MemoryInvariant_WriteData_specific_unpred:
@@ -303,7 +303,7 @@ lemma MemoryInvariant_WriteData_specific_unpred:
 by Invariant
 
 lemmas MemoryInvariant_WriteData_specific [MemoryInvariantI] =
-  PrePost_weakest_pre_disj
+  HoareTriple_weakest_pre_disj
     [OF MemoryInvariant_WriteData_specific_Mem 
         MemoryInvariant_WriteData_specific_unpred]
 
@@ -313,7 +313,7 @@ lemma MemoryInvariant_AdjustEndian [MemoryInvariantI]:
     and a :: "40 word"
   defines "b \<equiv> (unat l + unat a' mod 8 < unat a mod 8 \<or> unat a mod 8 < unat a' mod 8) \<and> 
                 unat a' mod 8 + unat l < 8"
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b
                   (return ((slice 3 a::37 word) \<noteq> slice 3 (snd v) \<or> b) \<and>\<^sub>b 
                    (read_state (getMemByte a) =\<^sub>b return val)))
@@ -323,7 +323,7 @@ lemma MemoryInvariant_AdjustEndian [MemoryInvariantI]:
                       (return ((slice 3 a::37 word) \<noteq> slice 3 x \<or> b) \<and>\<^sub>b 
                        (read_state (getMemByte a) =\<^sub>b return val)))"
 unfolding AdjustEndian_alt_def
-by PrePost (auto simp: slice_xor)
+by HoareTriple (auto simp: slice_xor)
 
 lemma MemoryInvariant_RegionI:
   fixes accessLength :: "3 word"
@@ -380,7 +380,7 @@ using MemoryInvariant_RegionI[where accessLength=0]
 by auto
 
 lemma MemoryInvariant_StoreMemoryCap [MemoryInvariantI]:
-  shows "PrePost ((case v of (memType, accessLength, memElem, needAlign, vAddr, cond) \<Rightarrow>
+  shows "HoareTriple ((case v of (memType, accessLength, memElem, needAlign, vAddr, cond) \<Rightarrow>
                    bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> 
@@ -393,7 +393,7 @@ lemma MemoryInvariant_StoreMemoryCap [MemoryInvariantI]:
                       read_state isUnpredictable \<or>\<^sub>b
                       read_state (getMemByte a) =\<^sub>b return val)"
 unfolding StoreMemoryCap_alt_def
-by (MemoryInvariant intro: PrePost_DefinedAddressTranslation)
+by (MemoryInvariant intro: HoareTriple_DefinedAddressTranslation)
    (auto simp: not_le not_less
          intro: isAligned_max_length 
          elim!: MemoryInvariant_RegionI
@@ -405,7 +405,7 @@ by (MemoryInvariant intro: PrePost_DefinedAddressTranslation)
 (* Code generation - override - StoreMemory *)
 
 lemma MemoryInvariant_StoreMemory [MemoryInvariantI]:
-  shows "PrePost ((case v of (memType, accessLength, needAlign, memElem, vAddr, cond) \<Rightarrow>
+  shows "HoareTriple ((case v of (memType, accessLength, needAlign, memElem, vAddr, cond) \<Rightarrow>
                    bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> 
@@ -425,7 +425,7 @@ by MemoryInvariant auto?
 (* Code generation - override - StoreCap *)
 
 lemma MemoryInvariant_StoreCap [MemoryInvariantI]:
-  shows "PrePost ((case v of (vAddr, cap, cond) \<Rightarrow>
+  shows "HoareTriple ((case v of (vAddr, cap, cond) \<Rightarrow>
                    bind (read_state getLLbit)
                         (\<lambda>llbit. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
@@ -437,7 +437,7 @@ lemma MemoryInvariant_StoreCap [MemoryInvariantI]:
                       read_state isUnpredictable \<or>\<^sub>b
                       read_state (getMemByte a) =\<^sub>b return val)"
 proof -
-  note addr_trans [MemoryInvariantI] = PrePost_DefinedAddressTranslation
+  note addr_trans [MemoryInvariantI] = HoareTriple_DefinedAddressTranslation
      [where p="\<lambda>x. bind (read_state getLLbit)
                         (\<lambda>llbit. return (((snd (snd v)) \<longrightarrow> llbit = Some True) \<longrightarrow> 
                                           slice 5 a \<noteq> slice 5 x)) \<and>\<^sub>b 
@@ -842,7 +842,7 @@ unfolding loadDoubleword_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LB [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LBActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LB v)
@@ -856,7 +856,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LBU [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LBUActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LBU v)
@@ -870,7 +870,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LH [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LHActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LH v)
@@ -884,7 +884,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LHU [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LHUActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LHU v)
@@ -898,7 +898,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LW [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LWActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LW v)
@@ -912,7 +912,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LWU [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LWUActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LWU v)
@@ -926,7 +926,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LL [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LLActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LL v)
@@ -940,7 +940,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LD [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LDActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LD v)
@@ -954,7 +954,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LLD [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LLDActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LLD v)
@@ -968,7 +968,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LWL [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LWLActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LWL v)
@@ -982,7 +982,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LWR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LWRActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LWR v)
@@ -996,7 +996,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LDL [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LDLActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LDL v)
@@ -1010,7 +1010,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'LDR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (LDRActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'LDR v)
@@ -1024,7 +1024,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'SB [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SBActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SB v)
@@ -1038,7 +1038,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'SH [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SHActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SH v)
@@ -1054,7 +1054,7 @@ by MemoryInvariant auto?
 (* Code generation - override - storeWord *)
 
 lemma MemoryInvariant_storeWord [MemoryInvariantI]:
-  shows "PrePost ((case v of (b, rt, offset, cond) \<Rightarrow>
+  shows "HoareTriple ((case v of (b, rt, offset, cond) \<Rightarrow>
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
@@ -1076,7 +1076,7 @@ by MemoryInvariant auto?
 (* Code generation - override - storeDoubleword *)
 
 lemma MemoryInvariant_storeDoubleword [MemoryInvariantI]:
-  shows "PrePost ((case v of (b, rt, offset, cond) \<Rightarrow>
+  shows "HoareTriple ((case v of (b, rt, offset, cond) \<Rightarrow>
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
@@ -1096,7 +1096,7 @@ by MemoryInvariant auto?
 (* Code generation - end override *)
 
 lemma MemoryInvariant_dfn'SW [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SWActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SW v)
@@ -1110,7 +1110,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'SD [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SDActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SD v)
@@ -1124,7 +1124,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'SC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SC v)
@@ -1138,7 +1138,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'SCD [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (SCDActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'SCD v)
@@ -1154,7 +1154,7 @@ by MemoryInvariant auto?
 (* Code generation - override - dfn'SWL *)
 
 lemma MemoryInvariant_dfn'SWL [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   bind (SWLActions v)
@@ -1179,7 +1179,7 @@ by MemoryInvariant
 (* Code generation - override - dfn'SWR *)
 
 lemma MemoryInvariant_dfn'SWR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   bind (SWRActions v)
@@ -1222,7 +1222,7 @@ qed
 (* Code generation - override - dfn'SDL *)
 
 lemma MemoryInvariant_dfn'SDL [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   bind (SDLActions v)
@@ -1268,7 +1268,7 @@ qed
 (* Code generation - override - dfn'SDR *)
 
 lemma MemoryInvariant_dfn'SDR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   bind (SDRActions v)
@@ -1526,7 +1526,7 @@ unfolding dfn'CGetAddr_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CGetPCC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CGetPCCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CGetPCC v)
@@ -1540,7 +1540,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CGetPCCSetOffset [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CGetPCCSetOffsetActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CGetPCCSetOffset v)
@@ -1564,7 +1564,7 @@ unfolding dfn'CSetCause_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CIncOffset [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CIncOffsetActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CIncOffset v)
@@ -1578,7 +1578,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CIncOffsetImmediate [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CIncOffsetImmediateActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CIncOffsetImmediate v)
@@ -1592,7 +1592,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CSetBounds [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSetBoundsActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSetBounds v)
@@ -1606,7 +1606,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CSetBoundsExact [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSetBoundsExactActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSetBoundsExact v)
@@ -1620,7 +1620,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CSetBoundsImmediate [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSetBoundsImmediateActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSetBoundsImmediate v)
@@ -1649,7 +1649,7 @@ unfolding dfn'ClearHi_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CClearLo [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CClearLoActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CClearLo v)
@@ -1663,7 +1663,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CClearHi [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CClearHiActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CClearHi v)
@@ -1677,7 +1677,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CClearTag [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CClearTagActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CClearTag v)
@@ -1691,7 +1691,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CAndPerm [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CAndPermActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CAndPerm v)
@@ -1705,7 +1705,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CSetOffset [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSetOffsetActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSetOffset v)
@@ -1734,7 +1734,7 @@ unfolding dfn'CCheckType_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CFromPtr [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CFromPtrActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CFromPtr v)
@@ -1820,7 +1820,7 @@ by MemoryInvariant auto?
 (* Code generation - override - dfn'CSC *)
 
 lemma MemoryInvariant_dfn'CSC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSC v)
@@ -1836,7 +1836,7 @@ by MemoryInvariant
 (* Code generation - end override *)
 
 lemma MemoryInvariant_dfn'CLC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CLCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CLC v)
@@ -1850,7 +1850,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CLoad [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CLoadActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CLoad v)
@@ -1868,7 +1868,7 @@ by MemoryInvariant auto?
 (* Code generation - override - dfn'CStore *)
 
 lemma MemoryInvariant_dfn'CStore [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CStoreActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CStore v)
@@ -1890,7 +1890,7 @@ qed
 (* Code generation - end override *)
 
 lemma MemoryInvariant_dfn'CLLC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CLLCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CLLC v)
@@ -1904,7 +1904,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CLLx [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CLLxActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CLLx v)
@@ -1920,7 +1920,7 @@ by MemoryInvariant auto?
 (* Code generation - override - dfn'CSCC *)
 
 lemma MemoryInvariant_dfn'CSCC [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSCCActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSCC v)
@@ -1939,7 +1939,7 @@ by MemoryInvariant
 (* Code generation - override - dfn'CSCx *)
 
 lemma MemoryInvariant_dfn'CSCx [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSCxActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSCx v)
@@ -1961,7 +1961,7 @@ qed
 (* Code generation - end override *)
 
 lemma MemoryInvariant_dfn'CMOVN [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CMOVNActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CMOVN v)
@@ -1975,7 +1975,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CMOVZ [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CMOVZActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CMOVZ v)
@@ -1989,7 +1989,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CMove [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CMoveActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CMove v)
@@ -2008,7 +2008,7 @@ unfolding dfn'CTestSubset_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CBuildCap [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CBuildCapActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CBuildCap v)
@@ -2022,7 +2022,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CCopyType [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CCopyTypeActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CCopyType v)
@@ -2036,7 +2036,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CJR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CJRActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CJR v)
@@ -2050,7 +2050,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CJALR [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CJALRActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CJALR v)
@@ -2064,7 +2064,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CSeal [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CSealActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CSeal v)
@@ -2078,7 +2078,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CUnseal [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CUnsealActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CUnseal v)
@@ -2105,7 +2105,7 @@ by MemoryInvariant
 (* Code generation - end override *)
 
 lemma MemoryInvariant_dfn'CReadHwr [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CReadHwrActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CReadHwr v)
@@ -2119,7 +2119,7 @@ unfolding CheckBranch_alt_def getVirtualAddress_alt_def
 by MemoryInvariant auto?
 
 lemma MemoryInvariant_dfn'CWriteHwr [MemoryInvariantI]:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   bind (CWriteHwrActions v)
                        (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p))))
                  (dfn'CWriteHwr v)
@@ -2145,7 +2145,7 @@ by MemoryInvariant auto?
 (* Code generation - override - Run *)
 
 lemma MemoryInvariant_Run_aux:
-  shows "PrePost ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
+  shows "HoareTriple ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   bind (RunActions v)
@@ -2160,7 +2160,7 @@ unfolding Run_alt_def CheckBranch_alt_def RunActions_def
 by MemoryInvariant auto?
 
 lemmas MemoryInvariant_Run [MemoryInvariantI] =
-  PrePost_weakest_pre_disj[OF MemoryInvariant_Run_aux
+  HoareTriple_weakest_pre_disj[OF MemoryInvariant_Run_aux
                               UndefinedCase_Run]
 
 (* Code generation - end override *)
@@ -2170,7 +2170,7 @@ lemmas MemoryInvariant_Run [MemoryInvariantI] =
 lemma MemoryInvariant_TakeBranch [MemoryInvariantI]:
   shows "IsInvariant (MemoryInvariantPost a val) TakeBranch"
 unfolding TakeBranch_def
-by PrePost (auto split: option.splits)
+by HoareTriple (auto split: option.splits)
 
 lemma MemoryInvariant_Fetch_aux1:
   shows "IsInvariant ((read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
@@ -2185,20 +2185,20 @@ lemma MemoryInvariant_Fetch_aux2:
                                            | _ \<Rightarrow> True) \<and>\<^sub>b 
                     bind (RunActions (Decode w))
                          (\<lambda>p. return (a \<notin> \<Union> (WrittenAddresses ` p)))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> read_state getExceptionSignalled
                               | Some w \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p w)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemmas MemoryInvariant_Fetch [MemoryInvariantI] =
-  PrePost_weakest_pre_conj
+  HoareTriple_weakest_pre_conj
       [OF MemoryInvariant_Fetch_aux1[where a=a] 
           MemoryInvariant_Fetch_aux2[where a=a]] for a
 
 lemma MemoryInvariant_NextWithGhostState [MemoryInvariantI]:
-  shows "PrePost (read_state getGhostStateIsValid \<and>\<^sub>b
+  shows "HoareTriple (read_state getGhostStateIsValid \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   (read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b
@@ -2221,7 +2221,7 @@ theorem MemoryInvariant:
       and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getMemByte a s' = getMemByte a s"
 using assms
-using PrePostE[where s=s,
+using HoareTripleE[where s=s,
                OF MemoryInvariant_NextWithGhostState
                   [where a=a and val="getMemByte a s"]]
 unfolding StateIsValid_def

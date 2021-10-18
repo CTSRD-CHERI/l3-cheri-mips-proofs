@@ -16,7 +16,7 @@ section \<open>Semantics of @{const StoreDataAction}}\<close>
 named_theorems SemanticsStoreDataI
   
 method SemanticsStoreData uses intro =
-  PrePost intro: intro SemanticsStoreDataI[THEN PrePost_post_weakening]
+  HoareTriple intro: intro SemanticsStoreDataI[THEN HoareTriple_post_weakening]
 
 declare nonExceptionCase_exceptions [SemanticsStoreDataI]
 
@@ -47,12 +47,12 @@ by (Commute intro: assms)
 
 lemma SemanticsStoreData_WriteData_aux:
   fixes a :: PhysicalAddress
-  shows "PrePost (read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap)
+  shows "HoareTriple (read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap)
                  (WriteData v)
                  (\<lambda>_. bind (read_state (getMemCap (GetCapAddress a))) 
                            (\<lambda>cap'. return (getTag cap' \<longrightarrow> cap' = cap)))"
 unfolding WriteData_alt_def
-by PrePost auto
+by HoareTriple auto
 
 lemma UndefinedCase_WriteData:
   shows "IsInvariant (read_state isUnpredictable) (WriteData v)"
@@ -61,10 +61,10 @@ by Invariant
 lemma SemanticsStoreData_AdjustEndian_aux:
   shows "IsInvariant (read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap)
                      (AdjustEndian v)"
-by PrePost
+by HoareTriple
 
 lemma SemanticsStoreData_StoreMemoryCap_unpred:
-  shows "PrePost ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
+  shows "HoareTriple ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   return ((case v of (memType, accessLength, _, needAlign, vAddr, _) \<Rightarrow>
                            (needAlign \<and> memType = accessLength \<and> 
                             \<not> unat vAddr mod 8 + unat accessLength < 8) \<or>
@@ -74,22 +74,22 @@ lemma SemanticsStoreData_StoreMemoryCap_unpred:
                       read_state isUnpredictable)"
 proof -
   note AdjustEndian_intro =
-    PrePost_weakest_pre_disj[OF 
+    HoareTriple_weakest_pre_disj[OF 
       ExceptionSignalled_AdjustEndian
       UndefinedCase_AdjustEndian]
   note intros = 
     AdjustEndian_intro 
-    PrePost_DefinedAddressTranslation[where p="\<lambda>x. return False"]
+    HoareTriple_DefinedAddressTranslation[where p="\<lambda>x. return False"]
   show ?thesis
     unfolding StoreMemoryCap_alt_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening])
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening])
        (auto simp: getTranslateAddrFunc_def
              dest!: isAligned_max_length)
 qed
 
 lemma SemanticsStoreData_StoreMemoryCap_mem:
   fixes a' :: PhysicalAddress
-  shows "PrePost (read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap)
+  shows "HoareTriple (read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap)
                  (StoreMemoryCap v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b 
                       read_state isUnpredictable \<or>\<^sub>b
@@ -97,37 +97,37 @@ lemma SemanticsStoreData_StoreMemoryCap_mem:
                            (\<lambda>cap'. return (getTag cap' \<longrightarrow> cap' = cap)))"
 proof -
   note AdjustEndian_intro =
-    PrePost_weakest_pre_disj[OF 
+    HoareTriple_weakest_pre_disj[OF 
       SemanticsStoreData_AdjustEndian_aux[where a=a and cap=cap]
-      PrePost_weakest_pre_disj[OF 
+      HoareTriple_weakest_pre_disj[OF 
         UndefinedCase_AdjustEndian
         ExceptionSignalled_AdjustEndian]]
   note WriteData_intro =
-    PrePost_weakest_pre_disj[OF 
+    HoareTriple_weakest_pre_disj[OF 
       SemanticsStoreData_WriteData_aux[where a=a and cap=cap]
-      PrePost_weakest_pre_disj[OF 
+      HoareTriple_weakest_pre_disj[OF 
         UndefinedCase_WriteData
         ExceptionSignalled_WriteData]]
   note intros = 
     AdjustEndian_intro 
     WriteData_intro
-    PrePost_DefinedAddressTranslation
+    HoareTriple_DefinedAddressTranslation
       [where p="\<lambda>x. read_state (getMemCap (GetCapAddress a)) =\<^sub>b return cap"]
   show ?thesis
     unfolding StoreMemoryCap_alt_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening])
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening])
 qed
 
 lemmas SemanticsStoreData_StoreMemoryCap =
-  PrePost_weakest_pre_disj[OF
+  HoareTriple_weakest_pre_disj[OF
     SemanticsStoreData_StoreMemoryCap_unpred[where addrTrans=addrTrans]
-    PrePost_weakest_pre_conj[OF 
+    HoareTriple_weakest_pre_conj[OF 
       SemanticsStoreData_StoreMemoryCap_mem[where cap=cap and a=a]
       IsInvariant_constant[where x="AddressIsDataWritable authCap addrTrans a l"]]]
   for cap authCap addrTrans a l
 
 lemma SemanticsStoreData_StoreMemory_aux:
-  shows "PrePost ((return authCap =\<^sub>b read_state getDDC) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state getDDC) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   return ((case v of (memType, accessLength, needAlign, _, vAddr, _) \<Rightarrow>
@@ -159,25 +159,25 @@ proof -
 qed
 
 lemmas SemanticsStoreData_StoreMemory =
-  PrePost_weakest_pre_conj[OF SemanticsStoreData_StoreMemory_aux
+  HoareTriple_weakest_pre_conj[OF SemanticsStoreData_StoreMemory_aux
                               IsInvariant_constant[where x=authAccessible]]
   for authAccessible
 
 lemma SemanticsStoreData_StoreCap:
-  shows "PrePost ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
+  shows "HoareTriple ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   return ((case v of (vAddr, cap, cond) \<Rightarrow>
                            addrTrans (vAddr, STORE) = None)))
                  (StoreCap v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b 
                       read_state isUnpredictable)"
 unfolding StoreCap_alt_def
-by (PrePost intro: 
-       PrePost_DefinedAddressTranslation
-         [where p="\<lambda>x. return False", THEN PrePost_post_weakening])
+by (HoareTriple intro: 
+       HoareTriple_DefinedAddressTranslation
+         [where p="\<lambda>x. return False", THEN HoareTriple_post_weakening])
    (auto simp: getTranslateAddrFunc_def)
 
 lemma SemanticsStoreAndRestrict_dfn'SB [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -200,7 +200,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SH [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -223,7 +223,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SW [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -246,7 +246,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SD [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -269,7 +269,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SC [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -292,7 +292,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SCD [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -315,7 +315,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SWL [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -345,7 +345,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SWR [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -390,7 +390,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SDL [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -438,7 +438,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'SDR [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -484,7 +484,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'CStore [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -496,9 +496,9 @@ lemma SemanticsStoreAndRestrict_dfn'CStore [SemanticsStoreDataI]:
                       return authAccessible)"
 proof -
   note [SemanticsStoreDataI] =
-    PrePost_weakest_pre_disj[OF
+    HoareTriple_weakest_pre_disj[OF
       SemanticsStoreData_StoreMemoryCap_unpred[where addrTrans=addrTrans]
-      PrePost_weakest_pre_conj[OF 
+      HoareTriple_weakest_pre_conj[OF 
         SemanticsStoreData_StoreMemoryCap_mem[where cap=cap and a=a]
         IsInvariant_constant[where x="AddressIsDataWritable authCap addrTrans a l \<and> 
                                       authAccessible"]]]
@@ -531,7 +531,7 @@ proof -
 qed
 
 lemma SemanticsStoreAndRestrict_dfn'CSCx [SemanticsStoreDataI]:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -543,9 +543,9 @@ lemma SemanticsStoreAndRestrict_dfn'CSCx [SemanticsStoreDataI]:
                       return authAccessible)"
 proof -
   note [SemanticsStoreDataI] =
-    PrePost_weakest_pre_disj[OF
+    HoareTriple_weakest_pre_disj[OF
       SemanticsStoreData_StoreMemoryCap_unpred[where addrTrans=addrTrans]
-      PrePost_weakest_pre_conj[OF 
+      HoareTriple_weakest_pre_conj[OF 
         SemanticsStoreData_StoreMemoryCap_mem[where cap=cap and a=a]
         IsInvariant_constant[where x="AddressIsDataWritable authCap addrTrans a l \<and> 
                                     authAccessible"]]]
@@ -578,7 +578,7 @@ proof -
 qed
 
 lemma SemanticsStoreData_Run_aux:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -591,14 +591,14 @@ lemma SemanticsStoreData_Run_aux:
                       SemanticsStoreDataPost authCap addrTrans a l cap \<and>\<^sub>b
                       return authAccessible)"
 unfolding Run_alt_def RunActions_def
-by (PrePost_cases;
-    rule PrePost_pre_strengthening,
+by (HoareTriple_cases;
+    rule HoareTriple_pre_strengthening,
     rule SemanticsStoreDataI
-         PrePost_weakest_pre_any,
+         HoareTriple_weakest_pre_any,
     solves \<open>auto simp: ValueAndStatePart_simp\<close>)
 
 lemmas SemanticsStoreData_Run =
-  PrePost_weakest_pre_disj[OF SemanticsStoreData_Run_aux
+  HoareTriple_weakest_pre_disj[OF SemanticsStoreData_Run_aux
                               UndefinedCase_Run]
 
 lemma SemanticsStoreData_Fetch:
@@ -610,15 +610,15 @@ lemma SemanticsStoreData_Fetch:
                     (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>ac. return (StoreDataAction auth a l \<in> ac))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemma SemanticsStoreData_NextWithGhostState:
-  shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
+  shows "HoareTriple ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return cap =\<^sub>b read_state (getMemCap (GetCapAddress a))) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
@@ -666,7 +666,7 @@ using SemanticsStoreData_NextWithGhostState
                 authCap="getCapReg auth s" and
                 cap="getMemCap (GetCapAddress a) s" and
                 authAccessible="getRegisterIsAccessible auth s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 unfolding SemanticsStoreDataPost_def AddressIsDataWritable_def 
 unfolding getTranslateAddrFunc_def getTranslateAddresses_def
 unfolding StateIsValid_def

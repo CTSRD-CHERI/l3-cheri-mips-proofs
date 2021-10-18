@@ -524,17 +524,17 @@ using assms
 unfolding Commute_def
 by auto
 
-lemma StatePartSimpFromPrePost:
+lemma StatePartSimpFromHoareTriple:
   fixes s :: state
-  assumes "\<And>x. PrePost (read_state f' =\<^sub>b return x) m (\<lambda>_. read_state f =\<^sub>b return x)"
+  assumes "\<And>x. HoareTriple (read_state f' =\<^sub>b return x) m (\<lambda>_. read_state f =\<^sub>b return x)"
   shows "f (StatePart m s) = f' s"
 using assms
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (simp add: ValueAndStatePart_simp)
 
-method SimpLemmaViaPrePost uses simp = 
-  rule StatePartSimpFromPrePost,
-  (PrePostNoExplosion simp: simp)
+method SimpLemmaViaHoareTriple uses simp = 
+  rule StatePartSimpFromHoareTriple,
+  (HoareTripleNoExplosion simp: simp)
 
 subsection \<open>Generated lemmas\<close>
 
@@ -1637,7 +1637,7 @@ subsubsection \<open>@{const raise'exception}\<close>
 
 lemma raise'exception_getExceptionSignalled [simp]:
   shows "getExceptionSignalled (StatePart (raise'exception v) s) = getExceptionSignalled s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma raise'exception_exception:
   shows "exception (StatePart (raise'exception v) s) = 
@@ -1649,17 +1649,17 @@ subsubsection \<open>@{const check_cca}\<close>
 
 lemma check_cca_getExceptionSignalled [simp]:
   shows "getExceptionSignalled (StatePart (check_cca v) s) = getExceptionSignalled s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const next_unknown}\<close>
 
 lemma next_unknown_getExceptionSignalled [simp]:
   shows "getExceptionSignalled (StatePart (next_unknown v) s) = getExceptionSignalled s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma next_unknown_exception [simp]:
   shows "exception (StatePart (next_unknown v) s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalException}\<close>
 
@@ -1671,51 +1671,51 @@ by (rule Commute_read_state_update_stateE, Commute)+
 lemma setSignalException_getExceptionSignalled [simp]:
   shows "getExceptionSignalled ((setSignalException v) s) = True"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_exception [simp]:
   shows "exception (setSignalException v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_BranchTo [simp]:
   shows "getBranchTo ((setSignalException v) s) = None"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_BranchDelay [simp]:
   shows "getBranchDelay ((setSignalException v) s) = None"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_BranchToPCC [simp]:
   shows "BranchToPCC ((setSignalException v) s) = None"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_BranchDelayPCC [simp]:
   shows "BranchDelayPCC ((setSignalException v) s) = None"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_getPCC [simp]:
   shows "getPCC ((setSignalException v) s) = getKCC s"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_getCAPR [simp]:
   shows "getCAPR cd ((setSignalException v) s) = getCAPR cd s"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_ExcCode [simp]:
   shows "CauseRegister.ExcCode (Cause (getCP0 ((setSignalException v) s))) = ExceptionCode v"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 lemma setSignalException_CP0Status [simp]:
   shows "Status (getCP0 ((setSignalException v) s)) = Status (getCP0 s)\<lparr>EXL := True\<rparr>"
 unfolding SignalException_alt_def
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 definition SignalExceptionSCAPR where
   "SignalExceptionSCAPR \<equiv> 
@@ -1738,7 +1738,7 @@ lemma setSignalException_getSCAPR [simp]:
 unfolding SignalException_alt_def SignalExceptionSCAPR_def
 unfolding canRepOffset_def
 -- \<open>The following takes a long time.\<close>
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
    (auto split: if_splits(1))
 
 definition VectorBaseSignalExceptionPC :: "state \<Rightarrow> 64 word" where
@@ -1767,7 +1767,7 @@ unfolding SignalException_alt_def
   canRepOffset_def
 unfolding Let_def
 -- \<open>The following takes a long time.\<close> 
-by (SimpLemmaViaPrePost simp: if_bool_simps)
+by (SimpLemmaViaHoareTriple simp: if_bool_simps)
 
 definition ExceptionPCs where
   "ExceptionPCs \<equiv> 
@@ -1797,7 +1797,7 @@ by (simp add: StatePart_bind)
 
 lemma setSignalCP2UnusableException_exception [simp]:
   shows "exception (setSignalCP2UnusableException s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalCapException_internal}\<close>
 
@@ -1808,7 +1808,7 @@ by (cases v) (simp add: StatePart_bind)
 
 lemma setSignalCapException_internal_exception [simp]:
   shows "exception (setSignalCapException_internal v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalCapException}\<close>
 
@@ -1819,7 +1819,7 @@ by (cases v) (simp add: StatePart_bind)
 
 lemma setSignalCapException_exception [simp]:
   shows "exception (setSignalCapException v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalCapException_noReg}\<close>
 
@@ -1830,7 +1830,7 @@ by simp
 
 lemma setSignalCapException_noReg_exception [simp]:
   shows "exception (setSignalCapException_noReg v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalTLBException}\<close>
 
@@ -1841,7 +1841,7 @@ by (cases v) (simp add: ValuePart_bind StatePart_bind)
 
 lemma setSignalTLBException_exception [simp]:
   shows "exception (setSignalTLBException v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const SignalTLBCapException}\<close>
 
@@ -1852,7 +1852,7 @@ by (cases v) (simp add: ValuePart_bind StatePart_bind)
 
 lemma setSignalTLBCapException_exception [simp]:
   shows "exception (setSignalTLBCapException v s) = exception s"
-by SimpLemmaViaPrePost
+by SimpLemmaViaHoareTriple
 
 subsubsection \<open>@{const CheckSegment}\<close>
 
@@ -3214,8 +3214,8 @@ definition MakePartial :: "(state \<Rightarrow> 'a \<times> state) \<Rightarrow>
         (\<lambda>ex. bind (read_state isUnpredictable)
         (\<lambda>unpred. return (if ex \<or> unpred then None else Some v))))"
 
-lemma ValuePartMakePartial_from_PrePost:
-  assumes "\<And>x. PrePost (return x =\<^sub>b read_state f)
+lemma ValuePartMakePartial_from_HoareTriple:
+  assumes "\<And>x. HoareTriple (return x =\<^sub>b read_state f)
                         m
                         (\<lambda>v. bind (read_state getExceptionSignalled)
                                   (\<lambda>ex. bind (read_state isUnpredictable)
@@ -3224,7 +3224,7 @@ lemma ValuePartMakePartial_from_PrePost:
 proof 
   fix s :: state
   show "ValuePart (MakePartial m) s = f s"
-    using assms[where x="f s", THEN PrePostE[where s=s]]
+    using assms[where x="f s", THEN HoareTripleE[where s=s]]
     unfolding MakePartial_def
     by (simp add: ValueAndStatePart_simp)
 qed
@@ -3249,12 +3249,12 @@ by simp
 lemma AddressTranslation_isUnpredictable:
   shows "IsInvariant (read_state isUnpredictable) (AddressTranslation v)"
 unfolding AddressTranslation_alt_def 
-by (PrePost simp: check_cca_isUnpredictable)
+by (HoareTriple simp: check_cca_isUnpredictable)
 
 lemma AddressTranslation_getExceptionSignalled:
   shows "IsInvariant (read_state getExceptionSignalled) (AddressTranslation v)"
 unfolding AddressTranslation_alt_def
-by PrePost
+by HoareTriple
 
 lemma DefinedAddressTranslation_read_only_aux:
   shows "IsInvariant (read_state getExceptionSignalled \<or>\<^sub>b
@@ -3262,7 +3262,7 @@ lemma DefinedAddressTranslation_read_only_aux:
                     p)
                    (AddressTranslation v)"
 unfolding AddressTranslation_alt_def check_cca_alt_def
-by PrePost
+by HoareTriple
 
 lemma DefinedAddressTranslation_read_only:
   assumes "\<not> getExceptionSignalled (StatePart (AddressTranslation v) s)"
@@ -3271,7 +3271,7 @@ lemma DefinedAddressTranslation_read_only:
 using assms
 using DefinedAddressTranslation_read_only_aux[
         where p="read_state (\<lambda>s'. s' = s)" and v=v,
-        THEN PrePostE[where s=s]]
+        THEN HoareTripleE[where s=s]]
 by (simp add: ValueAndStatePart_simp)
 
 subsection \<open>@{term PartialAddressTranslation}\<close>
@@ -3314,8 +3314,8 @@ lemma getAddressTranslationPartial_alt_def:
                                         else Some (x1, x2a, False, False)
                else None))"
 unfolding AddressTranslationPartial_def AddressTranslation_alt_def check_cca_alt_def
-by (intro ValuePartMakePartial_from_PrePost)
-   (PrePost simp: all_distrib[where h="\<lambda>x. _ = x", THEN sym])
+by (intro ValuePartMakePartial_from_HoareTriple)
+   (HoareTriple simp: all_distrib[where h="\<lambda>x. _ = x", THEN sym])
 
 lemma Commute_getAddressTranslationPartial [Commute_compositeI]:
   assumes "\<And>v. Commute (read_state (getCheckSegment v)) m"
@@ -3448,20 +3448,20 @@ using assms
 unfolding getTranslateAddresses_def
 by simp
 
-subsection \<open>@{const PrePost} of @{const AddressTranslation}\<close>
+subsection \<open>@{const HoareTriple} of @{const AddressTranslation}\<close>
 
-lemma PrePost_AddressTranslation:
+lemma HoareTriple_AddressTranslation:
   defines "h \<equiv> read_state getExceptionSignalled \<or>\<^sub>b read_state isUnpredictable"
   assumes "IsInvariant p (AddressTranslation v)"
-  shows "PrePost (bind (read_state (getTranslateAddr v)) (case_option p q))
+  shows "HoareTriple (bind (read_state (getTranslateAddr v)) (case_option p q))
                  (AddressTranslation v)
                  (\<lambda>x. (\<not>\<^sub>b h \<or>\<^sub>b p) \<and>\<^sub>b (h \<or>\<^sub>b q (fst x)))" 
-  (is "PrePost ?pre _ ?post")
-proof (intro PrePostI)
+  (is "HoareTriple ?pre _ ?post")
+proof (intro HoareTripleI)
   fix s
   assume "ValuePart ?pre s"
   thus "ValuePart (bind (AddressTranslation v) ?post) s"
-    using PrePostE[OF assms(2), where s=s]
+    using HoareTripleE[OF assms(2), where s=s]
     using DefinedAddressTranslation_read_only[where v=v and s=s]
     unfolding h_def 
     unfolding TranslateAddr_def AddressTranslationPartial_def MakePartial_def
@@ -3470,8 +3470,8 @@ proof (intro PrePostI)
              dest!: if_split[where P="\<lambda>x. x = _", THEN iffD1])
 qed
 
-lemma PrePost_DefinedAddressTranslation:
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b 
+lemma HoareTriple_DefinedAddressTranslation:
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b 
                   read_state isUnpredictable \<or>\<^sub>b 
                   bind (read_state (getTranslateAddr v))
                        (\<lambda>a. case a of None \<Rightarrow> return True 
@@ -3480,10 +3480,10 @@ lemma PrePost_DefinedAddressTranslation:
                  (\<lambda>x. read_state getExceptionSignalled \<or>\<^sub>b 
                       read_state isUnpredictable \<or>\<^sub>b 
                       p (fst x))"
-by (rule PrePostIE[OF 
-             PrePost_weakest_pre_disj[OF 
-                 PrePost_AddressTranslation[where v=v and p="return True" and q=p]
-                 PrePost_weakest_pre_disj[OF 
+by (rule HoareTripleIE[OF 
+             HoareTriple_weakest_pre_disj[OF 
+                 HoareTriple_AddressTranslation[where v=v and p="return True" and q=p]
+                 HoareTriple_weakest_pre_disj[OF 
                       AddressTranslation_isUnpredictable
                       AddressTranslation_getExceptionSignalled]]])
    (auto simp: ValueAndStatePart_simp cong: cong)
@@ -3987,7 +3987,7 @@ definition FetchPartial where
 abbreviation "getFetchPartial \<equiv> ValuePart FetchPartial"
 
 lemmas getFetchPartial_alt_def_aux =
-  PrePost_AddressTranslation[
+  HoareTriple_AddressTranslation[
     where p="return (x = None)" and 
           q="\<lambda>y. bind (read_state (getReadInst y)) (\<lambda>z. return (x = Some (Some z)))",
     OF IsInvariant_constant] for x
@@ -3995,8 +3995,8 @@ lemmas getFetchPartial_alt_def_aux =
 schematic_goal getFetchPartial_alt_def:
   shows "getFetchPartial = ?x"
 unfolding FetchPartial_def Fetch_alt_def
-by (intro ValuePartMakePartial_from_PrePost)
-   (PrePost intro: getFetchPartial_alt_def_aux[THEN PrePost_post_weakening]
+by (intro ValuePartMakePartial_from_HoareTriple)
+   (HoareTriple intro: getFetchPartial_alt_def_aux[THEN HoareTriple_post_weakening]
             simp: all_distrib[where h="\<lambda>x. _ = x", THEN sym])
 
 subsection \<open>@{term NextInstruction}\<close>
@@ -4033,45 +4033,45 @@ using assms
 unfolding NextInstruction_def getFetchPartial_alt_def Commute_def
 by (strong_cong_simp add: ValueAndStatePart_simp)
 
-subsection \<open>@{const PrePost} of @{const Fetch}\<close>
+subsection \<open>@{const HoareTriple} of @{const Fetch}\<close>
 
-lemma PrePost_Fetch_getExceptionSignalled:
-  shows "PrePost (return True)
+lemma HoareTriple_Fetch_getExceptionSignalled:
+  shows "HoareTriple (return True)
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> read_state getExceptionSignalled
                               | Some w \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b
                                           \<not>\<^sub>b read_state getExceptionSignalled)"
 unfolding Fetch_alt_def
-by (PrePost intro: PrePost_DefinedAddressTranslation[where p="\<lambda>x. return True", 
-                                                     THEN PrePost_post_weakening])
+by (HoareTriple intro: HoareTriple_DefinedAddressTranslation[where p="\<lambda>x. return True", 
+                                                     THEN HoareTriple_post_weakening])
 
-lemma PrePost_Fetch_aux:
+lemma HoareTriple_Fetch_aux:
   assumes "\<And>x. Commute p (update_state (setCP0CauseIP x))"
       and "\<And>x. Commute p (update_state (setCP0CauseTI x))"
       and "\<And>x. Commute p (ReadInst x)"
-  shows "PrePost p
+  shows "HoareTriple p
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> return True
                               | Some w \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p)"
 unfolding Fetch_alt_def
-by (PrePost intro: assms PrePost_DefinedAddressTranslation
-                           [where p="\<lambda>x. p", THEN PrePost_post_weakening])
+by (HoareTriple intro: assms HoareTriple_DefinedAddressTranslation
+                           [where p="\<lambda>x. p", THEN HoareTriple_post_weakening])
 
-lemma PrePost_Fetch:
+lemma HoareTriple_Fetch:
   assumes "\<And>x v. Commute (p x) (update_state (setCP0CauseIP v))"
       and "\<And>x v. Commute (p x) (update_state (setCP0CauseTI v))"
       and "\<And>x v. Commute (p x) (ReadInst v)"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> read_state getExceptionSignalled
                               | Some w \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p w)"
-  (is "PrePost ?pre _ ?post")
-proof (intro PrePostI)
+  (is "HoareTriple ?pre _ ?post")
+proof (intro HoareTripleI)
   fix s
   assume "ValuePart ?pre s"
   thus "ValuePart (bind Fetch ?post) s"
-    using PrePostE[where s=s, OF PrePost_Fetch_getExceptionSignalled]
-    using PrePostE[where s=s, OF PrePost_Fetch_aux[OF assms]]
+    using HoareTripleE[where s=s, OF HoareTriple_Fetch_getExceptionSignalled]
+    using HoareTripleE[where s=s, OF HoareTriple_Fetch_aux[OF assms]]
     unfolding NextInstruction_def FetchPartial_def MakePartial_def
     by (auto simp: ValueAndStatePart_simp split: option.splits if_splits)
 qed

@@ -16,7 +16,7 @@ section \<open>Semantics of @{const LoadCapAction}\<close>
 named_theorems SemanticsLoadCapI
   
 method SemanticsLoadCap uses intro =
-  PrePost intro: intro SemanticsLoadCapI[THEN PrePost_post_weakening]
+  HoareTriple intro: intro SemanticsLoadCapI[THEN HoareTriple_post_weakening]
 
 declare nonExceptionCase_exceptions [SemanticsLoadCapI]
 
@@ -85,15 +85,15 @@ unfolding SemanticsLoadCapPost_def
 by (Commute intro: assms)
 
 lemma SemanticsLoadCapability_write'CAPR:
-  shows "PrePost (return (cb = cd) \<and>\<^sub>b 
+  shows "HoareTriple (return (cb = cd) \<and>\<^sub>b 
                   return (if cd = 0 then f nullCap else f cap))
                  (write'CAPR (cap, cb))
                  (\<lambda>_. bind (read_state (getCAPR cd)) (\<lambda>x. return (f x)))"
-unfolding PrePost_def
+unfolding HoareTriple_def
 by (auto simp: ValueAndStatePart_simp)
 
 lemmas SemanticsLoadCapability_AddressTranslation =
-  PrePost_DefinedAddressTranslation
+  HoareTriple_DefinedAddressTranslation
     [where p="\<lambda>x. return (AddressIsCapReadable authCap a addrTrans \<and> extra) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCAPR cb)) \<and>\<^sub>b
                   bind (read_state (getMemCap (slice 5 x)))
@@ -101,7 +101,7 @@ lemmas SemanticsLoadCapability_AddressTranslation =
   for a authCap cap addrTrans extra cb
 
 lemma SemanticsLoadCapability_LoadCap:
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b
                   bind (read_state (getTranslateAddr (fst v, LOAD))) 
                        (\<lambda>z. case z of None \<Rightarrow> return True 
@@ -125,7 +125,7 @@ proof -
 qed
 
 lemma SemanticsLoadCapability_CLC [SemanticsLoadCapI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -152,7 +152,7 @@ proof -
 qed
 
 lemma SemanticsLoadCapability_CLLC [SemanticsLoadCapI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -179,7 +179,7 @@ proof -
 qed
 
 lemma SemanticsLoadCapability_Run_aux:
-  shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -190,15 +190,15 @@ lemma SemanticsLoadCapability_Run_aux:
                       SemanticsLoadCapPost authCap cap a cd addrTrans \<and>\<^sub>b
                       return authAccessible)"
 unfolding Run_alt_def RunActions_def 
-by (PrePost_cases;
-    rule PrePost_pre_strengthening,
+by (HoareTriple_cases;
+    rule HoareTriple_pre_strengthening,
     rule SemanticsLoadCapability_CLC
          SemanticsLoadCapability_CLLC
-         PrePost_weakest_pre_any,
+         HoareTriple_weakest_pre_any,
     solves \<open>auto simp: ValueAndStatePart_simp\<close>)
 
 lemmas SemanticsLoadCapability_Run =
-  PrePost_weakest_pre_disj[OF SemanticsLoadCapability_Run_aux
+  HoareTriple_weakest_pre_disj[OF SemanticsLoadCapability_Run_aux
                               UndefinedCase_Run]
 
 lemma SemanticsLoadCapability_Fetch:
@@ -208,15 +208,15 @@ lemma SemanticsLoadCapability_Fetch:
                     (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>prov. return (LoadCapAction auth a cd \<in> prov))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemma SemanticsLoadCapability_NextWithGhostState:
-  shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -257,7 +257,7 @@ using SemanticsLoadCapability_NextWithGhostState
          [where cap="getMemCap a s" and cd=cd and a=a and auth=auth and
                 authCap="getCapReg auth s" and addrTrans="getTranslateAddrFunc s" and
                 authAccessible="getRegisterIsAccessible auth s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 unfolding SemanticsLoadCapPost_def
 unfolding AddressIsCapReadable_def 
 unfolding getTranslateAddrFunc_def getTranslateAddresses_def

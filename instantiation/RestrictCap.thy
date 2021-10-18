@@ -47,7 +47,7 @@ lemma SemanticsRestrict_Branch_raise'exception [SemanticsRestrict_BranchI]:
                     read_state isUnpredictable \<or>\<^sub>b 
                     SemanticsRestrict_Branch cap r r')
                  (raise'exception (UNPREDICTABLE v))"
-by PrePost
+by HoareTriple
 
 (* Code generation - end override *)
 
@@ -82,7 +82,7 @@ lemma SemanticsRestrict_Branch_SignalException [SemanticsRestrict_BranchI]:
                     read_state isUnpredictable \<or>\<^sub>b 
                     SemanticsRestrict_Branch cap r r')
                  (SignalException v)"
-by PrePost
+by HoareTriple
 
 (* Code generation - end override *)
 
@@ -1875,7 +1875,7 @@ by SemanticsRestrict_Branch
 (* Code generation - override - Run *)
 
 lemma SemanticsRestrict_Branch_Run_aux1:
-  shows "PrePost (SemanticsRestrict_Branch cap r r' \<and>\<^sub>b
+  shows "HoareTriple (SemanticsRestrict_Branch cap r r' \<and>\<^sub>b
                   return (case v of COP2 (CHERICOP2 (CCallFast _)) \<Rightarrow> False
                                   | _ \<Rightarrow> True))
                  (Run v)
@@ -1883,7 +1883,7 @@ lemma SemanticsRestrict_Branch_Run_aux1:
                       read_state isUnpredictable \<or>\<^sub>b 
                       SemanticsRestrict_Branch cap r r')"
 unfolding Run_alt_def
-by (PrePost intro: SemanticsRestrict_BranchI)
+by (HoareTriple intro: SemanticsRestrict_BranchI)
 
 lemma SemanticsRestrict_Branch_Run_aux2:
   assumes "ValuePart (SemanticsRestrict_Branch cap r r') s"
@@ -1894,7 +1894,7 @@ unfolding TakeBranchActions_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 lemma SemanticsRestrict_Branch_Run:
-  shows "PrePost ((return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
+  shows "HoareTriple ((return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   SemanticsRestrict_Branch cap r r' \<and>\<^sub>b
                   return (case v of COP2 (CHERICOP2 (CCallFast _)) \<Rightarrow> False
@@ -1904,8 +1904,8 @@ lemma SemanticsRestrict_Branch_Run:
                       read_state isUnpredictable \<or>\<^sub>b 
                       SemanticsRestrict_Branch cap r r' \<and>\<^sub>b
                       return (rAccessible \<and> r'Accessible))"
-  (is "PrePost ?pre _ ?post")
-proof (intro PrePostI)
+  (is "HoareTriple ?pre _ ?post")
+proof (intro HoareTripleI)
   fix s
   assume "ValuePart ?pre s"
   hence [simp]: "rAccessible = getRegisterIsAccessible r s"
@@ -1920,7 +1920,7 @@ proof (intro PrePostI)
   thus "ValuePart (bind (Run v) ?post) s"
     using `ValuePart ?pre s`
     using SemanticsRestrict_Branch_Run_aux1
-        [where cap=cap and r=r and r'=r' and v=v, THEN PrePostE[where s=s]]
+        [where cap=cap and r=r and r'=r' and v=v, THEN HoareTripleE[where s=s]]
     using der
     by (auto simp: ValueAndStatePart_simp)
 qed
@@ -1963,7 +1963,7 @@ unfolding SemanticsRestrict_Instruction_def
 by (Commute intro: assms)
 
 lemma SemanticsRestrict_Instruction_dfn'ERET [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind ERETActions (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -1974,10 +1974,10 @@ lemma SemanticsRestrict_Instruction_dfn'ERET [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'ERET_alt_def CheckBranch_alt_def ERETActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: ValueAndStatePart_simp special_register_accessible_alt_def)
+by HoareTriple (auto simp: ValueAndStatePart_simp special_register_accessible_alt_def)
 
 lemma SemanticsRestrict_Instruction_dfn'CGetPCC [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                    bind (read_state getPCC) (\<lambda>cap. return (\<not> getSealed cap)) \<and>\<^sub>b
@@ -1989,10 +1989,10 @@ lemma SemanticsRestrict_Instruction_dfn'CGetPCC [SemanticsRestrict_InstructionI]
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CGetPCC_alt_def CheckBranch_alt_def CGetPCCActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CGetPCCSetOffset [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                    bind (read_state getPCC) (\<lambda>cap. return (\<not> getSealed cap)) \<and>\<^sub>b
@@ -2004,10 +2004,10 @@ lemma SemanticsRestrict_Instruction_dfn'CGetPCCSetOffset [SemanticsRestrict_Inst
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CGetPCCSetOffset_alt_def CheckBranch_alt_def CGetPCCSetOffsetActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CIncOffset [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CIncOffsetActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2018,10 +2018,10 @@ lemma SemanticsRestrict_Instruction_dfn'CIncOffset [SemanticsRestrict_Instructio
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CIncOffset_alt_def CheckBranch_alt_def CIncOffsetActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CIncOffsetImmediate [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CIncOffsetImmediateActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2032,10 +2032,10 @@ lemma SemanticsRestrict_Instruction_dfn'CIncOffsetImmediate [SemanticsRestrict_I
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CIncOffsetImmediate_alt_def CheckBranch_alt_def CIncOffsetImmediateActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CSetBounds [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CSetBoundsActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2046,7 +2046,7 @@ lemma SemanticsRestrict_Instruction_dfn'CSetBounds [SemanticsRestrict_Instructio
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CSetBounds_alt_def CSetBoundsActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost 
+by HoareTriple 
    (simple_auto simp: if_splits if_simps(6) not_less 
                       uint_plus_simple word_le_def
                       setBounds_le
@@ -2055,7 +2055,7 @@ by PrePost
                 elim: notE[OF _ Region_subsetI])
 
 lemma SemanticsRestrict_Instruction_dfn'CSetBoundsExact [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CSetBoundsExactActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2066,7 +2066,7 @@ lemma SemanticsRestrict_Instruction_dfn'CSetBoundsExact [SemanticsRestrict_Instr
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CSetBoundsExact_alt_def CSetBoundsExactActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost 
+by HoareTriple 
    (simple_auto simp: if_splits if_simps(6) not_less 
                       uint_plus_simple word_le_def
                       setBounds_le
@@ -2075,7 +2075,7 @@ by PrePost
                 elim: notE[OF _ Region_subsetI])
 
 lemma SemanticsRestrict_Instruction_dfn'CSetBoundsImmediate [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CSetBoundsImmediateActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2086,7 +2086,7 @@ lemma SemanticsRestrict_Instruction_dfn'CSetBoundsImmediate [SemanticsRestrict_I
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CSetBoundsImmediate_alt_def CSetBoundsImmediateActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost 
+by HoareTriple 
    (simple_auto simp: if_splits if_simps(6) not_less 
                       uint_plus_simple word_le_def
                       setBounds_le
@@ -2110,7 +2110,7 @@ definition ClearRegLoopPre where
                               | _ \<Rightarrow> return (cap_loc' \<le> cap)))))"
 
 lemma SemanticsRestrict_Instruction_ClearRegsLoop_aux:
-  shows "PrePost (ClearRegLoopPre cond l cap r r')
+  shows "HoareTriple (ClearRegLoopPre cond l cap r r')
                  (foreach_loop (l, \<lambda>i. if cond i 
                                        then write'CAPR (nullCap, word_of_int (int i)) 
                                        else return ()))
@@ -2118,7 +2118,7 @@ lemma SemanticsRestrict_Instruction_ClearRegsLoop_aux:
 proof (induct l)
   case Nil
   thus ?case
-    unfolding PrePost_def
+    unfolding HoareTriple_def
     unfolding ClearRegLoopPre_def
     unfolding SemanticsRestrict_Instruction_def
     by (cases r') (simp_all add: ValueAndStatePart_simp)
@@ -2127,9 +2127,9 @@ next
   show ?case
     by (auto simp: ValueAndStatePart_simp 
                    ClearRegLoopPre_def
-                   PrePost_def[where m="write'CAPR _"]
-             intro!: PrePost_weakest_pre_bind[OF Cons refl]
-                     PrePost_pre_strengthening[OF Cons]
+                   HoareTriple_def[where m="write'CAPR _"]
+             intro!: HoareTriple_weakest_pre_bind[OF Cons refl]
+                     HoareTriple_pre_strengthening[OF Cons]
              split: CapRegister.splits option.splits)   
 qed
 
@@ -2138,27 +2138,27 @@ lemma ExceptionSignalled_ClearRegsLoop:
                      (foreach_loop (l, \<lambda>i. if cond i 
                                            then write'CAPR (nullCap, word_of_int (int i)) 
                                            else return ()))"
-by PrePost
+by HoareTriple
 
 lemma UndefinedCase_ClearRegsLoop:
   shows "IsInvariant (read_state isUnpredictable) 
                      (foreach_loop (l, \<lambda>i. if cond i 
                                            then write'CAPR (nullCap, word_of_int (int i)) 
                                            else return ()))"
-by PrePost
+by HoareTriple
 
 lemmas SemanticsRestrict_Instruction_ClearRegsLoop =
-  PrePost_weakest_pre_disj[OF 
+  HoareTriple_weakest_pre_disj[OF 
     ExceptionSignalled_ClearRegsLoop
-    PrePost_weakest_pre_disj[OF 
+    HoareTriple_weakest_pre_disj[OF 
       UndefinedCase_ClearRegsLoop
-      PrePost_weakest_pre_conj[OF 
+      HoareTriple_weakest_pre_conj[OF 
         SemanticsRestrict_Instruction_ClearRegsLoop_aux
         IsInvariant_constant[where x="rAccessible \<and> r'Accessible"]]]]
   for rAccessible r'Accessible
 
 lemma SemanticsRestrict_Instruction_dfn'CClearHi [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CClearHiActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2174,12 +2174,12 @@ proof -
   show ?thesis
     unfolding dfn'CClearHi_alt_def CheckBranch_alt_def CClearHiActions_def
     unfolding ClearRegs_alt_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening])
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening])
        (auto simp: ValueAndStatePart_simp ClearRegLoopPre_def)
 qed
 
 lemma SemanticsRestrict_Instruction_dfn'CClearLo [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CClearLoActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2190,12 +2190,12 @@ lemma SemanticsRestrict_Instruction_dfn'CClearLo [SemanticsRestrict_InstructionI
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CClearLo_alt_def CheckBranch_alt_def CClearLoActions_def
 unfolding ClearRegs_alt_def
-by (PrePost simp: ClearRegLoopPre_def
+by (HoareTriple simp: ClearRegLoopPre_def
             intro: SemanticsRestrict_Instruction_ClearRegsLoop)
    auto
 
 lemma SemanticsRestrict_Instruction_dfn'CReadHwr [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CReadHwrActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2206,10 +2206,10 @@ lemma SemanticsRestrict_Instruction_dfn'CReadHwr [SemanticsRestrict_InstructionI
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CReadHwr_alt_def CheckBranch_alt_def CReadHwrActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma SemanticsRestrict_Instruction_dfn'CWriteHwr [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CWriteHwrActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2220,10 +2220,10 @@ lemma SemanticsRestrict_Instruction_dfn'CWriteHwr [SemanticsRestrict_Instruction
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CWriteHwr_alt_def CheckBranch_alt_def CWriteHwrActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma SemanticsRestrict_Instruction_dfn'CClearTag [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CClearTagActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2234,10 +2234,10 @@ lemma SemanticsRestrict_Instruction_dfn'CClearTag [SemanticsRestrict_Instruction
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CClearTag_alt_def CheckBranch_alt_def CClearTagActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma SemanticsRestrict_Instruction_CAndPerm [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CAndPermActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2254,7 +2254,7 @@ proof -
   show ?thesis
     unfolding dfn'CAndPerm_alt_def CAndPermActions_def
     unfolding SemanticsRestrict_Instruction_def
-    by PrePost
+    by HoareTriple
        (simple_auto simp: if_splits if_simps(6)
                           setPerms_le setUPerms_le
                           ValueAndStatePart_simp
@@ -2265,7 +2265,7 @@ proof -
 qed
 
 lemma SemanticsRestrict_Instruction_dfn'CSetOffset [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CSetOffsetActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2276,10 +2276,10 @@ lemma SemanticsRestrict_Instruction_dfn'CSetOffset [SemanticsRestrict_Instructio
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CSetOffset_alt_def CheckBranch_alt_def CSetOffsetActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CFromPtr [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CFromPtrActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2290,14 +2290,14 @@ lemma SemanticsRestrict_Instruction_dfn'CFromPtr [SemanticsRestrict_InstructionI
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CFromPtr_alt_def CheckBranch_alt_def CFromPtrActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_LoadCap:
   fixes rAccessible r'Accessible cd
   defines "q \<equiv> bind (read_state (getCAPR cd))
                      (\<lambda>cap. return (\<not> Permit_Load_Capability (getPerms cap) \<and> 
                                     rAccessible \<and> r'Accessible))"
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b 
                   bind (read_state (getTranslateAddr (fst v, LOAD)))
                        (\<lambda>a. case a of None \<Rightarrow> return True
@@ -2307,14 +2307,14 @@ lemma SemanticsRestrict_Instruction_LoadCap:
                       read_state isUnpredictable \<or>\<^sub>b 
                       q)"
 proof -
-  note intro = PrePost_DefinedAddressTranslation[where p="\<lambda>x. q", THEN PrePost_post_weakening]
+  note intro = HoareTriple_DefinedAddressTranslation[where p="\<lambda>x. q", THEN HoareTriple_post_weakening]
   show ?thesis
     unfolding LoadCap_alt_def
-    by (PrePost simp: q_def intro: intro) auto?
+    by (HoareTriple simp: q_def intro: intro) auto?
 qed
 
 lemma SemanticsRestrict_Instruction_dfn'CLC [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CLCActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2323,8 +2323,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLC [SemanticsRestrict_InstructionI]:
                       read_state isUnpredictable \<or>\<^sub>b 
                       SemanticsRestrict_Instruction cap r r' \<and>\<^sub>b
                       return (rAccessible \<and> r'Accessible))"
-  (is "PrePost ?pre _ ?post")
-proof (intro PrePostI)
+  (is "HoareTriple ?pre _ ?post")
+proof (intro HoareTripleI)
   fix s
   assume pre: "ValuePart ?pre s"
   have [simp]: "r = (case v of (cd, cb, rt, offset) \<Rightarrow> RegGeneral cd)"
@@ -2335,24 +2335,24 @@ proof (intro PrePostI)
              split: option.splits if_splits)
   note intro = SemanticsRestrict_Instruction_LoadCap
                  [where rAccessible=rAccessible and r'Accessible=r'Accessible, 
-                  THEN PrePost_post_weakening]
+                  THEN HoareTriple_post_weakening]
   -- \<open>It is a bit backward to first assume the precondition and then prove the entire Hoare triple
       instead of proving the post condition. The reason we do this is so we can use the proof 
       methods that work on Hoare triples, while we already simplify r and r' based on the pre
       condition.\<close>
-  have "PrePost ?pre (dfn'CLC v) ?post"
+  have "HoareTriple ?pre (dfn'CLC v) ?post"
     unfolding dfn'CLC_alt_def CheckBranch_alt_def CLCActions_def
     unfolding SemanticsRestrict_Instruction_def
-    by (cases v, simp, PrePost intro: intro)
+    by (cases v, simp, HoareTriple intro: intro)
        (auto split: option.splits)
   thus "ValuePart (bind (dfn'CLC v) ?post) s"
-    unfolding PrePost_def
+    unfolding HoareTriple_def
     using pre
     by auto
 qed
 
 lemma SemanticsRestrict_Instruction_dfn'CLLC [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CLLCActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2361,8 +2361,8 @@ lemma SemanticsRestrict_Instruction_dfn'CLLC [SemanticsRestrict_InstructionI]:
                       read_state isUnpredictable \<or>\<^sub>b 
                       SemanticsRestrict_Instruction cap r r' \<and>\<^sub>b
                       return (rAccessible \<and> r'Accessible))"
-  (is "PrePost ?pre _ ?post")
-proof (intro PrePostI)
+  (is "HoareTriple ?pre _ ?post")
+proof (intro HoareTripleI)
   fix s
   assume pre: "ValuePart ?pre s"
   have [simp]: "r = (case v of (cd, cb) \<Rightarrow> RegGeneral cd)"
@@ -2373,24 +2373,24 @@ proof (intro PrePostI)
              split: option.splits if_splits)
   note intro = SemanticsRestrict_Instruction_LoadCap
                  [where rAccessible=rAccessible and r'Accessible=r'Accessible, 
-                  THEN PrePost_post_weakening]
+                  THEN HoareTriple_post_weakening]
   -- \<open>It is a bit backward to first assume the precondition and then prove the entire Hoare triple
       instead of proving the post condition. The reason we do this is so we can use the proof 
       methods that work on Hoare triples, while we already simplify r and r' based on the pre
       condition.\<close>
-  have "PrePost ?pre (dfn'CLLC v) ?post"
+  have "HoareTriple ?pre (dfn'CLLC v) ?post"
     unfolding dfn'CLLC_alt_def CheckBranch_alt_def CLLCActions_def
     unfolding SemanticsRestrict_Instruction_def
-    by (cases v, simp, PrePost intro: intro)
+    by (cases v, simp, HoareTriple intro: intro)
        (auto split: option.splits)
   thus "ValuePart (bind (dfn'CLLC v) ?post) s"
-    unfolding PrePost_def
+    unfolding HoareTriple_def
     using pre
     by auto
 qed
 
 lemma SemanticsRestrict_Instruction_dfn'CMOVN [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CMOVNActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2401,10 +2401,10 @@ lemma SemanticsRestrict_Instruction_dfn'CMOVN [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CMOVN_alt_def CheckBranch_alt_def CMOVNActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: ValueAndStatePart_simp split: CapLocation.splits)
+by HoareTriple (auto simp: ValueAndStatePart_simp split: CapLocation.splits)
 
 lemma SemanticsRestrict_Instruction_dfn'CMOVZ [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CMOVZActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2415,10 +2415,10 @@ lemma SemanticsRestrict_Instruction_dfn'CMOVZ [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CMOVZ_alt_def CMOVZActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: ValueAndStatePart_simp split: if_splits CapLocation.splits)
+by HoareTriple (auto simp: ValueAndStatePart_simp split: if_splits CapLocation.splits)
 
 lemma SemanticsRestrict_Instruction_dfn'CMove [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CMoveActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2429,10 +2429,10 @@ lemma SemanticsRestrict_Instruction_dfn'CMove [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CMove_alt_def CheckBranch_alt_def CMoveActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma SemanticsRestrict_Instruction_dfn'CBuildCap [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CBuildCapActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2443,7 +2443,7 @@ lemma SemanticsRestrict_Instruction_dfn'CBuildCap [SemanticsRestrict_Instruction
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CBuildCap_alt_def CheckBranch_alt_def CBuildCapActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost
+by HoareTriple
    (auto simp: ValueAndStatePart_simp not_le not_less word_le_def ucast_and
                less_eq_Capability_ext_def less_eq_Capability_def
                less_eq_Perms_ext_def less_eq_Perms_def
@@ -2455,7 +2455,7 @@ by PrePost
                 arg_cong[where f="\<lambda>x. (ucast x::32 word)" and y="ucast (reg'UPerms _)"])
 
 lemma SemanticsRestrict_Instruction_dfn'CCopyType [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CCopyTypeActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2466,10 +2466,10 @@ lemma SemanticsRestrict_Instruction_dfn'CCopyType [SemanticsRestrict_Instruction
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CCopyType_alt_def CheckBranch_alt_def CCopyTypeActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_dfn'CJR [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   bind (CJRActions v) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))
@@ -2480,10 +2480,10 @@ lemma SemanticsRestrict_Instruction_dfn'CJR [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CJR_alt_def CheckBranch_alt_def CJRActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost auto?
+by HoareTriple auto?
 
 lemma SemanticsRestrict_Instruction_dfn'CJALR [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                    bind (read_state getPCC) (\<lambda>cap. return (\<not> getSealed cap)) \<and>\<^sub>b
@@ -2495,10 +2495,10 @@ lemma SemanticsRestrict_Instruction_dfn'CJALR [SemanticsRestrict_InstructionI]:
                       return (rAccessible \<and> r'Accessible))"
 unfolding dfn'CJALR_alt_def CheckBranch_alt_def CJALRActions_def
 unfolding SemanticsRestrict_Instruction_def
-by PrePost (auto simp: setOffset_le)
+by HoareTriple (auto simp: setOffset_le)
 
 lemma SemanticsRestrict_Instruction_Run [SemanticsRestrict_InstructionI]:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                    bind (read_state getPCC) (\<lambda>cap. return (\<not> getSealed cap)) \<and>\<^sub>b
@@ -2509,16 +2509,16 @@ lemma SemanticsRestrict_Instruction_Run [SemanticsRestrict_InstructionI]:
                       SemanticsRestrict_Instruction cap r r' \<and>\<^sub>b
                       return (rAccessible \<and> r'Accessible))"
 unfolding Run_alt_def RunActions_def
-by (PrePost_cases;
-    rule PrePost_pre_strengthening,
+by (HoareTriple_cases;
+    rule HoareTriple_pre_strengthening,
     rule SemanticsRestrict_InstructionI
-         PrePost_weakest_pre_any,
+         HoareTriple_weakest_pre_any,
     solves \<open>auto simp: ValueAndStatePart_simp\<close>)
 
 subsection \<open>SemanticsRestrict\<close>  
 
 lemma SemanticsRestrict_TakeBranch:
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b 
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b 
                   read_state isUnpredictable \<or>\<^sub>b 
                   (SemanticsRestrict_Branch cap r r' \<or>\<^sub>b 
                    SemanticsRestrict_Instruction cap r r') \<and>\<^sub>b
@@ -2531,14 +2531,14 @@ lemma SemanticsRestrict_TakeBranch:
                       return (rAccessible \<and> r'Accessible))"
 unfolding SemanticsRestrict_Branch_def SemanticsRestrict_Instruction_def
 unfolding TakeBranch_def TakeBranchActions_def
-by PrePost
+by HoareTriple
    (auto simp: ValueAndStatePart_simp getBranchDelayPccCap_def 
          split: option.splits if_splits)
 
 lemmas SemanticsRestrict_Run =
-  PrePost_weakest_pre_disj[OF 
+  HoareTriple_weakest_pre_disj[OF 
     UndefinedCase_Run
-    PrePost_weakest_pre_disj[OF 
+    HoareTriple_weakest_pre_disj[OF 
       SemanticsRestrict_Branch_Run
         [where cap=cap and r=r and r'=r' and rAccessible=rAccessible and r'Accessible=r'Accessible]
       SemanticsRestrict_Instruction_Run
@@ -2555,12 +2555,12 @@ lemma SemanticsRestrict_Fetch:
                      (SemanticsRestrict_Branch cap r r' \<or>\<^sub>b 
                       ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                        bind (RunActions (Decode w)) (\<lambda>prov. return (RestrictCapAction r r' \<in> prov)))))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemma SemanticsRestrict_Branch_getCap:
   assumes "RestrictCapAction r r' \<in> ValuePart TakeBranchActions s"
@@ -2570,7 +2570,7 @@ unfolding SemanticsRestrict_Branch_def TakeBranchActions_def
 by (auto simp add: ValueAndStatePart_simp split: if_splits)
 
 lemma SemanticsRestrict_NextWithGhostState:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
                   (return rAccessible =\<^sub>b RegisterIsAccessible r) \<and>\<^sub>b
                   (return r'Accessible =\<^sub>b RegisterIsAccessible r') \<and>\<^sub>b
                   (read_state CCallFastInstructionParam =\<^sub>b return None) \<and>\<^sub>b
@@ -2593,7 +2593,7 @@ proof -
                                              r'Accessible=r'Accessible]
   show ?thesis
     unfolding NextWithGhostState_def DomainActions_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening])
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening])
        (auto split: option.splits 
              elim!: SemanticsRestrict_Branch_getCap CCallFastInstructionParam_None)
 qed
@@ -2610,7 +2610,7 @@ using SemanticsRestrict_NextWithGhostState
          [where cap="getCapReg r s" and r=r and r'=r' and
                 rAccessible="getRegisterIsAccessible r s" and
                 r'Accessible="getRegisterIsAccessible r' s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 using SemanticsExecute[OF suc] prov
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)

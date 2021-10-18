@@ -38,7 +38,7 @@ using assms
 by (intro less_mask_eq) simp
 
 lemma SemanticsSeal_CSeal:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CSealActions v) (\<lambda>prov. return (SealCapAction auth cd cd' \<in> prov)))
@@ -49,7 +49,7 @@ lemma SemanticsSeal_CSeal:
                       return authAccessible)"
 unfolding dfn'CSeal_alt_def CSealActions_def
 unfolding SemanticsSealPost_def
-by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
+by (HoareTriple intro: nonExceptionCase_exceptions[THEN HoareTriple_post_weakening])
    (auto simp: not_less not_le
                ucast_plus_down[THEN sym]
                Region_member_simp
@@ -57,7 +57,7 @@ by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
          split: if_splits)
 
 lemma SemanticsSeal_Run_aux:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (RunActions v) (\<lambda>prov. return (SealCapAction auth cd cd' \<in> prov)))
@@ -66,12 +66,12 @@ lemma SemanticsSeal_Run_aux:
                       read_state isUnpredictable \<or>\<^sub>b
                       SemanticsSealPost authCap cap cd' \<and>\<^sub>b
                       return authAccessible)"
-unfolding Run_alt_def RunActions_def PrePost_def
-using PrePostE[OF SemanticsSeal_CSeal]
+unfolding Run_alt_def RunActions_def HoareTriple_def
+using HoareTripleE[OF SemanticsSeal_CSeal]
 by (auto simp: ValueAndStatePart_simp split: all_split)
 
 lemmas SemanticsSeal_Run =
-  PrePost_weakest_pre_disj[OF SemanticsSeal_Run_aux
+  HoareTriple_weakest_pre_disj[OF SemanticsSeal_Run_aux
                               UndefinedCase_Run]
 
 lemma SemanticsSeal_Fetch:
@@ -80,15 +80,15 @@ lemma SemanticsSeal_Fetch:
                     (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>ac. return (SealCapAction auth cd cd' \<in> ac))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemma SemanticsSeal_NextWithGhostState:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind DomainActions (\<lambda>prov. return (SealCapAction auth cd cd' \<in> prov)))
@@ -106,7 +106,7 @@ proof -
                                           authAccessible=authAccessible]
   show ?thesis
     unfolding NextWithGhostState_def DomainActions_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening] UndefinedCase_TakeBranch)
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening] UndefinedCase_TakeBranch)
        (auto split: option.splits)
 qed
 
@@ -127,7 +127,7 @@ using SemanticsSeal_NextWithGhostState
          [where cap="getCAPR cd s" and cd=cd and cd'=cd' and
                 authCap="getCapReg auth s" and auth=auth and
                 authAccessible="getRegisterIsAccessible auth s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 unfolding t_def SemanticsSealPost_def Let_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)

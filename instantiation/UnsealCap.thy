@@ -35,7 +35,7 @@ lemma SemanticsUnseal_CUnseal_aux:
 by auto
 
 lemma SemanticsUnseal_CUnseal:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CUnsealActions v) (\<lambda>prov. return (UnsealCapAction auth cd cd' \<in> prov)))
@@ -46,7 +46,7 @@ lemma SemanticsUnseal_CUnseal:
                       return authAccessible)"
 unfolding dfn'CUnseal_alt_def CUnsealActions_def 
 unfolding SemanticsUnsealPost_def
-by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
+by (HoareTriple intro: nonExceptionCase_exceptions[THEN HoareTriple_post_weakening])
    (auto simp: not_less not_le setPerms_le
                Region_member_simp
                SemanticsUnseal_CUnseal_aux
@@ -54,7 +54,7 @@ by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
          elim!: notE[OF _ rec'Perms_AND_leq_forget_right])
 
 lemma SemanticsUnseal_Run_aux:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (RunActions v) (\<lambda>prov. return (UnsealCapAction auth cd cd' \<in> prov)))
@@ -63,12 +63,12 @@ lemma SemanticsUnseal_Run_aux:
                       read_state isUnpredictable \<or>\<^sub>b
                       SemanticsUnsealPost authCap cap cd' \<and>\<^sub>b
                       return authAccessible)"
-unfolding Run_alt_def RunActions_def PrePost_def
-using PrePostE[OF SemanticsUnseal_CUnseal]
+unfolding Run_alt_def RunActions_def HoareTriple_def
+using HoareTripleE[OF SemanticsUnseal_CUnseal]
 by (auto simp: ValueAndStatePart_simp split: all_split)
 
 lemmas SemanticsUnseal_Run =
-  PrePost_weakest_pre_disj[OF SemanticsUnseal_Run_aux
+  HoareTriple_weakest_pre_disj[OF SemanticsUnseal_Run_aux
                               UndefinedCase_Run]
 
 lemma SemanticsUnseal_Fetch:
@@ -77,15 +77,15 @@ lemma SemanticsUnseal_Fetch:
                     (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>ac. return (UnsealCapAction auth cd cd' \<in> ac))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                   Fetch
                   (\<lambda>b. case b of None \<Rightarrow> read_state getExceptionSignalled
                                | Some y \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p y)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemma SemanticsUnseal_NextWithGhostState:
-  shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
+  shows "HoareTriple ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind DomainActions (\<lambda>prov. return (UnsealCapAction auth cd cd' \<in> prov)))
@@ -103,7 +103,7 @@ proof -
                                             authAccessible=authAccessible]
   show ?thesis
     unfolding NextWithGhostState_def DomainActions_def
-    by (PrePost intro: intros[THEN PrePost_post_weakening] UndefinedCase_TakeBranch)
+    by (HoareTriple intro: intros[THEN HoareTriple_post_weakening] UndefinedCase_TakeBranch)
        (auto split: option.splits)
 qed
 
@@ -122,7 +122,7 @@ using SemanticsUnseal_NextWithGhostState
          [where cap="getCAPR cd s" and cd=cd and cd'=cd' and
                 authCap="getCapReg auth s" and auth=auth and
                 authAccessible="getRegisterIsAccessible auth s",
-          THEN PrePostE[where s=s]]
+          THEN HoareTripleE[where s=s]]
 unfolding SemanticsUnsealPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)

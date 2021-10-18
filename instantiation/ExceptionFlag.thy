@@ -13,21 +13,21 @@ section \<open>Invariance of @{const getExceptionSignalled}\<close>
 
 named_theorems ExceptionSignalledI
 
-lemma ExceptionSignalled_to_PrePost:
+lemma ExceptionSignalled_to_HoareTriple:
   fixes m :: "state \<Rightarrow> 'a \<times> state"
   assumes "\<And>s. getExceptionSignalled (StatePart m s) = True"
-  shows "PrePost (return True) m (\<lambda>_. read_state getExceptionSignalled)"
+  shows "HoareTriple (return True) m (\<lambda>_. read_state getExceptionSignalled)"
 using assms
-by - PrePost
+by - HoareTriple
 
 lemmas nonExceptionCase_exceptions = 
-  ExceptionSignalled_to_PrePost[OF setSignalException_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalCP2UnusableException_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalCapException_internal_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalCapException_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalCapException_noReg_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalTLBException_getExceptionSignalled]
-  ExceptionSignalled_to_PrePost[OF setSignalTLBCapException_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalException_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalCP2UnusableException_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalCapException_internal_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalCapException_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalCapException_noReg_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalTLBException_getExceptionSignalled]
+  ExceptionSignalled_to_HoareTriple[OF setSignalTLBCapException_getExceptionSignalled]
 
 (* Code generation - start - ExceptionSignalled invariant *)
 
@@ -201,7 +201,7 @@ by (Invariant intro: ExceptionSignalledI)
 lemma ExceptionSignalled_SignalException [ExceptionSignalledI]:
   shows "IsInvariant (read_state getExceptionSignalled) (SignalException v)"
 unfolding SignalException_alt_def
-by (PrePost intro: ExceptionSignalledI)
+by (HoareTriple intro: ExceptionSignalledI)
 
 (* Code generation - end override *)
 

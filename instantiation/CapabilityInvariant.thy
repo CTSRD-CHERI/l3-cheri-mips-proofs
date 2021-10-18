@@ -17,8 +17,8 @@ section \<open>Capability invariance\<close>
 named_theorems CapInvariantI
 
 method CapInvariant uses simp intro =
-  (PrePost intro: intro[THEN PrePost_post_weakening]
-                  CapInvariantI[THEN PrePost_post_weakening])
+  (HoareTriple intro: intro[THEN HoareTriple_post_weakening]
+                  CapInvariantI[THEN HoareTriple_post_weakening])
 
 declare UndefinedCase_raise'exception [CapInvariantI]
 
@@ -99,14 +99,14 @@ unfolding CapInvariantPost_def
 by (Commute intro: assms)
 
 lemma CapInvariant_BranchToPCC_update [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocReg RegBranchDelayPCC)))  
                  (update_state (BranchToPCC_update (\<lambda>_. v))) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - start - capability invariant *)
 
@@ -128,55 +128,55 @@ by CapInvariant
 (* Code generation - override - write'PCC *)
 
 lemma CapInvariant_write'PCC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocReg RegPCC))) 
                  (write'PCC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - end override *)
 
 (* Code generation - override - write'CAPR *)
 
 lemma CapInvariant_write'CAPR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocReg (RegGeneral (snd v)) \<or> snd v = 0)))  
                  (write'CAPR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - end override *)
 
 (* Code generation - override - write'SCAPR *)
 
 lemma CapInvariant_write'SCAPR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocReg (RegSpecial (snd v)))))  
                  (write'SCAPR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - end override *)
 
 (* Code generation - override - SignalException *)
 
 lemma getExceptionSignalled_SignalException:
-  shows "PrePost (return True)
+  shows "HoareTriple (return True)
                  (SignalException ex)
                  (\<lambda>_. read_state getExceptionSignalled)"
-by PrePost
+by HoareTriple
 
 lemma CapInvariant_SignalException [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalException v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 by (CapInvariant intro: getExceptionSignalled_SignalException)
@@ -186,7 +186,7 @@ by (CapInvariant intro: getExceptionSignalled_SignalException)
 (* Code generation - override - SignalCP2UnusableException *)
 
 lemma CapInvariant_SignalCP2UnusableException [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  SignalCP2UnusableException 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalCP2UnusableException_alt_def
@@ -197,7 +197,7 @@ by CapInvariant
 (* Code generation - override - SignalCapException_internal *)
 
 lemma CapInvariant_SignalCapException_internal [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalCapException_internal v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalCapException_internal_alt_def
@@ -208,7 +208,7 @@ by CapInvariant
 (* Code generation - override - SignalCapException *)
 
 lemma CapInvariant_SignalCapException [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalCapException v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalCapException_alt_def
@@ -219,7 +219,7 @@ by CapInvariant
 (* Code generation - override - SignalCapException_noReg *)
 
 lemma CapInvariant_SignalCapException_noReg [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalCapException_noReg v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalCapException_noReg_alt_def
@@ -228,7 +228,7 @@ by CapInvariant
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'ERET [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind ERETActions
@@ -244,7 +244,7 @@ by CapInvariant auto?
 (* Code generation - override - SignalTLBException *)
 
 lemma CapInvariant_SignalTLBException [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalTLBException v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalTLBException_alt_def
@@ -265,7 +265,7 @@ by CapInvariant
 (* Code generation - override - SignalTLBCapException *)
 
 lemma CapInvariant_SignalTLBCapException [CapInvariantI]:
-  shows "PrePost (return True) 
+  shows "HoareTriple (return True) 
                  (SignalTLBCapException v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding SignalTLBCapException_alt_def
@@ -280,7 +280,7 @@ by CapInvariant
 (* Code generation - override - WriteData *)
 
 lemma CapInvariant_WriteData [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocMem (slice 2 (fst v)))))
@@ -288,14 +288,14 @@ lemma CapInvariant_WriteData [CapInvariantI]:
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
 unfolding WriteData_alt_def
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - end override *)
 
 (* Code generation - override - WriteCap *)
 
 lemma CapInvariant_WriteCap [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    return (loc \<noteq> LocMem (fst v))))
@@ -303,7 +303,7 @@ lemma CapInvariant_WriteCap [CapInvariantI]:
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding CapInvariantTakeBranchPre_def
 unfolding WriteCap_alt_def 
-by PrePost (cases loc, auto split: option.splits)
+by HoareTriple (cases loc, auto split: option.splits)
 
 (* Code generation - end override *)
 
@@ -330,7 +330,7 @@ unfolding LoadCap_alt_def
 by CapInvariant
 
 lemma CapInvariant_LoadCap_aux_PhysicalAddress:
-  shows "PrePost (bind (read_state (getTranslateAddr (fst v, LOAD)))
+  shows "HoareTriple (bind (read_state (getTranslateAddr (fst v, LOAD)))
                        (\<lambda>a. case a of None \<Rightarrow> return True 
                                      | Some _ \<Rightarrow> return (loc \<noteq> LocReg (RegGeneral cd))))
                  (LoadCap v) 
@@ -340,20 +340,20 @@ lemma CapInvariant_LoadCap_aux_PhysicalAddress:
 proof -
   note [CapInvariantI del] = CapInvariant_AddressTranslation
   note [CapInvariantI] =
-    PrePost_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocReg (RegGeneral cd))"]
+    HoareTriple_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocReg (RegGeneral cd))"]
   show ?thesis
     unfolding LoadCap_alt_def
     by CapInvariant
 qed
 
 lemmas CapInvariant_LoadCap_aux_unpredictable = 
-  PrePost_weakest_pre_disj
+  HoareTriple_weakest_pre_disj
     [OF CapInvariant_LoadCap_aux_PhysicalAddress
-        PrePost_weakest_pre_disj
+        HoareTriple_weakest_pre_disj
           [OF UndefinedCase_LoadCap ExceptionSignalled_LoadCap]]
 
 lemmas CapInvariant_LoadCap [CapInvariantI] =
-  PrePost_weakest_pre_conj
+  HoareTriple_weakest_pre_conj
       [OF CapInvariant_LoadCap_aux_unpredictable[where loc=loc]
           CapInvariant_LoadCap_aux_TakeBranchPre[where loc=loc]]
   for loc
@@ -363,7 +363,7 @@ lemmas CapInvariant_LoadCap [CapInvariantI] =
 (* Code generation - override - StoreMemoryCap *)
 
 lemma CapInvariant_AdjustEndian_result:
-  shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b 
+  shows "HoareTriple (read_state getExceptionSignalled \<or>\<^sub>b 
                   read_state isUnpredictable \<or>\<^sub>b 
                   return (loc \<noteq> LocMem (slice 5 (snd v))))
                  (AdjustEndian v)
@@ -371,16 +371,16 @@ lemma CapInvariant_AdjustEndian_result:
                       read_state isUnpredictable \<or>\<^sub>b 
                       return (loc \<noteq> LocMem (slice 5 x)))"
 unfolding AdjustEndian_alt_def
-by PrePost (auto simp: slice_xor)
+by HoareTriple (auto simp: slice_xor)
 
 lemmas CapInvariant_AdjustEndian_2 =
-  PrePost_weakest_pre_conj
+  HoareTriple_weakest_pre_conj
     [OF CapInvariant_AdjustEndian[where loc=loc] 
         CapInvariant_AdjustEndian_result[where loc=loc]]
   for loc
 
 lemma CapInvariant_StoreMemoryCap [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    (case v of (MemType, AccessLength, MemElem, needAlign, vAddr, cond) \<Rightarrow>
@@ -394,8 +394,8 @@ proof -
   note [CapInvariantI] = CapInvariant_AdjustEndian_2[where loc=loc]
   note [CapInvariantI del] = CapInvariant_AddressTranslation
   note [CapInvariantI] = 
-    PrePost_weakest_pre_conj
-      [OF PrePost_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocMem (slice 5 x))"]
+    HoareTriple_weakest_pre_conj
+      [OF HoareTriple_DefinedAddressTranslation[where p="\<lambda>x. return (loc \<noteq> LocMem (slice 5 x))"]
           CapInvariant_AddressTranslation[where loc=loc]]
   show ?thesis
     unfolding StoreMemoryCap_alt_def GetCapAddress_def
@@ -408,7 +408,7 @@ qed
 (* Code generation - override - StoreMemory *)
 
 lemma CapInvariant_StoreMemory [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    (case v of (memType, accessLength, needAlign, memElem, vAddr, cond) \<Rightarrow>
@@ -425,7 +425,7 @@ by CapInvariant auto?
 (* Code generation - override - StoreCap *)
 
 lemma CapInvariant_StoreCap [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    bind (read_state getLLbit)
@@ -437,12 +437,12 @@ lemma CapInvariant_StoreCap [CapInvariantI]:
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 proof -
   note [CapInvariantI del] = CapInvariant_AddressTranslation
-  note PrePost_DefinedAddressTranslation
+  note HoareTriple_DefinedAddressTranslation
     [where p="\<lambda>x. bind (read_state getLLbit)
                        (\<lambda>llbit. return ((cond \<longrightarrow> llbit = Some True) \<longrightarrow>
                                         loc \<noteq> LocMem (slice 5 x)))"]
   note [CapInvariantI] = 
-    PrePost_weakest_pre_conj[OF this CapInvariant_AddressTranslation[where loc=loc]] 
+    HoareTriple_weakest_pre_conj[OF this CapInvariant_AddressTranslation[where loc=loc]] 
   show ?thesis
     unfolding StoreCap_alt_def GetCapAddress_def
     by simp CapInvariant
@@ -848,7 +848,7 @@ unfolding loadDoubleword_alt_def
 by CapInvariant
 
 lemma CapInvariant_dfn'LB [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LBActions v)
@@ -862,7 +862,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LBU [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LBUActions v)
@@ -876,7 +876,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LH [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LHActions v)
@@ -890,7 +890,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LHU [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LHUActions v)
@@ -904,7 +904,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LW [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWActions v)
@@ -918,7 +918,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LWU [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWUActions v)
@@ -932,7 +932,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LL [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LLActions v)
@@ -946,7 +946,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LD [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDActions v)
@@ -960,7 +960,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LLD [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LLDActions v)
@@ -974,7 +974,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LWL [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWLActions v)
@@ -988,7 +988,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LWR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWRActions v)
@@ -1002,7 +1002,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LDL [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDLActions v)
@@ -1016,7 +1016,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'LDR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDRActions v)
@@ -1030,7 +1030,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SB [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SBActions v)
@@ -1044,7 +1044,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SH [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SHActions v)
@@ -1060,7 +1060,7 @@ by CapInvariant auto?
 (* Code generation - override - storeWord *)
 
 lemma CapInvariant_storeWord [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (case v of (b, rt, offset, cond) \<Rightarrow>
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
@@ -1079,7 +1079,7 @@ by CapInvariant auto?
 (* Code generation - override - storeDoubleword *)
 
 lemma CapInvariant_storeDoubleword [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   (case v of (b, rt, offset, cond) \<Rightarrow>
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
@@ -1096,7 +1096,7 @@ by CapInvariant auto?
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'SW [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWActions v)
@@ -1110,7 +1110,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SD [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDActions v)
@@ -1124,7 +1124,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SCActions v)
@@ -1138,7 +1138,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SCD [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SCDActions v)
@@ -1152,7 +1152,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'SWL [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWLActions v)
@@ -1168,7 +1168,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'SWR *)
 
 lemma CapInvariant_dfn'SWR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWRActions v)
@@ -1190,7 +1190,7 @@ qed
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'SDL [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDLActions v)
@@ -1206,7 +1206,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'SDR *)
 
 lemma CapInvariant_dfn'SDR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDRActions v)
@@ -1443,7 +1443,7 @@ unfolding dfn'CGetAddr_alt_def
 by CapInvariant
 
 lemma CapInvariant_dfn'CGetPCC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CGetPCCActions v)
@@ -1457,7 +1457,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CGetPCCSetOffset [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CGetPCCSetOffsetActions v)
@@ -1481,7 +1481,7 @@ unfolding dfn'CSetCause_alt_def
 by CapInvariant
 
 lemma CapInvariant_dfn'CIncOffset [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CIncOffsetActions v)
@@ -1495,7 +1495,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CIncOffsetImmediate [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CIncOffsetImmediateActions v)
@@ -1509,7 +1509,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CSetBounds [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsActions v)
@@ -1523,7 +1523,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CSetBoundsExact [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsExactActions v)
@@ -1537,7 +1537,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CSetBoundsImmediate [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsImmediateActions v)
@@ -1582,7 +1582,7 @@ by (auto simp: ValueAndStatePart_simp
          split: CapLocation.splits CapRegister.splits)
 
 lemma SemanticsRestrict_Instruction_ClearRegsLoop_aux:
-  shows "PrePost (ClearRegLoopPre cond l loc cap)
+  shows "HoareTriple (ClearRegLoopPre cond l loc cap)
                  (foreach_loop (l, \<lambda>i. if cond i 
                                        then write'CAPR (nullCap, word_of_int (int i)) 
                                        else return ()))
@@ -1590,7 +1590,7 @@ lemma SemanticsRestrict_Instruction_ClearRegsLoop_aux:
 proof (induct l)
   case Nil
   thus ?case
-    unfolding PrePost_def
+    unfolding HoareTriple_def
     unfolding ClearRegLoopPre_def
     unfolding CapInvariantTakeBranchPre_def
     by (auto simp: ValueAndStatePart_simp 
@@ -1602,15 +1602,15 @@ next
     unfolding TakeBranchActions_def
     by (simp add: ValueAndStatePart_simp)
   show ?case
-    by (auto simp: PrePost_def[where m="write'CAPR _"]
-             intro!: PrePost_weakest_pre_bind[OF Cons refl]
-                     PrePost_pre_strengthening[OF Cons])
+    by (auto simp: HoareTriple_def[where m="write'CAPR _"]
+             intro!: HoareTriple_weakest_pre_bind[OF Cons refl]
+                     HoareTriple_pre_strengthening[OF Cons])
        (auto simp: ValueAndStatePart_simp ClearRegLoopPre_def
              split: CapLocation.splits CapRegister.splits option.splits)   
 qed
 
 lemma CapInvariant_ClearRegs [CapInvariantI]:
-  shows "PrePost (case (snd v) of CLo_rs \<Rightarrow> ClearRegLoopPre (op !! (fst v)) (seq 0 15) loc cap 
+  shows "HoareTriple (case (snd v) of CLo_rs \<Rightarrow> ClearRegLoopPre (op !! (fst v)) (seq 0 15) loc cap 
                                 | CHi_rs \<Rightarrow> ClearRegLoopPre (\<lambda>i. (fst v) !! (i - 16)) (seq 16 31) loc cap
                                 | _ \<Rightarrow> CapInvariantTakeBranchPre loc cap)
                  (ClearRegs v)
@@ -1662,7 +1662,7 @@ proof (elim ClearRegLoopPre_TakeBranchPre)
 qed
 
 lemma CapInvariant_dfn'CClearLo [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearLoActions v)
@@ -1713,7 +1713,7 @@ proof (elim ClearRegLoopPre_TakeBranchPre)
 qed
 
 lemma CapInvariant_dfn'CClearHi [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearHiActions v)
@@ -1729,7 +1729,7 @@ by CapInvariant (auto elim: CapInvariant_dfn'CClearHi_aux)
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'CClearTag [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearTagActions v)
@@ -1743,7 +1743,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CAndPerm [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CAndPermActions v)
@@ -1757,7 +1757,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CSetOffset [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetOffsetActions v)
@@ -1786,7 +1786,7 @@ unfolding dfn'CCheckType_alt_def
 by CapInvariant
 
 lemma CapInvariant_dfn'CFromPtr [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CFromPtrActions v)
@@ -1872,7 +1872,7 @@ by CapInvariant
 (* Code generation - override - dfn'CSC *)
 
 lemma CapInvariant_dfn'CSC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CSCActions v)
                        (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
                  (dfn'CSC v) 
@@ -1886,7 +1886,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'CLC *)
 
 lemma CapInvariant_dfn'CLC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CLCActions v)
                         (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
                  (dfn'CLC v) 
@@ -1898,7 +1898,7 @@ by CapInvariant (auto split: option.splits if_splits)
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'CLoad [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CLoadActions v)
@@ -1916,7 +1916,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'CStore *)
 
 lemma CapInvariant_dfn'CStore [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CStoreActions v)
@@ -1934,7 +1934,7 @@ by CapInvariant auto
 (* Code generation - override - dfn'CLLC *)
 
 lemma CapInvariant_dfn'CLLC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CLLCActions v)
                         (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
                  (dfn'CLLC v) 
@@ -1946,7 +1946,7 @@ by CapInvariant (auto split: option.splits if_splits)
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'CLLx [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CLLxActions v)
@@ -1962,7 +1962,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'CSCC *)
 
 lemma CapInvariant_dfn'CSCC [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CSCCActions v)
                         (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
                  (dfn'CSCC v) 
@@ -1976,7 +1976,7 @@ by CapInvariant auto?
 (* Code generation - override - dfn'CSCx *)
 
 lemma CapInvariant_dfn'CSCx [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSCxActions v)
@@ -1992,7 +1992,7 @@ by CapInvariant auto
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'CMOVN [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMOVNActions v)
@@ -2006,7 +2006,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CMOVZ [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMOVZActions v)
@@ -2020,7 +2020,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CMove [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMoveActions v)
@@ -2039,7 +2039,7 @@ unfolding dfn'CTestSubset_alt_def
 by CapInvariant
 
 lemma CapInvariant_dfn'CBuildCap [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CBuildCapActions v)
@@ -2053,7 +2053,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CCopyType [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CCopyTypeActions v)
@@ -2067,7 +2067,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CJR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CJRActions v)
@@ -2081,7 +2081,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CJALR [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CJALRActions v)
@@ -2095,7 +2095,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CSeal [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSealActions v)
@@ -2109,7 +2109,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CUnseal [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CUnsealActions v)
@@ -2136,7 +2136,7 @@ by CapInvariant
 (* Code generation - end override *)
 
 lemma CapInvariant_dfn'CReadHwr [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CReadHwrActions v)
@@ -2150,7 +2150,7 @@ unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
 by CapInvariant auto?
 
 lemma CapInvariant_dfn'CWriteHwr [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CWriteHwrActions v)
@@ -2176,7 +2176,7 @@ by CapInvariant
 (* Code generation - override - Run *)
 
 lemma CapInvariant_Run_aux:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (RunActions v)
@@ -2189,7 +2189,7 @@ unfolding Run_alt_def RunActions_def
 by CapInvariant auto?
 
 lemmas CapInvariant_Run [CapInvariantI] =
-  PrePost_weakest_pre_disj[OF CapInvariant_Run_aux
+  HoareTriple_weakest_pre_disj[OF CapInvariant_Run_aux
                               UndefinedCase_Run]
 
 (* Code generation - end override *)
@@ -2197,13 +2197,13 @@ lemmas CapInvariant_Run [CapInvariantI] =
 (* Code generation - override - Next *)
 
 lemma CapInvariant_TakeBranch [CapInvariantI]:
-  shows "PrePost (CapInvariantTakeBranchPre loc cap)
+  shows "HoareTriple (CapInvariantTakeBranchPre loc cap)
                  TakeBranch 
                  (\<lambda>_. CapInvariantPost loc cap)"
 unfolding CapInvariantTakeBranchPre_def
 unfolding CapInvariantPost_def
 unfolding TakeBranch_def TakeBranchActions_def
-by PrePost (auto simp: getBranchToPccCap_def split: option.splits if_splits)
+by HoareTriple (auto simp: getBranchToPccCap_def split: option.splits if_splits)
 
 lemma CapInvariant_Fetch_aux1:
   shows "IsInvariant (CapInvariantTakeBranchPre loc cap)
@@ -2219,20 +2219,20 @@ lemma CapInvariant_Fetch_aux2:
                                            | _ \<Rightarrow> True) \<and>\<^sub>b 
                     bind (RunActions (Decode w))
                          (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p)))"
-  shows "PrePost (bind NextInstruction (case_option (return True) p))
+  shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> read_state getExceptionSignalled
                               | Some w \<Rightarrow> read_state isUnpredictable \<or>\<^sub>b p w)"
 unfolding p_def
-by (intro PrePost_Fetch) Commute+
+by (intro HoareTriple_Fetch) Commute+
 
 lemmas CapInvariant_Fetch [CapInvariantI] =
-  PrePost_weakest_pre_conj
+  HoareTriple_weakest_pre_conj
       [OF CapInvariant_Fetch_aux1[where loc=loc] 
           CapInvariant_Fetch_aux2[where loc=loc]] for loc
 
 lemma CapInvariant_NextWithGhostState [CapInvariantI]:
-  shows "PrePost (read_state getStateIsValid \<and>\<^sub>b
+  shows "HoareTriple (read_state getStateIsValid \<and>\<^sub>b
                   \<not>\<^sub>b (NextInstruction =\<^sub>b return None) \<and>\<^sub>b
                   (read_state (getCap loc) =\<^sub>b return cap) \<and>\<^sub>b
                   (read_state CCallFastInstructionParam =\<^sub>b return None) \<and>\<^sub>b
@@ -2262,7 +2262,7 @@ theorem CapabilityCapInvariant:
 using assms
 using CapInvariant_NextWithGhostState
         [where loc=loc and cap="getCap loc s",
-         THEN PrePostE[where s=s]]
+         THEN HoareTripleE[where s=s]]
 using DefinedNextInstruction[OF suc]
 unfolding CapInvariantPost_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
