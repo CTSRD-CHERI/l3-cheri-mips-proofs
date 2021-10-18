@@ -94,8 +94,8 @@ proof clarify
     by auto
 qed
 
-definition GPermOfSegment where
-  "GPermOfSegment segment types \<equiv>
+definition AuthorityOfSegment where
+  "AuthorityOfSegment segment types \<equiv>
    \<lparr>SystemRegisterAccess = False,
     ExecutableAddresses = segment,
     LoadableAddresses = segment,
@@ -106,17 +106,17 @@ definition GPermOfSegment where
     SealableTypes = types,
     UnsealableTypes = types\<rparr>"
 
-lemma GPermOfSegment_simp [simp]:
-  shows "SystemRegisterAccess (GPermOfSegment segment types) = False"
-    and "ExecutableAddresses (GPermOfSegment segment types) = segment"
-    and "LoadableAddresses (GPermOfSegment segment types) = segment"
-    and "CapLoadableAddresses (GPermOfSegment segment types) = segment"
-    and "StorableAddresses (GPermOfSegment segment types) = segment"
-    and "CapStorableAddresses (GPermOfSegment segment types) = segment"
-    and "LocalCapStorableAddresses (GPermOfSegment segment types) = segment"
-    and "SealableTypes (GPermOfSegment segment types) = types"
-    and "UnsealableTypes (GPermOfSegment segment types) = types"
-unfolding GPermOfSegment_def
+lemma AuthorityOfSegment_simp [simp]:
+  shows "SystemRegisterAccess (AuthorityOfSegment segment types) = False"
+    and "ExecutableAddresses (AuthorityOfSegment segment types) = segment"
+    and "LoadableAddresses (AuthorityOfSegment segment types) = segment"
+    and "CapLoadableAddresses (AuthorityOfSegment segment types) = segment"
+    and "StorableAddresses (AuthorityOfSegment segment types) = segment"
+    and "CapStorableAddresses (AuthorityOfSegment segment types) = segment"
+    and "LocalCapStorableAddresses (AuthorityOfSegment segment types) = segment"
+    and "SealableTypes (AuthorityOfSegment segment types) = types"
+    and "UnsealableTypes (AuthorityOfSegment segment types) = types"
+unfolding AuthorityOfSegment_def
 by simp_all
 
 definition GrantedCaps where 
@@ -124,39 +124,39 @@ definition GrantedCaps where
    {getCapReg r s |r. RegisterIsAlwaysAccessible r} \<union>
    {getMemCap (GetCapAddress a) s |a. a \<in> getTranslateAddresses segment LOAD s}"
 
-lemma ReadableCaps_GPermOfSegment:
-  shows "ReadableCaps (GPermOfSegment segment types) s = 
+lemma ReadableCaps_AuthorityOfSegment:
+  shows "ReadableCaps (AuthorityOfSegment segment types) s = 
          {cap. cap \<in> GrantedCaps segment s \<and> getTag cap}"
 proof (intro equalityI; clarify, (intro conjI)?)
   fix cap
   assume "cap \<in> GrantedCaps segment s"
      and "getTag cap"
-  thus "cap \<in> ReadableCaps (GPermOfSegment segment types) s"
+  thus "cap \<in> ReadableCaps (AuthorityOfSegment segment types) s"
     unfolding GrantedCaps_def
     proof (elim UnE; clarify)
       fix r
       assume "RegisterIsAlwaysAccessible r"
          and "getTag (getCapReg r s)"
-      thus "getCapReg r s \<in> ReadableCaps (GPermOfSegment segment types) s"
+      thus "getCapReg r s \<in> ReadableCaps (AuthorityOfSegment segment types) s"
         by (auto intro!: ReadableCapsI[where loc="LocReg r"])
     next
       fix a
       assume "a \<in> getTranslateAddresses segment LOAD s"
          and "getTag (getMemCap (GetCapAddress a) s)"
-      thus "getMemCap (GetCapAddress a) s \<in> ReadableCaps (GPermOfSegment segment types) s"
+      thus "getMemCap (GetCapAddress a) s \<in> ReadableCaps (AuthorityOfSegment segment types) s"
         by (auto intro!: ReadableCapsI[where loc="LocMem (GetCapAddress a)"]
                  simp: getTranslateCapAddresses_def)
     qed
 next
   fix cap
-  assume readable: "cap \<in> ReadableCaps (GPermOfSegment segment types) s"
+  assume readable: "cap \<in> ReadableCaps (AuthorityOfSegment segment types) s"
   thus "getTag cap" by auto
   show "cap \<in> GrantedCaps segment s"
     using readable
     unfolding ReadableCaps_def
     proof clarify
       fix loc
-      assume loc: "loc \<in> ReadableLocations (GPermOfSegment segment types) s"
+      assume loc: "loc \<in> ReadableLocations (AuthorityOfSegment segment types) s"
          and tag: "getTag (getCap loc s)"
       show "getCap loc s \<in> GrantedCaps segment s"
         proof (cases loc)
@@ -192,8 +192,8 @@ definition InvokableCaps where
    {cap\<in>GrantedCaps segment s. 
     getTag cap \<and> Permit_CCall (getPerms cap)}"
 
-lemma GPerm_le_GPermOfSegment:
-  shows "(GetAuthority cap \<le> GPermOfSegment segment types) =
+lemma Authority_le_AuthorityOfSegment:
+  shows "(GetAuthority cap \<le> AuthorityOfSegment segment types) =
          (\<not> getTag cap \<or>
           ((Permit_Seal (getPerms cap) \<or>
             Permit_Unseal (getPerms cap)) \<longrightarrow>
@@ -206,7 +206,7 @@ lemma GPerm_le_GPermOfSegment:
             Permit_Store_Local_Capability (getPerms cap)) \<longrightarrow>
            RegionOfCap cap \<subseteq> segment) \<and>
           \<not> Access_System_Registers (getPerms cap))"
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 unfolding GetAuthority_accessors
 by auto
 
@@ -294,10 +294,10 @@ proof (intro conjI allI impI)
     using caps
     unfolding CapabilitySetup_def InvokableCapsSetup_def
     by simp
-  define gPerm where "gPerm = GPermOfSegment segment types"
-  note [simp] = ReadableCaps_GPermOfSegment
+  define gPerm where "gPerm = AuthorityOfSegment segment types"
+  note [simp] = ReadableCaps_AuthorityOfSegment
   have closed: "PermIsClosed gPerm s"
-    unfolding gPerm_def PermIsClosed_def ReadableCaps_GPermOfSegment
+    unfolding gPerm_def PermIsClosed_def ReadableCaps_AuthorityOfSegment
     proof clarsimp
       fix cap
       assume "cap \<in> GrantedCaps segment s"
@@ -306,11 +306,11 @@ proof (intro conjI allI impI)
       hence "cap \<in> UsableCaps segment types s"
         unfolding UsableCaps_def
         by auto
-      thus "GetAuthority cap \<le> GPermOfSegment segment types"
+      thus "GetAuthority cap \<le> AuthorityOfSegment segment types"
         using systemreg[THEN spec[where x=cap]]
         using segment[THEN spec[where x=cap]]
         using types[THEN spec[where x=cap]]
-        unfolding GPerm_le_GPermOfSegment
+        unfolding Authority_le_AuthorityOfSegment
         by simp
      qed
   note gPerm_def [simp]

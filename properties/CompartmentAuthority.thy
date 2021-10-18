@@ -2,7 +2,7 @@
 
 (* Author: Kyndylan Nienhuis *)
 
-theory GeneralisedPermissions
+theory CompartmentAuthority
 
 imports 
   "CHERI-core.CheriLemmas"
@@ -11,7 +11,7 @@ begin
 (*>*)
 section \<open>Generalised permissions\<close>
 
-record GeneralisedPerm = 
+record CompartmentAuthority = 
   SystemRegisterAccess :: bool
   ExecutableAddresses :: "VirtualAddress set"
   LoadableAddresses :: "VirtualAddress set"
@@ -24,13 +24,13 @@ record GeneralisedPerm =
 
 subsection \<open>Order over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (order) order
+instantiation "CompartmentAuthority_ext" :: (order) order
 begin
 
-  definition less_eq_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme \<Rightarrow> bool"
+  definition less_eq_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme \<Rightarrow> bool"
   where 
-    "less_eq_GeneralisedPerm_ext perm\<^sub>1 perm\<^sub>2 \<equiv>
+    "less_eq_CompartmentAuthority_ext perm\<^sub>1 perm\<^sub>2 \<equiv>
      (SystemRegisterAccess perm\<^sub>1 \<le> SystemRegisterAccess perm\<^sub>2) \<and>
      (ExecutableAddresses perm\<^sub>1 \<le> ExecutableAddresses perm\<^sub>2) \<and>
      (LoadableAddresses perm\<^sub>1 \<le> LoadableAddresses perm\<^sub>2) \<and>
@@ -40,13 +40,13 @@ begin
      (LocalCapStorableAddresses perm\<^sub>1 \<le> LocalCapStorableAddresses perm\<^sub>2) \<and>
      (SealableTypes perm\<^sub>1 \<le> SealableTypes perm\<^sub>2) \<and>
      (UnsealableTypes perm\<^sub>1 \<le> UnsealableTypes perm\<^sub>2) \<and>
-     (GeneralisedPerm.more perm\<^sub>1 \<le> GeneralisedPerm.more perm\<^sub>2)"
+     (CompartmentAuthority.more perm\<^sub>1 \<le> CompartmentAuthority.more perm\<^sub>2)"
   
-  definition less_GeneralisedPerm_ext :: "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme \<Rightarrow> bool" where
-    "less_GeneralisedPerm_ext perm\<^sub>1 perm\<^sub>2 \<equiv> perm\<^sub>1 \<le> perm\<^sub>2 \<and> \<not> (perm\<^sub>2 \<le> perm\<^sub>1)"
+  definition less_CompartmentAuthority_ext :: "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme \<Rightarrow> bool" where
+    "less_CompartmentAuthority_ext perm\<^sub>1 perm\<^sub>2 \<equiv> perm\<^sub>1 \<le> perm\<^sub>2 \<and> \<not> (perm\<^sub>2 \<le> perm\<^sub>1)"
   
   instance
-    by standard (auto simp: less_GeneralisedPerm_ext_def less_eq_GeneralisedPerm_ext_def)
+    by standard (auto simp: less_CompartmentAuthority_ext_def less_eq_CompartmentAuthority_ext_def)
 
 end
 
@@ -57,14 +57,14 @@ lemma SystemRegisterAccess_le [elim]:
       and "SystemRegisterAccess p"
   shows "SystemRegisterAccess q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemma ExecutableAddresses_le:
   assumes "p \<le> q"
   shows "ExecutableAddresses p \<subseteq> ExecutableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas ExecutableAddresses_le_subsetD [elim] =
@@ -74,7 +74,7 @@ lemma LoadableAddresses_le:
   assumes "p \<le> q"
   shows "LoadableAddresses p \<subseteq> LoadableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas LoadableAddresses_le_subsetD [elim] =
@@ -84,7 +84,7 @@ lemma CapLoadableAddresses_le:
   assumes "p \<le> q"
   shows "CapLoadableAddresses p \<subseteq> CapLoadableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas CapLoadableAddresses_le_subsetD [elim] =
@@ -94,7 +94,7 @@ lemma StorableAddresses_le:
   assumes "p \<le> q"
   shows "StorableAddresses p \<subseteq> StorableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas StorableAddresses_le_subsetD [elim] =
@@ -104,7 +104,7 @@ lemma CapStorableAddresses_le:
   assumes "p \<le> q"
   shows "CapStorableAddresses p \<subseteq> CapStorableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas CapStorableAddresses_le_subsetD [elim] =
@@ -114,7 +114,7 @@ lemma LocalCapStorableAddresses_le:
   assumes "p \<le> q"
   shows "LocalCapStorableAddresses p \<subseteq> LocalCapStorableAddresses q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas LocalCapStorableAddresses_le_subsetD [elim] =
@@ -124,7 +124,7 @@ lemma SealableTypes_le:
   assumes "p \<le> q"
   shows "SealableTypes p \<subseteq> SealableTypes q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas SealableTypes_le_subsetD [elim] =
@@ -134,7 +134,7 @@ lemma UnsealableTypes_le:
   assumes "p \<le> q"
   shows "UnsealableTypes p \<subseteq> UnsealableTypes q"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 by auto
 
 lemmas UnsealableTypes_le_subsetD [elim] =
@@ -144,11 +144,11 @@ subsection \<open>Complete lattice over generalised permissions\<close>
 
 subsubsection \<open>Bottom of generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (order_bot) order_bot
+instantiation "CompartmentAuthority_ext" :: (order_bot) order_bot
 begin
 
-  definition bot_GeneralisedPerm_ext :: "'a GeneralisedPerm_scheme" where
-    "bot_GeneralisedPerm_ext = 
+  definition bot_CompartmentAuthority_ext :: "'a CompartmentAuthority_scheme" where
+    "bot_CompartmentAuthority_ext = 
      \<lparr>SystemRegisterAccess = bot,
       ExecutableAddresses = bot,
       LoadableAddresses = bot,
@@ -161,11 +161,11 @@ begin
       \<dots> = bot\<rparr>"
   
   instance
-    by standard (auto simp: bot_GeneralisedPerm_ext_def less_eq_GeneralisedPerm_ext_def)
+    by standard (auto simp: bot_CompartmentAuthority_ext_def less_eq_CompartmentAuthority_ext_def)
 
 end
 
-lemma bot_GeneralisedPerm_ext_simp [simp]:
+lemma bot_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess bot = bot"
     and "ExecutableAddresses bot = bot"
     and "LoadableAddresses bot = bot"
@@ -176,16 +176,16 @@ lemma bot_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes bot = bot"
     and "UnsealableTypes bot = bot"
     and "more bot = bot"
-unfolding bot_GeneralisedPerm_ext_def
+unfolding bot_CompartmentAuthority_ext_def
 by simp_all
 
 subsubsection \<open>Top of generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (order_top) order_top
+instantiation "CompartmentAuthority_ext" :: (order_top) order_top
 begin
 
-  definition top_GeneralisedPerm_ext :: "'a GeneralisedPerm_scheme" where
-    "top_GeneralisedPerm_ext = 
+  definition top_CompartmentAuthority_ext :: "'a CompartmentAuthority_scheme" where
+    "top_CompartmentAuthority_ext = 
      \<lparr>SystemRegisterAccess = top,
       ExecutableAddresses = top,
       LoadableAddresses = top,
@@ -198,11 +198,11 @@ begin
       \<dots> = top\<rparr>"
   
   instance
-    by standard (auto simp: top_GeneralisedPerm_ext_def less_eq_GeneralisedPerm_ext_def)
+    by standard (auto simp: top_CompartmentAuthority_ext_def less_eq_CompartmentAuthority_ext_def)
 
 end
 
-lemma top_GeneralisedPerm_ext_simp [simp]:
+lemma top_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess top = top"
     and "ExecutableAddresses top = top"
     and "LoadableAddresses top = top"
@@ -213,18 +213,18 @@ lemma top_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes top = top"
     and "UnsealableTypes top = top"
     and "more top = top"
-unfolding top_GeneralisedPerm_ext_def
+unfolding top_CompartmentAuthority_ext_def
 by simp_all
 
 subsubsection \<open>Infimum of generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (semilattice_inf) semilattice_inf
+instantiation "CompartmentAuthority_ext" :: (semilattice_inf) semilattice_inf
 begin
 
-  definition inf_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition inf_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "inf_GeneralisedPerm_ext left right = 
+    "inf_CompartmentAuthority_ext left right = 
      \<lparr>SystemRegisterAccess = inf (SystemRegisterAccess left) (SystemRegisterAccess right),
       ExecutableAddresses = inf (ExecutableAddresses left) (ExecutableAddresses right),
       LoadableAddresses = inf (LoadableAddresses left) (LoadableAddresses right),
@@ -237,11 +237,11 @@ begin
       \<dots> = inf (more left) (more right)\<rparr>"
   
   instance
-    by standard (auto simp: inf_GeneralisedPerm_ext_def less_eq_GeneralisedPerm_ext_def)
+    by standard (auto simp: inf_CompartmentAuthority_ext_def less_eq_CompartmentAuthority_ext_def)
 
 end
 
-lemma inf_GeneralisedPerm_ext_simp [simp]:
+lemma inf_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (inf left right) = inf (SystemRegisterAccess left) (SystemRegisterAccess right)"
     and "ExecutableAddresses (inf left right) = inf (ExecutableAddresses left) (ExecutableAddresses right)"
     and "LoadableAddresses (inf left right) = inf (LoadableAddresses left) (LoadableAddresses right)"
@@ -252,16 +252,16 @@ lemma inf_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (inf left right) = inf (SealableTypes left) (SealableTypes right)"
     and "UnsealableTypes (inf left right) = inf (UnsealableTypes left) (UnsealableTypes right)"
     and "more (inf left right) = inf (more left) (more right)"
-unfolding inf_GeneralisedPerm_ext_def
+unfolding inf_CompartmentAuthority_ext_def
 by simp_all
 
-instantiation "GeneralisedPerm_ext" :: (Inf) Inf
+instantiation "CompartmentAuthority_ext" :: (Inf) Inf
 begin
 
-  definition Inf_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme set \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition Inf_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme set \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "Inf_GeneralisedPerm_ext permSet = 
+    "Inf_CompartmentAuthority_ext permSet = 
      \<lparr>SystemRegisterAccess = Inf (SystemRegisterAccess ` permSet),
       ExecutableAddresses = Inf (ExecutableAddresses ` permSet),
       LoadableAddresses = Inf (LoadableAddresses ` permSet),
@@ -277,7 +277,7 @@ begin
 
 end
 
-lemma Inf_GeneralisedPerm_ext_simp [simp]:
+lemma Inf_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (Inf permSet) = Inf (SystemRegisterAccess ` permSet)"
     and "ExecutableAddresses (Inf permSet) = Inf (ExecutableAddresses ` permSet)"
     and "LoadableAddresses (Inf permSet) = Inf (LoadableAddresses ` permSet)"
@@ -288,18 +288,18 @@ lemma Inf_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (Inf permSet) = Inf (SealableTypes ` permSet)"
     and "UnsealableTypes (Inf permSet) = Inf (UnsealableTypes ` permSet)"
     and "more (Inf permSet) = Inf (more ` permSet)"
-unfolding Inf_GeneralisedPerm_ext_def
+unfolding Inf_CompartmentAuthority_ext_def
 by simp_all
 
 subsubsection \<open>Supremum of generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (semilattice_sup) semilattice_sup
+instantiation "CompartmentAuthority_ext" :: (semilattice_sup) semilattice_sup
 begin
 
-  definition sup_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition sup_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "sup_GeneralisedPerm_ext left right = 
+    "sup_CompartmentAuthority_ext left right = 
      \<lparr>SystemRegisterAccess = sup (SystemRegisterAccess left) (SystemRegisterAccess right),
       ExecutableAddresses = sup (ExecutableAddresses left) (ExecutableAddresses right),
       LoadableAddresses = sup (LoadableAddresses left) (LoadableAddresses right),
@@ -312,11 +312,11 @@ begin
       \<dots> = sup (more left) (more right)\<rparr>"
   
   instance
-    by standard (auto simp: sup_GeneralisedPerm_ext_def less_eq_GeneralisedPerm_ext_def)
+    by standard (auto simp: sup_CompartmentAuthority_ext_def less_eq_CompartmentAuthority_ext_def)
 
 end
 
-lemma sup_GeneralisedPerm_ext_simp [simp]:
+lemma sup_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (sup left right) = sup (SystemRegisterAccess left) (SystemRegisterAccess right)"
     and "ExecutableAddresses (sup left right) = sup (ExecutableAddresses left) (ExecutableAddresses right)"
     and "LoadableAddresses (sup left right) = sup (LoadableAddresses left) (LoadableAddresses right)"
@@ -327,16 +327,16 @@ lemma sup_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (sup left right) = sup (SealableTypes left) (SealableTypes right)"
     and "UnsealableTypes (sup left right) = sup (UnsealableTypes left) (UnsealableTypes right)"
     and "more (sup left right) = sup (more left) (more right)"
-unfolding sup_GeneralisedPerm_ext_def
+unfolding sup_CompartmentAuthority_ext_def
 by simp_all
 
-instantiation "GeneralisedPerm_ext" :: (Sup) Sup
+instantiation "CompartmentAuthority_ext" :: (Sup) Sup
 begin
 
-  definition Sup_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme set \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition Sup_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme set \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "Sup_GeneralisedPerm_ext permSet = 
+    "Sup_CompartmentAuthority_ext permSet = 
      \<lparr>SystemRegisterAccess = Sup (SystemRegisterAccess ` permSet),
       ExecutableAddresses = Sup (ExecutableAddresses ` permSet),
       LoadableAddresses = Sup (LoadableAddresses ` permSet),
@@ -352,7 +352,7 @@ begin
 
 end
 
-lemma Sup_GeneralisedPerm_ext_simp [simp]:
+lemma Sup_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (Sup permSet) = Sup (SystemRegisterAccess ` permSet)"
     and "ExecutableAddresses (Sup permSet) = Sup (ExecutableAddresses ` permSet)"
     and "LoadableAddresses (Sup permSet) = Sup (LoadableAddresses ` permSet)"
@@ -363,45 +363,45 @@ lemma Sup_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (Sup permSet) = Sup (SealableTypes ` permSet)"
     and "UnsealableTypes (Sup permSet) = Sup (UnsealableTypes ` permSet)"
     and "more (Sup permSet) = Sup (more ` permSet)"
-unfolding Sup_GeneralisedPerm_ext_def
+unfolding Sup_CompartmentAuthority_ext_def
 by simp_all
 
 subsubsection \<open>Bounded, distributive lattice over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (Lattices.lattice) Lattices.lattice
+instantiation "CompartmentAuthority_ext" :: (Lattices.lattice) Lattices.lattice
 begin  
 
   instance by standard
 
 end
 
-instantiation "GeneralisedPerm_ext" :: (bounded_lattice) bounded_lattice
+instantiation "CompartmentAuthority_ext" :: (bounded_lattice) bounded_lattice
 begin  
 
   instance by standard
 
 end
 
-instantiation "GeneralisedPerm_ext" :: (distrib_lattice) distrib_lattice
+instantiation "CompartmentAuthority_ext" :: (distrib_lattice) distrib_lattice
 begin
   
   instance
     by standard
        (auto simp: sup_inf_distrib1 
-                   inf_GeneralisedPerm_ext_def
-                   sup_GeneralisedPerm_ext_def)
+                   inf_CompartmentAuthority_ext_def
+                   sup_CompartmentAuthority_ext_def)
 
 end
 
 subsubsection \<open>Boolean algebra over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (boolean_algebra) boolean_algebra
+instantiation "CompartmentAuthority_ext" :: (boolean_algebra) boolean_algebra
 begin
 
-  definition minus_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition minus_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "minus_GeneralisedPerm_ext left right = 
+    "minus_CompartmentAuthority_ext left right = 
      \<lparr>SystemRegisterAccess = minus (SystemRegisterAccess left) (SystemRegisterAccess right),
       ExecutableAddresses = minus (ExecutableAddresses left) (ExecutableAddresses right),
       LoadableAddresses = minus (LoadableAddresses left) (LoadableAddresses right),
@@ -413,10 +413,10 @@ begin
       UnsealableTypes = minus (UnsealableTypes left) (UnsealableTypes right), 
       \<dots> = minus (more left) (more right)\<rparr>"
 
-  definition uminus_GeneralisedPerm_ext :: 
-    "'a GeneralisedPerm_scheme \<Rightarrow> 'a GeneralisedPerm_scheme"
+  definition uminus_CompartmentAuthority_ext :: 
+    "'a CompartmentAuthority_scheme \<Rightarrow> 'a CompartmentAuthority_scheme"
   where
-    "uminus_GeneralisedPerm_ext perm = 
+    "uminus_CompartmentAuthority_ext perm = 
      \<lparr>SystemRegisterAccess = uminus (SystemRegisterAccess perm),
       ExecutableAddresses = uminus (ExecutableAddresses perm),
       LoadableAddresses = uminus (LoadableAddresses perm),
@@ -431,16 +431,16 @@ begin
   instance
     by standard
        (auto simp: diff_eq
-                   bot_GeneralisedPerm_ext_def
-                   top_GeneralisedPerm_ext_def
-                   inf_GeneralisedPerm_ext_def 
-                   sup_GeneralisedPerm_ext_def
-                   minus_GeneralisedPerm_ext_def
-                   uminus_GeneralisedPerm_ext_def)
+                   bot_CompartmentAuthority_ext_def
+                   top_CompartmentAuthority_ext_def
+                   inf_CompartmentAuthority_ext_def 
+                   sup_CompartmentAuthority_ext_def
+                   minus_CompartmentAuthority_ext_def
+                   uminus_CompartmentAuthority_ext_def)
 
 end
 
-lemma minus_GeneralisedPerm_ext_simp [simp]:
+lemma minus_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (minus left right) = minus (SystemRegisterAccess left) (SystemRegisterAccess right)"
     and "ExecutableAddresses (minus left right) = minus (ExecutableAddresses left) (ExecutableAddresses right)"
     and "LoadableAddresses (minus left right) = minus (LoadableAddresses left) (LoadableAddresses right)"
@@ -451,10 +451,10 @@ lemma minus_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (minus left right) = minus (SealableTypes left) (SealableTypes right)"
     and "UnsealableTypes (minus left right) = minus (UnsealableTypes left) (UnsealableTypes right)"
     and "more (minus left right) = minus (more left) (more right)"
-unfolding minus_GeneralisedPerm_ext_def
+unfolding minus_CompartmentAuthority_ext_def
 by simp_all
 
-lemma uminus_GeneralisedPerm_ext_simp [simp]:
+lemma uminus_CompartmentAuthority_ext_simp [simp]:
   shows "SystemRegisterAccess (uminus perm) = uminus (SystemRegisterAccess perm)"
     and "ExecutableAddresses (uminus perm) = uminus (ExecutableAddresses perm)"
     and "LoadableAddresses (uminus perm) = uminus (LoadableAddresses perm)"
@@ -465,52 +465,52 @@ lemma uminus_GeneralisedPerm_ext_simp [simp]:
     and "SealableTypes (uminus perm) = uminus (SealableTypes perm)"
     and "UnsealableTypes (uminus perm) = uminus (UnsealableTypes perm)"
     and "more (uminus perm) = uminus (more perm)"
-unfolding uminus_GeneralisedPerm_ext_def
+unfolding uminus_CompartmentAuthority_ext_def
 by simp_all
 
 subsubsection \<open>Complete lattice over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (complete_lattice) complete_lattice
+instantiation "CompartmentAuthority_ext" :: (complete_lattice) complete_lattice
 begin
   
   instance
     proof standard
-      fix x :: "'a GeneralisedPerm_ext" and A 
+      fix x :: "'a CompartmentAuthority_ext" and A 
       assume "x \<in> A"
       thus   "less_eq (Inf A) x"
-        unfolding Inf_GeneralisedPerm_ext_def
-        unfolding less_eq_GeneralisedPerm_ext_def
+        unfolding Inf_CompartmentAuthority_ext_def
+        unfolding less_eq_CompartmentAuthority_ext_def
         by (simp add: INF_lower)
     next
-      fix z :: "'a GeneralisedPerm_ext" and A 
+      fix z :: "'a CompartmentAuthority_ext" and A 
       assume "\<And>x. x \<in> A \<Longrightarrow> less_eq z x"
       thus   "less_eq z (Inf A)"
-        unfolding Inf_GeneralisedPerm_ext_def
-        unfolding less_eq_GeneralisedPerm_ext_def
+        unfolding Inf_CompartmentAuthority_ext_def
+        unfolding less_eq_CompartmentAuthority_ext_def
         by (auto simp: INF_greatest)
     next
-      fix x :: "'a GeneralisedPerm_ext" and A 
+      fix x :: "'a CompartmentAuthority_ext" and A 
       assume "x \<in> A"
       thus   "less_eq x (Sup A)"
-        unfolding Sup_GeneralisedPerm_ext_def
-        unfolding less_eq_GeneralisedPerm_ext_def
+        unfolding Sup_CompartmentAuthority_ext_def
+        unfolding less_eq_CompartmentAuthority_ext_def
         by (auto simp: SUP_upper)
     next
-      fix z :: "'a GeneralisedPerm_ext" and A 
+      fix z :: "'a CompartmentAuthority_ext" and A 
       assume "\<And>x. x \<in> A \<Longrightarrow> less_eq x z"
       thus   "less_eq (Sup A) z"
-        unfolding Sup_GeneralisedPerm_ext_def
-        unfolding less_eq_GeneralisedPerm_ext_def
+        unfolding Sup_CompartmentAuthority_ext_def
+        unfolding less_eq_CompartmentAuthority_ext_def
         by (auto simp: SUP_least)
     next
-      show "(Inf {}::'a GeneralisedPerm_ext) = top"
-        unfolding Inf_GeneralisedPerm_ext_def
-        unfolding top_GeneralisedPerm_ext_def
+      show "(Inf {}::'a CompartmentAuthority_ext) = top"
+        unfolding Inf_CompartmentAuthority_ext_def
+        unfolding top_CompartmentAuthority_ext_def
         by simp
     next
-      show "(Sup {}::'a GeneralisedPerm_ext) = bot"
-        unfolding Sup_GeneralisedPerm_ext_def
-        unfolding bot_GeneralisedPerm_ext_def
+      show "(Sup {}::'a CompartmentAuthority_ext) = bot"
+        unfolding Sup_CompartmentAuthority_ext_def
+        unfolding bot_CompartmentAuthority_ext_def
         by simp
     qed
 
@@ -518,23 +518,23 @@ end
 
 subsubsection \<open>Complete distributive lattice over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (complete_distrib_lattice) complete_distrib_lattice
+instantiation "CompartmentAuthority_ext" :: (complete_distrib_lattice) complete_distrib_lattice
 begin
   
   instance
     proof standard
-      fix x :: "'a GeneralisedPerm_ext" and A 
+      fix x :: "'a CompartmentAuthority_ext" and A 
       show "sup x (Inf A) = (INF a:A. sup x a)"
-        unfolding Inf_GeneralisedPerm_ext_def
-        unfolding sup_GeneralisedPerm_ext_def
-        using sup_Inf[where a="GeneralisedPerm.more x"]
+        unfolding Inf_CompartmentAuthority_ext_def
+        unfolding sup_CompartmentAuthority_ext_def
+        using sup_Inf[where a="CompartmentAuthority.more x"]
         by simp
     next
-      fix x :: "'a GeneralisedPerm_ext" and A 
+      fix x :: "'a CompartmentAuthority_ext" and A 
       show "inf x (Sup A) = (SUP a:A. inf x a)"
-        unfolding Sup_GeneralisedPerm_ext_def
-        unfolding inf_GeneralisedPerm_ext_def
-        using inf_Sup[where a="GeneralisedPerm.more x"]
+        unfolding Sup_CompartmentAuthority_ext_def
+        unfolding inf_CompartmentAuthority_ext_def
+        using inf_Sup[where a="CompartmentAuthority.more x"]
         by simp
     qed
 
@@ -542,7 +542,7 @@ end
 
 subsubsection \<open>Complete boolean algebra over generalised permissions\<close>
 
-instantiation "GeneralisedPerm_ext" :: (complete_boolean_algebra) complete_boolean_algebra
+instantiation "CompartmentAuthority_ext" :: (complete_boolean_algebra) complete_boolean_algebra
 begin
   
   instance by standard
@@ -669,7 +669,7 @@ by simp_all
 
 subsection \<open>Readable locations\<close>
 
-definition ReadableLocations :: "GeneralisedPerm \<Rightarrow> state \<Rightarrow> CapLocation set" where
+definition ReadableLocations :: "CompartmentAuthority \<Rightarrow> state \<Rightarrow> CapLocation set" where
   "ReadableLocations f s \<equiv> 
    {loc. case loc of 
       LocReg r \<Rightarrow> RegisterIsAlwaysAccessible r
@@ -769,7 +769,7 @@ by auto
 
 subsection \<open>Generalised permissions of capabilities\<close>
 
-definition GetAuthority :: "Capability \<Rightarrow> GeneralisedPerm" where
+definition GetAuthority :: "Capability \<Rightarrow> CompartmentAuthority" where
   "GetAuthority cap \<equiv> 
    if getTag cap
    then let perms = getPerms cap in
@@ -849,7 +849,7 @@ next
     using segment that by auto
   thus ?thesis 
     using True tag perms *
-    unfolding less_eq_GeneralisedPerm_ext_def
+    unfolding less_eq_CompartmentAuthority_ext_def
     unfolding less_eq_Perms_ext_alt
     by (strong_cong_simp add: GetAuthority_accessors)
 qed
@@ -885,9 +885,9 @@ lemma GetAuthorityOfCaps_subset [elim!]:
   assumes "caps \<subseteq> caps'"
   shows "GetAuthorityOfCaps caps \<le> GetAuthorityOfCaps caps'"
 using assms
-unfolding less_eq_GeneralisedPerm_ext_def
+unfolding less_eq_CompartmentAuthority_ext_def
 unfolding GetAuthorityOfCaps_def
-unfolding Sup_GeneralisedPerm_ext_def
+unfolding Sup_CompartmentAuthority_ext_def
 by auto
 
 (*<*)

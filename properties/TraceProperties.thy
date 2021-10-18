@@ -6,7 +6,7 @@ theory TraceProperties
 
 imports 
   "CHERI-abstraction.CheriAbstraction"
-  "GeneralisedPermissions"
+  "CompartmentAuthority"
 begin
 
 (*>*)
@@ -213,7 +213,7 @@ by auto
 
 subsection \<open>Transitively reachable permissions\<close>
 
-definition ReachablePermissions :: "state \<Rightarrow> GeneralisedPerm" where
+definition ReachablePermissions :: "state \<Rightarrow> CompartmentAuthority" where
   "ReachablePermissions s \<equiv> GetAuthorityOfCaps (TransUsableCaps s)"
 
 lemma GetAuthority_ReachablePermissions_le [elim!]:
@@ -313,7 +313,7 @@ proof -
     qed
 qed
 
-definition InvokableCapsNotUnsealable :: "GeneralisedPerm \<Rightarrow> state \<Rightarrow> bool" where
+definition InvokableCapsNotUnsealable :: "CompartmentAuthority \<Rightarrow> state \<Rightarrow> bool" where
   "InvokableCapsNotUnsealable perm s \<equiv>
    \<forall>cap\<in>ReadableCaps perm s.
    Permit_CCall (getPerms cap) \<longrightarrow>
