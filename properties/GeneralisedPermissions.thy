@@ -769,8 +769,8 @@ by auto
 
 subsection \<open>Generalised permissions of capabilities\<close>
 
-definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
-  "Generalise cap \<equiv> 
+definition GetAuthority :: "Capability \<Rightarrow> GeneralisedPerm" where
+  "GetAuthority cap \<equiv> 
    if getTag cap
    then let perms = getPerms cap in
          \<lparr>SystemRegisterAccess = Access_System_Registers perms,
@@ -784,52 +784,52 @@ definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
           UnsealableTypes = if Permit_Unseal perms then {t. ucast t \<in> RegionOfCap cap} else {}\<rparr>
    else bot"
 
-lemma Generalise_accessors:
-  shows "SystemRegisterAccess (Generalise cap) = 
+lemma GetAuthority_accessors:
+  shows "SystemRegisterAccess (GetAuthority cap) = 
          (getTag cap \<and> Access_System_Registers (getPerms cap))"
-    and "ExecutableAddresses (Generalise cap) = 
+    and "ExecutableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Execute (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "LoadableAddresses (Generalise cap) = 
+    and "LoadableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Load (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "CapLoadableAddresses (Generalise cap) = 
+    and "CapLoadableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Load_Capability (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "StorableAddresses (Generalise cap) = 
+    and "StorableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Store (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "CapStorableAddresses (Generalise cap) = 
+    and "CapStorableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Store_Capability (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "LocalCapStorableAddresses (Generalise cap) = 
+    and "LocalCapStorableAddresses (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) 
           then RegionOfCap cap else {})"
-    and "SealableTypes (Generalise cap) = 
+    and "SealableTypes (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Seal (getPerms cap) 
           then {t. ucast t \<in> RegionOfCap cap} else {})"
-    and "UnsealableTypes (Generalise cap) = 
+    and "UnsealableTypes (GetAuthority cap) = 
          (if getTag cap \<and> Permit_Unseal (getPerms cap) 
           then {t. ucast t \<in> RegionOfCap cap} else {})"
-unfolding Generalise_def Let_def
+unfolding GetAuthority_def Let_def
 by simp_all
 
-lemma Generalise_setMember_simp [simp]:
-  shows "Generalise (setSealed (cap, v1)) = Generalise cap"
-    and "Generalise (setType (cap, v2)) = Generalise cap"
-    and "Generalise (setOffset (cap, v3)) = Generalise cap"
-    and "Generalise (setUPerms (cap, v5)) = Generalise cap"
-    and "Generalise (setTag (cap, False)) = bot"
-unfolding Generalise_def
+lemma GetAuthority_setMember_simp [simp]:
+  shows "GetAuthority (setSealed (cap, v1)) = GetAuthority cap"
+    and "GetAuthority (setType (cap, v2)) = GetAuthority cap"
+    and "GetAuthority (setOffset (cap, v3)) = GetAuthority cap"
+    and "GetAuthority (setUPerms (cap, v5)) = GetAuthority cap"
+    and "GetAuthority (setTag (cap, False)) = bot"
+unfolding GetAuthority_def
 by (simp_all cong: cong)
 
-lemma Generalise_le [intro]:
+lemma GetAuthority_le [intro]:
   assumes "cap' \<le> cap"
-  shows "Generalise cap' \<le> Generalise cap"
+  shows "GetAuthority cap' \<le> GetAuthority cap"
 proof (cases "getTag cap'")
   case False
-  hence "Generalise cap' = bot"
-    unfolding Generalise_def
+  hence "GetAuthority cap' = bot"
+    unfolding GetAuthority_def
     by simp
   thus ?thesis by auto
 next
@@ -851,42 +851,42 @@ next
     using True tag perms *
     unfolding less_eq_GeneralisedPerm_ext_def
     unfolding less_eq_Perms_ext_alt
-    by (strong_cong_simp add: Generalise_accessors)
+    by (strong_cong_simp add: GetAuthority_accessors)
 qed
 
-definition GeneraliseOfCaps where
-  "GeneraliseOfCaps caps \<equiv> Sup {Generalise cap |cap. cap \<in> caps}"
+definition GetAuthorityOfCaps where
+  "GetAuthorityOfCaps caps \<equiv> Sup {GetAuthority cap |cap. cap \<in> caps}"
 
-lemma GeneraliseOfCaps_empty [simp]:
-  shows "GeneraliseOfCaps {} = bot"
-unfolding GeneraliseOfCaps_def
+lemma GetAuthorityOfCaps_empty [simp]:
+  shows "GetAuthorityOfCaps {} = bot"
+unfolding GetAuthorityOfCaps_def
 by simp
 
-lemma GeneraliseOfCaps_singleton [simp]:
-  shows "GeneraliseOfCaps {cap} = Generalise cap"
-unfolding GeneraliseOfCaps_def
+lemma GetAuthorityOfCaps_singleton [simp]:
+  shows "GetAuthorityOfCaps {cap} = GetAuthority cap"
+unfolding GetAuthorityOfCaps_def
 by simp
 
-lemma GeneraliseOfCaps_accessors [simp]:
-  shows "SystemRegisterAccess (GeneraliseOfCaps caps) = (\<exists>cap\<in>caps. SystemRegisterAccess (Generalise cap))"
-    and "ExecutableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. ExecutableAddresses (Generalise cap))"
-    and "LoadableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. LoadableAddresses (Generalise cap))"
-    and "CapLoadableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. CapLoadableAddresses (Generalise cap))"
-    and "StorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. StorableAddresses (Generalise cap))"
-    and "CapStorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. CapStorableAddresses (Generalise cap))"
-    and "LocalCapStorableAddresses (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. LocalCapStorableAddresses (Generalise cap))"
-    and "SealableTypes (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. SealableTypes (Generalise cap))"
-    and "UnsealableTypes (GeneraliseOfCaps caps) = (\<Union>cap\<in>caps. UnsealableTypes (Generalise cap))"
-    and "more (GeneraliseOfCaps caps) = Sup (more ` Generalise ` caps)"
-unfolding GeneraliseOfCaps_def
+lemma GetAuthorityOfCaps_accessors [simp]:
+  shows "SystemRegisterAccess (GetAuthorityOfCaps caps) = (\<exists>cap\<in>caps. SystemRegisterAccess (GetAuthority cap))"
+    and "ExecutableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. ExecutableAddresses (GetAuthority cap))"
+    and "LoadableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. LoadableAddresses (GetAuthority cap))"
+    and "CapLoadableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. CapLoadableAddresses (GetAuthority cap))"
+    and "StorableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. StorableAddresses (GetAuthority cap))"
+    and "CapStorableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. CapStorableAddresses (GetAuthority cap))"
+    and "LocalCapStorableAddresses (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. LocalCapStorableAddresses (GetAuthority cap))"
+    and "SealableTypes (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. SealableTypes (GetAuthority cap))"
+    and "UnsealableTypes (GetAuthorityOfCaps caps) = (\<Union>cap\<in>caps. UnsealableTypes (GetAuthority cap))"
+    and "more (GetAuthorityOfCaps caps) = Sup (more ` GetAuthority ` caps)"
+unfolding GetAuthorityOfCaps_def
 by auto
 
-lemma GeneraliseOfCaps_subset [elim!]:
+lemma GetAuthorityOfCaps_subset [elim!]:
   assumes "caps \<subseteq> caps'"
-  shows "GeneraliseOfCaps caps \<le> GeneraliseOfCaps caps'"
+  shows "GetAuthorityOfCaps caps \<le> GetAuthorityOfCaps caps'"
 using assms
 unfolding less_eq_GeneralisedPerm_ext_def
-unfolding GeneraliseOfCaps_def
+unfolding GetAuthorityOfCaps_def
 unfolding Sup_GeneralisedPerm_ext_def
 by auto
 

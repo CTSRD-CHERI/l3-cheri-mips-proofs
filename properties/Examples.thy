@@ -193,7 +193,7 @@ definition InvokableCaps where
     getTag cap \<and> Permit_CCall (getPerms cap)}"
 
 lemma GPerm_le_GPermOfSegment:
-  shows "(Generalise cap \<le> GPermOfSegment segment types) =
+  shows "(GetAuthority cap \<le> GPermOfSegment segment types) =
          (\<not> getTag cap \<or>
           ((Permit_Seal (getPerms cap) \<or>
             Permit_Unseal (getPerms cap)) \<longrightarrow>
@@ -207,7 +207,7 @@ lemma GPerm_le_GPermOfSegment:
            RegionOfCap cap \<subseteq> segment) \<and>
           \<not> Access_System_Registers (getPerms cap))"
 unfolding less_eq_GeneralisedPerm_ext_def
-unfolding Generalise_accessors
+unfolding GetAuthority_accessors
 by auto
 
 definition NoSystemRegisterAccess where
@@ -306,7 +306,7 @@ proof (intro conjI allI impI)
       hence "cap \<in> UsableCaps segment types s"
         unfolding UsableCaps_def
         by auto
-      thus "Generalise cap \<le> GPermOfSegment segment types"
+      thus "GetAuthority cap \<le> GPermOfSegment segment types"
         using systemreg[THEN spec[where x=cap]]
         using segment[THEN spec[where x=cap]]
         using types[THEN spec[where x=cap]]

@@ -214,19 +214,19 @@ by auto
 subsection \<open>Transitively reachable permissions\<close>
 
 definition ReachablePermissions :: "state \<Rightarrow> GeneralisedPerm" where
-  "ReachablePermissions s \<equiv> GeneraliseOfCaps (TransUsableCaps s)"
+  "ReachablePermissions s \<equiv> GetAuthorityOfCaps (TransUsableCaps s)"
 
-lemma Generalise_ReachablePermissions_le [elim!]:
+lemma GetAuthority_ReachablePermissions_le [elim!]:
   assumes "cap \<in> TransUsableCaps s"
-  shows "Generalise cap \<le> ReachablePermissions s"
-unfolding ReachablePermissions_def GeneraliseOfCaps_def
+  shows "GetAuthority cap \<le> ReachablePermissions s"
+unfolding ReachablePermissions_def GetAuthorityOfCaps_def
 using assms
 by (intro Sup_upper) auto
 
 lemma getPCC_ReachablePermissions_le [intro]:
   assumes "getTag (getPCC s)"
       and "\<not> getSealed (getPCC s)"
-  shows "Generalise (getPCC s) \<le> ReachablePermissions s"
+  shows "GetAuthority (getPCC s) \<le> ReachablePermissions s"
 proof -
   have "getPCC s \<in> TransUsableCaps s"
     using assms
@@ -239,7 +239,7 @@ lemma ReachableCaps_ReachablePermissions_le [elim!]:
   shows "ReachablePermissions s \<le> ReachablePermissions s'"
 unfolding ReachablePermissions_def
 using assms
-by (intro GeneraliseOfCaps_subset) auto
+by (intro GetAuthorityOfCaps_subset) auto
 
 lemma SystemRegisterAccess_PCC:
   assumes abstraction: "CanBeSimulated sem"
@@ -252,12 +252,12 @@ proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
     using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
     by auto
-  hence "Generalise (getPCC s) \<le> ReachablePermissions s" 
+  hence "GetAuthority (getPCC s) \<le> ReachablePermissions s" 
     by auto
   from SystemRegisterAccess_le[OF this]
   show "\<not> Access_System_Registers (getPerms (getPCC s))"
     using no_sys valid_pcc
-    by (auto simp: Generalise_accessors)
+    by (auto simp: GetAuthority_accessors)
 qed
 
 lemma ReachablePermissions_AddressTranslation:
@@ -271,12 +271,12 @@ proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
     using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
     by auto
-  hence "Generalise (getPCC s) \<le> ReachablePermissions s" 
+  hence "GetAuthority (getPCC s) \<le> ReachablePermissions s" 
     by auto
   from SystemRegisterAccess_le[OF this]
   have "\<not> Access_System_Registers (getPerms (getPCC s))"
     using no_sys valid_pcc
-    by (auto simp: Generalise_accessors)
+    by (auto simp: GetAuthority_accessors)
   thus ?thesis
     using CanBeSimulatedE_AddressTranslation[OF abstraction suc no_ex _ valid]
     by auto
@@ -308,7 +308,7 @@ proof -
         using Memory[where addr=a and s=s]
         using LocMem tag loc
         unfolding ReachablePermissions_def TransUsableCaps_def
-        by (auto simp: getTranslateCapAddresses_distrib_Union Generalise_accessors
+        by (auto simp: getTranslateCapAddresses_distrib_Union GetAuthority_accessors
                  split: if_splits)
     qed
 qed
@@ -363,10 +363,10 @@ proof -
       case (Memory cap addr)
       hence "cap \<in> TransUsableCaps s"
         by auto
-      note gperm = Generalise_ReachablePermissions_le[OF this]
-      have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (Generalise cap)) LOAD s"
+      note gperm = GetAuthority_ReachablePermissions_le[OF this]
+      have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (GetAuthority cap)) LOAD s"
         using Memory ReachableCaps_getTag
-        by (auto simp: Generalise_accessors)
+        by (auto simp: GetAuthority_accessors)
       hence "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (ReachablePermissions s)) LOAD s"
         using getTranslateCapAddresses_le[OF CapLoadableAddresses_le[OF gperm]]
         by auto
@@ -404,10 +404,10 @@ proof -
       case (Unseal cap unsealer)
       hence "unsealer \<in> TransUsableCaps s"
         by auto
-      note gperm = Generalise_ReachablePermissions_le[OF this]
-      have "getType cap \<in> UnsealableTypes (Generalise unsealer)"
+      note gperm = GetAuthority_ReachablePermissions_le[OF this]
+      have "getType cap \<in> UnsealableTypes (GetAuthority unsealer)"
         using Unseal
-        by (auto simp: Generalise_accessors)
+        by (auto simp: GetAuthority_accessors)
       hence False
         using UnsealableTypes_le[OF gperm]
         using Unseal
@@ -424,13 +424,13 @@ definition PermIsClosed where
   "PermIsClosed perm s \<equiv>
    \<forall>cap\<in>ReadableCaps perm s.
    (\<not> getSealed cap \<or> getType cap \<in> UnsealableTypes perm) \<longrightarrow>
-   Generalise cap \<le> perm"
+   GetAuthority cap \<le> perm"
 
 lemma PermIsClosedE [elim]:
   assumes "PermIsClosed perm s"
       and "cap \<in> ReadableCaps perm s"
       and "getSealed cap \<Longrightarrow> getType cap \<in> UnsealableTypes perm"
-  shows "Generalise cap \<le> perm"
+  shows "GetAuthority cap \<le> perm"
 using assms
 unfolding PermIsClosed_def
 by auto
@@ -438,7 +438,7 @@ by auto
 lemma TransUsableCapsInClosedPerm:
   assumes closed: "PermIsClosed perm s"
       and usable: "cap \<in> TransUsableCaps s"
-  shows "Generalise cap \<le> perm"
+  shows "GetAuthority cap \<le> perm"
 proof -
   have reachable: "cap \<in> ReachableCaps s" and
        type: "getSealed cap \<longrightarrow> getType cap \<in> UnsealableTypes perm"
@@ -456,15 +456,15 @@ proof -
         by auto
     next
       case (Memory cap addr)
-      hence "Generalise cap \<le> perm"
+      hence "GetAuthority cap \<le> perm"
         by auto
       from CapLoadableAddresses_le[OF this]
-      have "CapLoadableAddresses (Generalise cap) \<subseteq> CapLoadableAddresses perm"
+      have "CapLoadableAddresses (GetAuthority cap) \<subseteq> CapLoadableAddresses perm"
         by auto
       from getTranslateCapAddresses_le[OF this]
       have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses perm) LOAD s"
         using Memory ReachableCaps_getTag
-        by (auto simp: Generalise_accessors)
+        by (auto simp: GetAuthority_accessors)
       hence "LocMem addr \<in> ReadableLocations perm s" 
         by auto
       thus ?case
@@ -473,7 +473,7 @@ proof -
         by auto
     next
       case (Restrict cap cap')
-      hence "Generalise cap' \<le> Generalise cap"
+      hence "GetAuthority cap' \<le> GetAuthority cap"
         by auto
       thus ?case 
         using less_eq_CapabilityE_getSealed[OF `cap' \<le> cap`]
@@ -485,12 +485,12 @@ proof -
       thus ?case by simp
     next
       case (Unseal cap unsealer)
-      hence "Generalise unsealer \<le> perm" 
+      hence "GetAuthority unsealer \<le> perm" 
         by auto
       from UnsealableTypes_le[OF this]
       have "getType cap \<in> UnsealableTypes perm"
         using Unseal 
-        by (auto simp: Generalise_accessors)
+        by (auto simp: GetAuthority_accessors)
       thus ?case 
         using Unseal by auto
     qed
@@ -500,7 +500,7 @@ lemma ReachablePermissionsInClosedPerm:
   assumes "PermIsClosed perm s"
   shows "ReachablePermissions s \<le> perm"
 using TransUsableCapsInClosedPerm[OF assms]
-unfolding ReachablePermissions_def GeneraliseOfCaps_def TransUsableCaps_def
+unfolding ReachablePermissions_def GetAuthorityOfCaps_def TransUsableCaps_def
 unfolding Sup_le_iff
 by auto
 
@@ -851,14 +851,14 @@ proof (induct trace arbitrary: s')
   note pcc = CanBeSimulatedE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
   hence "getPCC r \<in> TransUsableCaps r"
     by auto
-  hence "Generalise (getPCC r) \<le> ReachablePermissions r"
+  hence "GetAuthority (getPCC r) \<le> ReachablePermissions r"
     by auto
   from SystemRegisterAccess_le[OF this]
-  have "\<not> SystemRegisterAccess (Generalise (getPCC r))"
+  have "\<not> SystemRegisterAccess (GetAuthority (getPCC r))"
     using no_access2 by auto
   hence "\<not> Access_System_Registers (getPerms (getPCC r))"
     using pcc
-    by (auto simp: Generalise_accessors)
+    by (auto simp: GetAuthority_accessors)
   hence "getSCAPR cd s' = getSCAPR cd r" 
     using SystemRegisterInvariant_aux[OF abstraction _ system valid2 r\<^sub>2 no_ex2]
     by auto
@@ -990,7 +990,7 @@ proof (induct trace arbitrary: s')
               hence "getCapReg auth r \<in> TransUsableCaps r"
                 using restrict 
                 by auto
-              hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+              hence gperm: "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
                 by auto
               have "StoreDataProp r (PreserveDomain actions) s'"
                 using CanBeSimulatedE[OF abstraction intra_suc]
@@ -1002,9 +1002,9 @@ proof (induct trace arbitrary: s')
                                  "getTranslateAddr (vAddr, STORE) r = Some a'"
                 using action StoreDataAction target restrict
                 by auto
-              hence "a \<in> getTranslateCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
                 using a restrict
-                by (auto simp: Generalise_accessors 
+                by (auto simp: GetAuthority_accessors 
                          intro: getTranslateCapAddressesI)
               hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
                 using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
@@ -1028,7 +1028,7 @@ proof (induct trace arbitrary: s')
               hence "getCapReg auth r \<in> TransUsableCaps r"
                 using store 
                 by auto
-              hence gperm: "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+              hence gperm: "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
                 by auto
               have "StoreCapProp r (PreserveDomain actions) s'"
                 using CanBeSimulatedE[OF abstraction intra_suc]
@@ -1041,10 +1041,10 @@ proof (induct trace arbitrary: s')
                 using action StoreCapAction target
                 by auto
               from getTranslateCapAddressesI_word_cat[OF this(2) this(1)]
-              have "a \<in> getTranslateCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+              have "a \<in> getTranslateCapAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
                 using store
                 unfolding word_size
-                by (auto simp: Generalise_accessors
+                by (auto simp: GetAuthority_accessors
                          intro: getTranslateCapAddressesI)
               hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
                 using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
@@ -1170,9 +1170,9 @@ proof (induct trace arbitrary: s')
           hence "l \<noteq> 0"
             by auto
           note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
-          have *: "a \<in> getTranslateAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+          have *: "a \<in> getTranslateAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
             using store addr
-            by (auto simp: Generalise_accessors intro: getTranslateAddressesI)
+            by (auto simp: GetAuthority_accessors intro: getTranslateAddressesI)
           have "getCapReg auth r \<in> ReachableCaps r"
             using ReachableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
@@ -1181,7 +1181,7 @@ proof (induct trace arbitrary: s')
           hence "getCapReg auth r \<in> TransUsableCaps r"
             using store 
             by auto
-          hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+          hence "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
             by auto
           note StorableAddresses_le[OF this]
           from getTranslateAddresses_le[OF this]
@@ -1198,9 +1198,9 @@ proof (induct trace arbitrary: s')
           assume prov: "StoreCapAction auth cd a' \<in> actions" 
              and addr: "a \<in> Region (ExtendCapAddress a') 32"
           note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
-          have *: "a \<in> getTranslateAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+          have *: "a \<in> getTranslateAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
             using store addr
-            by (auto simp: Generalise_accessors intro: getTranslateAddressesI)
+            by (auto simp: GetAuthority_accessors intro: getTranslateAddressesI)
           have "getCapReg auth r \<in> ReachableCaps r"
             using ReachableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
@@ -1209,7 +1209,7 @@ proof (induct trace arbitrary: s')
           hence "getCapReg auth r \<in> TransUsableCaps r"
             using store 
             by auto
-          hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
+          hence "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
             by auto
           note StorableAddresses_le[OF this]
           from getTranslateAddresses_le[OF this]
