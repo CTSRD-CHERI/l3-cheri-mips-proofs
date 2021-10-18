@@ -551,75 +551,75 @@ end
 
 subsection \<open>Physical capability addresses\<close>
 
-definition getPhysicalCapAddresses :: 
+definition getTranslateCapAddresses :: 
   "VirtualAddress set \<Rightarrow> AccessType \<Rightarrow> state \<Rightarrow> PhysicalCapAddress set" 
 where
-  "getPhysicalCapAddresses addrs t s \<equiv> 
+  "getTranslateCapAddresses addrs t s \<equiv> 
    GetCapAddress ` getTranslateAddresses addrs t s"
 
-lemma Commute_getPhysicalCapAddresses [Commute_compositeI]: 
+lemma Commute_getTranslateCapAddresses [Commute_compositeI]: 
   assumes "Commute (read_state (getTranslateAddresses addrs t)) m"
-  shows "Commute (read_state (getPhysicalCapAddresses addrs t)) m"
+  shows "Commute (read_state (getTranslateCapAddresses addrs t)) m"
 using assms
-unfolding getPhysicalCapAddresses_def Commute_def
+unfolding getTranslateCapAddresses_def Commute_def
 by auto
 
-lemma getPhysicalCapAddressesI [intro?]:
+lemma getTranslateCapAddressesI [intro?]:
   assumes "getTranslateAddr (virtualAddress, t) s = Some physicalAddress"
       and "a = GetCapAddress physicalAddress"
       and "virtualAddress \<in> addrs"
-  shows "a \<in> getPhysicalCapAddresses addrs t s"
+  shows "a \<in> getTranslateCapAddresses addrs t s"
 using assms
-unfolding getPhysicalCapAddresses_def
+unfolding getTranslateCapAddresses_def
 unfolding getTranslateAddresses_def
 by auto
 
-lemma getPhysicalCapAddressesI_word_cat [elim]:
+lemma getTranslateCapAddressesI_word_cat [elim]:
   assumes "getTranslateAddr (virtualAddress, t) s = Some (ExtendCapAddress a)"
       and "virtualAddress \<in> addrs"
-  shows "a \<in> getPhysicalCapAddresses addrs t s"
+  shows "a \<in> getTranslateCapAddresses addrs t s"
 using assms
 using slice_cat1[where a=a and b="0::5 word" and 'a=40]
-by (intro getPhysicalCapAddressesI) (auto simp: word_size)
+by (intro getTranslateCapAddressesI) (auto simp: word_size)
 
-lemma getPhysicalCapAddressesE [elim]:
-  assumes "a \<in> getPhysicalCapAddresses addrs t s"
+lemma getTranslateCapAddressesE [elim]:
+  assumes "a \<in> getTranslateCapAddresses addrs t s"
   obtains virtualAddress physicalAddress
     where "getTranslateAddr (virtualAddress, t) s = Some physicalAddress"
       and "virtualAddress \<in> addrs" 
       and "a = GetCapAddress physicalAddress"
 using assms
-unfolding getPhysicalCapAddresses_def
+unfolding getTranslateCapAddresses_def
 by auto
 
-lemma getPhysicalCapAddresses_le:
+lemma getTranslateCapAddresses_le:
   assumes "addrs \<subseteq> addrs'"
-  shows "getPhysicalCapAddresses addrs t s \<subseteq> getPhysicalCapAddresses addrs' t s"
+  shows "getTranslateCapAddresses addrs t s \<subseteq> getTranslateCapAddresses addrs' t s"
 using assms
-unfolding getPhysicalCapAddresses_def
+unfolding getTranslateCapAddresses_def
 by auto
 
-lemmas getPhysicalCapAddresses_le_subsetD [elim] =
-  subsetD[OF getPhysicalCapAddresses_le]
+lemmas getTranslateCapAddresses_le_subsetD [elim] =
+  subsetD[OF getTranslateCapAddresses_le]
 
-lemma getPhysicalCapAddresses_eqI_getTranslateAddr:
+lemma getTranslateCapAddresses_eqI_getTranslateAddr:
   assumes "\<And>a. getTranslateAddr a s' = getTranslateAddr a s"
-  shows "getPhysicalCapAddresses addrs t s' = getPhysicalCapAddresses addrs t s"
+  shows "getTranslateCapAddresses addrs t s' = getTranslateCapAddresses addrs t s"
 using getTranslateAddresses_eqI_getTranslateAddr[OF assms]
-unfolding getPhysicalCapAddresses_def
+unfolding getTranslateCapAddresses_def
 by simp
 
-lemma getPhysicalCapAddresses_distrib_union:
-  shows "getPhysicalCapAddresses (addrs \<union> addrs') t s =
-         (getPhysicalCapAddresses addrs t s \<union> getPhysicalCapAddresses addrs' t s)"
-unfolding getPhysicalCapAddresses_def
+lemma getTranslateCapAddresses_distrib_union:
+  shows "getTranslateCapAddresses (addrs \<union> addrs') t s =
+         (getTranslateCapAddresses addrs t s \<union> getTranslateCapAddresses addrs' t s)"
+unfolding getTranslateCapAddresses_def
 unfolding getTranslateAddresses_distrib_union
 by auto
 
-lemma getPhysicalCapAddresses_distrib_Union:
-  shows "getPhysicalCapAddresses (\<Union>addrsSet) t s =
-         (\<Union>addrs\<in>addrsSet. getPhysicalCapAddresses addrs t s)"
-unfolding getPhysicalCapAddresses_def
+lemma getTranslateCapAddresses_distrib_Union:
+  shows "getTranslateCapAddresses (\<Union>addrsSet) t s =
+         (\<Union>addrs\<in>addrsSet. getTranslateCapAddresses addrs t s)"
+unfolding getTranslateCapAddresses_def
 unfolding getTranslateAddresses_distrib_Union
 by auto
 
@@ -640,13 +640,13 @@ subsection \<open>Capability writable addresses\<close>
 
 definition StorablePhysCapAddresses where
   "StorablePhysCapAddresses gperm s \<equiv>
-   getPhysicalCapAddresses (StorableAddresses gperm) STORE s"
+   getTranslateCapAddresses (StorableAddresses gperm) STORE s"
 
 lemma StorablePhysCapAddresses_le:
   assumes "p \<le> q"
   shows "StorablePhysCapAddresses p s \<subseteq> StorablePhysCapAddresses q s"
 using StorableAddresses_le[OF assms]
-using getPhysicalCapAddresses_le
+using getTranslateCapAddresses_le
 unfolding StorablePhysCapAddresses_def
 by auto
 
@@ -673,10 +673,10 @@ definition ReadableLocations :: "GeneralisedPerm \<Rightarrow> state \<Rightarro
   "ReadableLocations f s \<equiv> 
    {loc. case loc of 
       LocReg r \<Rightarrow> RegisterIsAlwaysAccessible r
-    | LocMem addr \<Rightarrow> addr \<in> getPhysicalCapAddresses (CapLoadableAddresses f) LOAD s}"
+    | LocMem addr \<Rightarrow> addr \<in> getTranslateCapAddresses (CapLoadableAddresses f) LOAD s}"
 
 lemma Commute_ReadableLocations [Commute_compositeI]: 
-  assumes "\<And>addrs. Commute (read_state (getPhysicalCapAddresses addrs LOAD)) m"
+  assumes "\<And>addrs. Commute (read_state (getTranslateCapAddresses addrs LOAD)) m"
   shows "Commute (read_state (ReadableLocations perm)) m"
 using assms
 unfolding ReadableLocations_def Commute_def
@@ -686,7 +686,7 @@ lemma ReadableLocations_simps [simp]:
   shows "(LocReg r) \<in> ReadableLocations f s = 
          (RegisterIsAlwaysAccessible r)"
     and "(LocMem addr) \<in> ReadableLocations f s = 
-         (addr \<in> getPhysicalCapAddresses (CapLoadableAddresses f) LOAD s)"
+         (addr \<in> getTranslateCapAddresses (CapLoadableAddresses f) LOAD s)"
 unfolding ReadableLocations_def
 by simp_all
 
@@ -702,7 +702,7 @@ next
   case (LocMem a)
   have "CapLoadableAddresses p \<subseteq> CapLoadableAddresses q"
     using assms by auto
-  from getPhysicalCapAddresses_le[OF this]
+  from getTranslateCapAddresses_le[OF this]
   show ?thesis
     using LocMem assms(2)
     by auto

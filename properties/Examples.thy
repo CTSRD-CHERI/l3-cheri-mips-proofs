@@ -145,7 +145,7 @@ proof (intro equalityI; clarify, (intro conjI)?)
          and "getTag (getMemCap (GetCapAddress a) s)"
       thus "getMemCap (GetCapAddress a) s \<in> ReadableCaps (GPermOfSegment segment types) s"
         by (auto intro!: ReadableCapsI[where loc="LocMem (GetCapAddress a)"]
-                 simp: getPhysicalCapAddresses_def)
+                 simp: getTranslateCapAddresses_def)
     qed
 next
   fix cap
@@ -172,7 +172,7 @@ next
           case (LocMem a)
           then obtain a' where "a = GetCapAddress a'" "a' \<in> getTranslateAddresses segment LOAD s"
             using loc
-            by (auto simp: getPhysicalCapAddresses_def)
+            by (auto simp: getTranslateCapAddresses_def)
           thus ?thesis
             using loc tag LocMem
             unfolding GrantedCaps_def
@@ -347,7 +347,7 @@ proof (intro conjI allI impI)
           then obtain b where "b \<in> getTranslateAddresses segment STORE s"
                           and "GetCapAddress b = GetCapAddress a"
             unfolding StorablePhysCapAddresses_def
-            unfolding getPhysicalCapAddresses_def
+            unfolding getTranslateCapAddresses_def
             by auto
           hence "a \<in> getTranslateAddresses segment STORE s"
             using TranslationCapabilityAligned[OF aligned, where s=s and t=STORE]

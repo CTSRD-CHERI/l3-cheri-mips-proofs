@@ -76,7 +76,7 @@ Reg:
   "\<lbrakk>cap \<in> ReachableCaps s;
     \<not> getSealed cap;
     Permit_Load_Capability (getPerms cap);
-    addr \<in> getPhysicalCapAddresses (RegionOfCap cap) LOAD s;
+    addr \<in> getTranslateCapAddresses (RegionOfCap cap) LOAD s;
     getTag (getMemCap addr s)\<rbrakk> \<Longrightarrow> 
     getMemCap addr s \<in> ReachableCaps s"
 
@@ -308,7 +308,7 @@ proof -
         using Memory[where addr=a and s=s]
         using LocMem tag loc
         unfolding ReachablePermissions_def TransUsableCaps_def
-        by (auto simp: getPhysicalCapAddresses_distrib_Union Generalise_accessors
+        by (auto simp: getTranslateCapAddresses_distrib_Union Generalise_accessors
                  split: if_splits)
     qed
 qed
@@ -364,11 +364,11 @@ proof -
       hence "cap \<in> TransUsableCaps s"
         by auto
       note gperm = Generalise_ReachablePermissions_le[OF this]
-      have "addr \<in> getPhysicalCapAddresses (CapLoadableAddresses (Generalise cap)) LOAD s"
+      have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (Generalise cap)) LOAD s"
         using Memory ReachableCaps_getTag
         by (auto simp: Generalise_accessors)
-      hence "addr \<in> getPhysicalCapAddresses (CapLoadableAddresses (ReachablePermissions s)) LOAD s"
-        using getPhysicalCapAddresses_le[OF CapLoadableAddresses_le[OF gperm]]
+      hence "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (ReachablePermissions s)) LOAD s"
+        using getTranslateCapAddresses_le[OF CapLoadableAddresses_le[OF gperm]]
         by auto
       hence "getMemCap addr s \<in> ReadableCaps (ReachablePermissions s) s"
         using Memory
@@ -461,8 +461,8 @@ proof -
       from CapLoadableAddresses_le[OF this]
       have "CapLoadableAddresses (Generalise cap) \<subseteq> CapLoadableAddresses perm"
         by auto
-      from getPhysicalCapAddresses_le[OF this]
-      have "addr \<in> getPhysicalCapAddresses (CapLoadableAddresses perm) LOAD s"
+      from getTranslateCapAddresses_le[OF this]
+      have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses perm) LOAD s"
         using Memory ReachableCaps_getTag
         by (auto simp: Generalise_accessors)
       hence "LocMem addr \<in> ReadableLocations perm s" 
@@ -559,7 +559,7 @@ proof -
         by auto
       hence le: "getCAPR cd s' \<le> getMemCap a s"
       and tag_auth: "getTag (getCapReg auth s)"
-      and segment: "a \<in> getPhysicalCapAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
+      and segment: "a \<in> getTranslateCapAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
       and unsealed: "\<not> getSealed (getCapReg auth s)"
       and perm: "Permit_Load_Capability (getPerms (getCapReg auth s))"
         using CanBeSimulatedE_LoadCap[OF abstraction suc _ Loaded(1) valid]
@@ -654,8 +654,8 @@ proof
       have "getTranslateAddr (v, LOAD) s' = getTranslateAddr (v, LOAD) s" for v
         using CanBeSimulatedE_AddressTranslation[OF abstraction suc _ no_sys valid]
         by auto
-      hence "getPhysicalCapAddresses addrs LOAD s' = getPhysicalCapAddresses addrs LOAD s" for addrs
-        unfolding getPhysicalCapAddresses_def
+      hence "getTranslateCapAddresses addrs LOAD s' = getTranslateCapAddresses addrs LOAD s" for addrs
+        unfolding getTranslateCapAddresses_def
         unfolding getTranslateAddresses_def
         by simp
       thus ?case 
@@ -953,7 +953,7 @@ proof (induct trace arbitrary: s')
     by auto
   from StorablePhysCapAddresses_le[OF perms]
   have no_access2: "a \<notin> StorablePhysCapAddresses (ReachablePermissions r) r"
-    using getPhysicalCapAddresses_eqI_getTranslateAddr[OF addrTrans]
+    using getTranslateCapAddresses_eqI_getTranslateAddr[OF addrTrans]
     using no_access
     unfolding StorablePhysCapAddresses_def
     by auto
@@ -1002,17 +1002,17 @@ proof (induct trace arbitrary: s')
                                  "getTranslateAddr (vAddr, STORE) r = Some a'"
                 using action StoreDataAction target restrict
                 by auto
-              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
                 using a restrict
                 by (auto simp: Generalise_accessors 
-                         intro: getPhysicalCapAddressesI)
-              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
-                using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
+                         intro: getTranslateCapAddressesI)
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+                using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
                 by auto
               thus False
                 using no_access2
                 unfolding StorablePhysCapAddresses_def Let_def
-                unfolding getPhysicalCapAddresses_distrib_union
+                unfolding getTranslateCapAddresses_distrib_union
                 by simp
             next
               case (StoreCapAction auth cd a')
@@ -1040,19 +1040,19 @@ proof (induct trace arbitrary: s')
                                  "getTranslateAddr (vAddr, STORE) r = Some (ExtendCapAddress a)"
                 using action StoreCapAction target
                 by auto
-              from getPhysicalCapAddressesI_word_cat[OF this(2) this(1)]
-              have "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+              from getTranslateCapAddressesI_word_cat[OF this(2) this(1)]
+              have "a \<in> getTranslateCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
                 using store
                 unfolding word_size
                 by (auto simp: Generalise_accessors
-                         intro: getPhysicalCapAddressesI)
-              hence "a \<in> getPhysicalCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
-                using getPhysicalCapAddresses_le[OF StorableAddresses_le[OF gperm]]
+                         intro: getTranslateCapAddressesI)
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+                using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
                 by auto
               thus False
                 using no_access2
                 unfolding StorablePhysCapAddresses_def Let_def
-                unfolding getPhysicalCapAddresses_distrib_union
+                unfolding getTranslateCapAddresses_distrib_union
                 by simp
             qed simp_all
         qed
