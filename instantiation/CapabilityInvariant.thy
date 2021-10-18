@@ -32,7 +32,7 @@ definition CapInvariantTakeBranchPre where
    read_state getExceptionSignalled \<or>\<^sub>b
    read_state isUnpredictable \<or>\<^sub>b
    (bind TakeBranchActions
-         (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> CapDerivationTargets x)) \<and>\<^sub>b
+         (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> ActionTargets x)) \<and>\<^sub>b
     bind (read_state BranchToPCC)
          (\<lambda>branchTo. bind (read_state (getCap loc))
          (\<lambda>cap'. let v = (if loc = LocReg RegBranchDelayPCC
@@ -232,7 +232,7 @@ lemma CapInvariant_dfn'ERET [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind ERETActions
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  dfn'ERET 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'ERET_alt_def ERETActions_def
@@ -852,7 +852,7 @@ lemma CapInvariant_dfn'LB [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LBActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LB v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LB_alt_def LBActions_def
@@ -866,7 +866,7 @@ lemma CapInvariant_dfn'LBU [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LBUActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LBU v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LBU_alt_def LBUActions_def
@@ -880,7 +880,7 @@ lemma CapInvariant_dfn'LH [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LHActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LH v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LH_alt_def LHActions_def
@@ -894,7 +894,7 @@ lemma CapInvariant_dfn'LHU [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LHUActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LHU v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LHU_alt_def LHUActions_def
@@ -908,7 +908,7 @@ lemma CapInvariant_dfn'LW [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LW v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LW_alt_def LWActions_def
@@ -922,7 +922,7 @@ lemma CapInvariant_dfn'LWU [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWUActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LWU v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LWU_alt_def LWUActions_def
@@ -936,7 +936,7 @@ lemma CapInvariant_dfn'LL [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LLActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LL v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LL_alt_def LLActions_def
@@ -950,7 +950,7 @@ lemma CapInvariant_dfn'LD [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LD v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LD_alt_def LDActions_def
@@ -964,7 +964,7 @@ lemma CapInvariant_dfn'LLD [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LLDActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LLD v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LLD_alt_def LLDActions_def
@@ -978,7 +978,7 @@ lemma CapInvariant_dfn'LWL [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWLActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LWL v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LWL_alt_def LWLActions_def
@@ -992,7 +992,7 @@ lemma CapInvariant_dfn'LWR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LWRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LWR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LWR_alt_def LWRActions_def
@@ -1006,7 +1006,7 @@ lemma CapInvariant_dfn'LDL [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDLActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LDL v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LDL_alt_def LDLActions_def
@@ -1020,7 +1020,7 @@ lemma CapInvariant_dfn'LDR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (LDRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'LDR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'LDR_alt_def LDRActions_def
@@ -1034,7 +1034,7 @@ lemma CapInvariant_dfn'SB [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SBActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SB v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SB_alt_def SBActions_def
@@ -1048,7 +1048,7 @@ lemma CapInvariant_dfn'SH [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SHActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SH v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SH_alt_def SHActions_def
@@ -1100,7 +1100,7 @@ lemma CapInvariant_dfn'SW [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SW v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SW_alt_def SWActions_def
@@ -1114,7 +1114,7 @@ lemma CapInvariant_dfn'SD [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SD v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SD_alt_def SDActions_def
@@ -1128,7 +1128,7 @@ lemma CapInvariant_dfn'SC [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SCActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SC_alt_def SCActions_def
@@ -1142,7 +1142,7 @@ lemma CapInvariant_dfn'SCD [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SCDActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SCD v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SCD_alt_def SCDActions_def
@@ -1156,7 +1156,7 @@ lemma CapInvariant_dfn'SWL [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWLActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SWL v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SWL_alt_def SWLActions_def
@@ -1172,7 +1172,7 @@ lemma CapInvariant_dfn'SWR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SWRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SWR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 proof -
@@ -1194,7 +1194,7 @@ lemma CapInvariant_dfn'SDL [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDLActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SDL v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'SDL_alt_def SDLActions_def
@@ -1210,7 +1210,7 @@ lemma CapInvariant_dfn'SDR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (SDRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'SDR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 proof -
@@ -1447,7 +1447,7 @@ lemma CapInvariant_dfn'CGetPCC [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CGetPCCActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CGetPCC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CGetPCC_alt_def CGetPCCActions_def
@@ -1461,7 +1461,7 @@ lemma CapInvariant_dfn'CGetPCCSetOffset [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CGetPCCSetOffsetActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CGetPCCSetOffset v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CGetPCCSetOffset_alt_def CGetPCCSetOffsetActions_def
@@ -1485,7 +1485,7 @@ lemma CapInvariant_dfn'CIncOffset [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CIncOffsetActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CIncOffset v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CIncOffset_alt_def CIncOffsetActions_def
@@ -1499,7 +1499,7 @@ lemma CapInvariant_dfn'CIncOffsetImmediate [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CIncOffsetImmediateActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CIncOffsetImmediate v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CIncOffsetImmediate_alt_def CIncOffsetImmediateActions_def
@@ -1513,7 +1513,7 @@ lemma CapInvariant_dfn'CSetBounds [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSetBounds v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSetBounds_alt_def CSetBoundsActions_def
@@ -1527,7 +1527,7 @@ lemma CapInvariant_dfn'CSetBoundsExact [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsExactActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSetBoundsExact v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSetBoundsExact_alt_def CSetBoundsExactActions_def
@@ -1541,7 +1541,7 @@ lemma CapInvariant_dfn'CSetBoundsImmediate [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetBoundsImmediateActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSetBoundsImmediate v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSetBoundsImmediate_alt_def CSetBoundsImmediateActions_def
@@ -1557,7 +1557,7 @@ definition ClearRegLoopPre where
    read_state getExceptionSignalled \<or>\<^sub>b
    read_state isUnpredictable \<or>\<^sub>b
    (bind TakeBranchActions
-         (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> CapDerivationTargets x)) \<and>\<^sub>b
+         (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> ActionTargets x)) \<and>\<^sub>b
     bind (read_state BranchToPCC)
          (\<lambda>branchTo. bind (read_state (getCap loc))
          (\<lambda>cap'. let v = (if loc = LocReg RegBranchDelayPCC
@@ -1666,7 +1666,7 @@ lemma CapInvariant_dfn'CClearLo [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearLoActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CClearLo v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CClearLo_alt_def CClearLoActions_def
@@ -1717,7 +1717,7 @@ lemma CapInvariant_dfn'CClearHi [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearHiActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CClearHi v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CClearHi_alt_def CClearHiActions_def
@@ -1733,7 +1733,7 @@ lemma CapInvariant_dfn'CClearTag [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CClearTagActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CClearTag v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CClearTag_alt_def CClearTagActions_def
@@ -1747,7 +1747,7 @@ lemma CapInvariant_dfn'CAndPerm [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CAndPermActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CAndPerm v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CAndPerm_alt_def CAndPermActions_def
@@ -1761,7 +1761,7 @@ lemma CapInvariant_dfn'CSetOffset [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSetOffsetActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSetOffset v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSetOffset_alt_def CSetOffsetActions_def
@@ -1790,7 +1790,7 @@ lemma CapInvariant_dfn'CFromPtr [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CFromPtrActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CFromPtr v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CFromPtr_alt_def CFromPtrActions_def
@@ -1874,7 +1874,7 @@ by CapInvariant
 lemma CapInvariant_dfn'CSC [CapInvariantI]:
   shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CSCActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSC_alt_def CSCActions_def
@@ -1888,7 +1888,7 @@ by CapInvariant auto?
 lemma CapInvariant_dfn'CLC [CapInvariantI]:
   shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CLCActions v)
-                        (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                        (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CLC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CLC_alt_def CLCActions_def
@@ -1902,7 +1902,7 @@ lemma CapInvariant_dfn'CLoad [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CLoadActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CLoad v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CLoad_alt_def CLoadActions_def
@@ -1920,7 +1920,7 @@ lemma CapInvariant_dfn'CStore [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CStoreActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CStore v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CStore_alt_def CStoreActions_def
@@ -1936,7 +1936,7 @@ by CapInvariant auto
 lemma CapInvariant_dfn'CLLC [CapInvariantI]:
   shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CLLCActions v)
-                        (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                        (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CLLC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CLLC_alt_def CLLCActions_def
@@ -1950,7 +1950,7 @@ lemma CapInvariant_dfn'CLLx [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CLLxActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CLLx v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CLLx_alt_def CLLxActions_def
@@ -1964,7 +1964,7 @@ by CapInvariant auto?
 lemma CapInvariant_dfn'CSCC [CapInvariantI]:
   shows "HoareTriple (CapInvariantTakeBranchPre loc cap \<and>\<^sub>b
                   bind (CSCCActions v)
-                        (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                        (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSCC v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSCC_alt_def CSCCActions_def
@@ -1980,7 +1980,7 @@ lemma CapInvariant_dfn'CSCx [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSCxActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSCx v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSCx_alt_def CSCxActions_def
@@ -1996,7 +1996,7 @@ lemma CapInvariant_dfn'CMOVN [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMOVNActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CMOVN v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CMOVN_alt_def CMOVNActions_def
@@ -2010,7 +2010,7 @@ lemma CapInvariant_dfn'CMOVZ [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMOVZActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CMOVZ v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CMOVZ_alt_def CMOVZActions_def
@@ -2024,7 +2024,7 @@ lemma CapInvariant_dfn'CMove [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CMoveActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CMove v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CMove_alt_def CMoveActions_def
@@ -2043,7 +2043,7 @@ lemma CapInvariant_dfn'CBuildCap [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CBuildCapActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CBuildCap v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CBuildCap_alt_def CBuildCapActions_def
@@ -2057,7 +2057,7 @@ lemma CapInvariant_dfn'CCopyType [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CCopyTypeActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CCopyType v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CCopyType_alt_def CCopyTypeActions_def
@@ -2071,7 +2071,7 @@ lemma CapInvariant_dfn'CJR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CJRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CJR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CJR_alt_def CJRActions_def
@@ -2085,7 +2085,7 @@ lemma CapInvariant_dfn'CJALR [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CJALRActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CJALR v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CJALR_alt_def CJALRActions_def
@@ -2099,7 +2099,7 @@ lemma CapInvariant_dfn'CSeal [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CSealActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CSeal v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CSeal_alt_def CSealActions_def
@@ -2113,7 +2113,7 @@ lemma CapInvariant_dfn'CUnseal [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CUnsealActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CUnseal v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CUnseal_alt_def CUnsealActions_def
@@ -2140,7 +2140,7 @@ lemma CapInvariant_dfn'CReadHwr [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CReadHwrActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CReadHwr v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CReadHwr_alt_def CReadHwrActions_def
@@ -2154,7 +2154,7 @@ lemma CapInvariant_dfn'CWriteHwr [CapInvariantI]:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (CWriteHwrActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))))
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))))
                  (dfn'CWriteHwr v) 
                  (\<lambda>_. CapInvariantTakeBranchPre loc cap)"
 unfolding dfn'CWriteHwr_alt_def CWriteHwrActions_def
@@ -2180,7 +2180,7 @@ lemma CapInvariant_Run_aux:
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   bind (RunActions v)
-                       (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p))) \<and>\<^sub>b
+                       (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p))) \<and>\<^sub>b
                   return (case v of COP2 (CHERICOP2 (CCallFast _)) \<Rightarrow> False
                                   | _ \<Rightarrow> True))
                  (Run v) 
@@ -2218,7 +2218,7 @@ lemma CapInvariant_Fetch_aux2:
                     return (case Decode w of COP2 (CHERICOP2 (CCallFast _)) \<Rightarrow> False
                                            | _ \<Rightarrow> True) \<and>\<^sub>b 
                     bind (RunActions (Decode w))
-                         (\<lambda>p. return (loc \<notin> \<Union> (CapDerivationTargets ` p)))"
+                         (\<lambda>p. return (loc \<notin> \<Union> (ActionTargets ` p)))"
   shows "HoareTriple (bind NextInstruction (case_option (return True) p))
                  Fetch
                  (\<lambda>x. case x of None \<Rightarrow> read_state getExceptionSignalled
@@ -2237,7 +2237,7 @@ lemma CapInvariant_NextWithGhostState [CapInvariantI]:
                   (read_state (getCap loc) =\<^sub>b return cap) \<and>\<^sub>b
                   (read_state CCallFastInstructionParam =\<^sub>b return None) \<and>\<^sub>b
                   bind DomainActions
-                       (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> CapDerivationTargets x)))
+                       (\<lambda>p. return (\<forall>x\<in>p. loc \<notin> ActionTargets x)))
                  NextWithGhostState
                  (\<lambda>_. CapInvariantPost loc cap)"
 unfolding NextWithGhostState_def DomainActions_def
@@ -2255,7 +2255,7 @@ by CapInvariant
 (* Code generation - end *)
 
 theorem CapabilityCapInvariant:
-  assumes prov: "loc \<notin> \<Union> (CapDerivationTargets ` actions)"
+  assumes prov: "loc \<notin> \<Union> (ActionTargets ` actions)"
       and valid: "getStateIsValid s"
       and suc: "(PreserveDomain actions, s') \<in> NextStates s"
   shows "getCap loc s' = getCap loc s"

@@ -70,58 +70,58 @@ lemma CapDerivations_simps [simp]:
 unfolding CapDerivations_def
 by simp_all
 
-definition CapDerivationSources :: "DomainAction \<Rightarrow> CapLocation set" where
-  "CapDerivationSources p \<equiv> fst ` (CapDerivations p)"
+definition ActionSources :: "DomainAction \<Rightarrow> CapLocation set" where
+  "ActionSources p \<equiv> fst ` (CapDerivations p)"
 
-lemma CapDerivationSources_simps [simp]:
-  shows "CapDerivationSources (LoadDataAction auth a' l) = {}"
-    and "CapDerivationSources (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
-    and "CapDerivationSources (RestrictCapAction r r') = {LocReg r}"
-    and "CapDerivationSources (LoadCapAction auth a cd) = {LocMem a}"
-    and "CapDerivationSources (StoreCapAction auth cd a) = {LocReg (RegGeneral cd)}"
-    and "CapDerivationSources (SealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
-    and "CapDerivationSources (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
-unfolding CapDerivationSources_def
+lemma ActionSources_simps [simp]:
+  shows "ActionSources (LoadDataAction auth a' l) = {}"
+    and "ActionSources (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
+    and "ActionSources (RestrictCapAction r r') = {LocReg r}"
+    and "ActionSources (LoadCapAction auth a cd) = {LocMem a}"
+    and "ActionSources (StoreCapAction auth cd a) = {LocReg (RegGeneral cd)}"
+    and "ActionSources (SealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
+    and "ActionSources (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd)}"
+unfolding ActionSources_def
 by simp_all
 
-definition CapDerivationTargets :: "DomainAction \<Rightarrow> CapLocation set" where
-  "CapDerivationTargets p \<equiv> snd ` (CapDerivations p)"
+definition ActionTargets :: "DomainAction \<Rightarrow> CapLocation set" where
+  "ActionTargets p \<equiv> snd ` (CapDerivations p)"
 
-lemma CapDerivationTargets_simps [simp]:
-  shows "CapDerivationTargets (LoadDataAction auth a' l) = {}"
-    and "CapDerivationTargets (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
-    and "CapDerivationTargets (RestrictCapAction r r') = {LocReg r'}"
-    and "CapDerivationTargets (LoadCapAction auth a cd) = {LocReg (RegGeneral cd)}"
-    and "CapDerivationTargets (StoreCapAction auth cd a) = {LocMem a}"
-    and "CapDerivationTargets (SealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
-    and "CapDerivationTargets (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
-unfolding CapDerivationTargets_def
+lemma ActionTargets_simps [simp]:
+  shows "ActionTargets (LoadDataAction auth a' l) = {}"
+    and "ActionTargets (StoreDataAction auth a' l) = {LocMem (GetCapAddress a')}"
+    and "ActionTargets (RestrictCapAction r r') = {LocReg r'}"
+    and "ActionTargets (LoadCapAction auth a cd) = {LocReg (RegGeneral cd)}"
+    and "ActionTargets (StoreCapAction auth cd a) = {LocMem a}"
+    and "ActionTargets (SealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
+    and "ActionTargets (UnsealCapAction auth cd cd') = {LocReg (RegGeneral cd')}"
+unfolding ActionTargets_def
 by simp_all
 
-definition CapDerivationRegisters :: "DomainAction \<Rightarrow> RegisterAddress set" where
-  "CapDerivationRegisters p \<equiv>
+definition SpecialRegisterParameters :: "DomainAction \<Rightarrow> RegisterAddress set" where
+  "SpecialRegisterParameters p \<equiv>
    (case ActionAuthority p of Some (RegSpecial i) \<Rightarrow> {i}
                             | _ \<Rightarrow> {}) \<union>
-   {i |i. LocReg (RegSpecial i) \<in> CapDerivationSources p} \<union>
-   {i |i. LocReg (RegSpecial i) \<in> CapDerivationTargets p}"
+   {i |i. LocReg (RegSpecial i) \<in> ActionSources p} \<union>
+   {i |i. LocReg (RegSpecial i) \<in> ActionTargets p}"
 
-lemma CapDerivationRegisters_simps [simp]:
-  shows "CapDerivationRegisters (LoadDataAction auth a' l) = 
+lemma SpecialRegisterParameters_simps [simp]:
+  shows "SpecialRegisterParameters (LoadDataAction auth a' l) = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (StoreDataAction auth a' l) = 
+    and "SpecialRegisterParameters (StoreDataAction auth a' l) = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (RestrictCapAction r r') = 
+    and "SpecialRegisterParameters (RestrictCapAction r r') = 
          (case r of RegSpecial i \<Rightarrow> {i} | _ \<Rightarrow> {}) \<union>
          (case r' of RegSpecial i \<Rightarrow> {i} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (LoadCapAction auth a cd) = 
+    and "SpecialRegisterParameters (LoadCapAction auth a cd) = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (StoreCapAction auth cd a) = 
+    and "SpecialRegisterParameters (StoreCapAction auth cd a) = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (SealCapAction auth cd cd') = 
+    and "SpecialRegisterParameters (SealCapAction auth cd cd') = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-    and "CapDerivationRegisters (UnsealCapAction auth cd cd') = 
+    and "SpecialRegisterParameters (UnsealCapAction auth cd cd') = 
          (case auth of RegSpecial cd \<Rightarrow> {cd} | _ \<Rightarrow> {})"
-unfolding CapDerivationRegisters_def
+unfolding SpecialRegisterParameters_def
 by (auto split: CapRegister.splits)
 
 definition WrittenAddresses where
@@ -460,13 +460,13 @@ definition SystemRegisterProp :: "state \<Rightarrow> AbstractStep \<Rightarrow>
    (getStateIsValid s \<and>
     (lbl = PreserveDomain actions) \<and>
     (cd \<noteq> 0 \<and> cd \<noteq> 1) \<and>
-    cd \<in> \<Union> (CapDerivationRegisters ` actions)) \<longrightarrow>
+    cd \<in> \<Union> (SpecialRegisterParameters ` actions)) \<longrightarrow>
    Access_System_Registers (getPerms (getPCC s))"
 
 lemma SystemRegisterPropE [elim]:
   assumes "SystemRegisterProp s lbl s'"
       and "lbl = PreserveDomain actions"
-      and "cd \<in> \<Union> (CapDerivationRegisters ` actions)"
+      and "cd \<in> \<Union> (SpecialRegisterParameters ` actions)"
       and "cd \<noteq> 0" "cd \<noteq> 1"
       and "getStateIsValid s"
   shows "Access_System_Registers (getPerms (getPCC s))"
@@ -579,13 +579,13 @@ definition CapabilityInvariant :: "state \<Rightarrow> AbstractStep \<Rightarrow
    \<forall>actions loc.
    (getStateIsValid s \<and>
     (lbl = PreserveDomain actions) \<and>   
-    (\<nexists>prov. prov \<in> actions \<and> loc \<in> CapDerivationTargets prov)) \<longrightarrow> 
+    (\<nexists>prov. prov \<in> actions \<and> loc \<in> ActionTargets prov)) \<longrightarrow> 
    (getCap loc s' = getCap loc s)"
 
 lemma CapabilityInvariantE [elim]:
   assumes "CapabilityInvariant s lbl s'"
       and "lbl = PreserveDomain actions"
-      and "\<And>prov. prov \<in> actions \<Longrightarrow> loc \<notin> CapDerivationTargets prov"
+      and "\<And>prov. prov \<in> actions \<Longrightarrow> loc \<notin> ActionTargets prov"
       and "getStateIsValid s"
   shows "getCap loc s' = getCap loc s"
 using assms
@@ -697,20 +697,20 @@ section \<open>Derived properties\<close>
 
 subsection \<open>Provenance\<close>
 
-definition CapDerivationSourcesOfLoc :: "DomainAction set \<Rightarrow> CapLocation \<Rightarrow> CapLocation set" where
-  "CapDerivationSourcesOfLoc actions loc \<equiv>
+definition ActionSourcesOfLoc :: "DomainAction set \<Rightarrow> CapLocation \<Rightarrow> CapLocation set" where
+  "ActionSourcesOfLoc actions loc \<equiv>
    {fst h |h d. d \<in> actions \<and> h \<in> CapDerivations d \<and> snd h = loc}"
 
 definition ProvenanceParents :: "DomainAction set \<Rightarrow> CapLocation \<Rightarrow> CapLocation set" where
   "ProvenanceParents actions loc \<equiv>
-   let derivationSources = CapDerivationSourcesOfLoc actions loc in
+   let derivationSources = ActionSourcesOfLoc actions loc in
    if derivationSources = {} then {loc}
    else derivationSources"
 
 lemma ProvenanceParentExists:
   obtains loc where "loc \<in> ProvenanceParents actions loc'"
 unfolding ProvenanceParents_def Let_def
-by (cases "CapDerivationSourcesOfLoc actions loc' = {}") auto
+by (cases "ActionSourcesOfLoc actions loc' = {}") auto
 
 lemma ProvenanceCases:
   assumes parent: "loc \<in> ProvenanceParents actions loc'"
@@ -739,30 +739,30 @@ lemma ProvenanceCases:
     "loc = LocReg (RegGeneral cd)"
     "loc' = LocReg (RegGeneral cd')"
   | (Unchanged)
-    "loc' \<notin> \<Union> (CapDerivationTargets ` actions)"
+    "loc' \<notin> \<Union> (ActionTargets ` actions)"
     "loc = loc'"
-proof (cases "CapDerivationSourcesOfLoc (actions) loc' = {}")
+proof (cases "ActionSourcesOfLoc (actions) loc' = {}")
   case True
   hence "loc = loc'"
     using parent
     unfolding ProvenanceParents_def
     by simp
-  have "loc' \<notin> \<Union> (CapDerivationTargets ` actions)"
+  have "loc' \<notin> \<Union> (ActionTargets ` actions)"
     using True
-    unfolding CapDerivationSourcesOfLoc_def CapDerivationTargets_def
+    unfolding ActionSourcesOfLoc_def ActionTargets_def
     by auto
   thus ?thesis
     using `loc = loc'` that by simp
 next
   case False
-  hence "loc \<in> CapDerivationSourcesOfLoc (actions) loc'"
+  hence "loc \<in> ActionSourcesOfLoc (actions) loc'"
     using parent 
     unfolding ProvenanceParents_def
     by simp
   then obtain der
   where "der \<in> actions" 
   and "(loc, loc') \<in> CapDerivations der"
-    unfolding CapDerivationSourcesOfLoc_def
+    unfolding ActionSourcesOfLoc_def
     by auto
   thus ?thesis 
     using that

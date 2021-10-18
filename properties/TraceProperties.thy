@@ -154,7 +154,7 @@ lemma ReachableCaps_SCapr [elim]:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
-      and reg: "cd \<in> CapDerivationRegisters action"
+      and reg: "cd \<in> SpecialRegisterParameters action"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getSCAPR cd s)"
@@ -174,7 +174,7 @@ lemma ReachableCaps_CapReg [elim]:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
-      and reg: "case r of RegSpecial cd \<Rightarrow> cd \<in> CapDerivationRegisters action | _ \<Rightarrow> True"
+      and reg: "case r of RegSpecial cd \<Rightarrow> cd \<in> SpecialRegisterParameters action | _ \<Rightarrow> True"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getCapReg r s)"
@@ -806,12 +806,12 @@ next
   hence intra_suc: "(PreserveDomain actions, s') \<in> sem s"
     using suc
     by auto
-  have "cd \<notin> \<Union> (CapDerivationRegisters ` actions)"
+  have "cd \<notin> \<Union> (SpecialRegisterParameters ` actions)"
     using CanBeSimulatedE_SystemRegister[OF abstraction intra_suc _ _ system  valid]
     using no_access
     by auto
-  hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocReg (RegSpecial cd) \<notin> CapDerivationTargets prov"
-    unfolding CapDerivationRegisters_def
+  hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocReg (RegSpecial cd) \<notin> ActionTargets prov"
+    unfolding SpecialRegisterParameters_def
     by auto
   from CanBeSimulatedE_CapabilityInvariant
        [OF abstraction intra_suc _ this valid]
@@ -966,11 +966,11 @@ proof (induct trace arbitrary: s')
         using r\<^sub>2
         by auto
       have "\<not> (\<exists>action. action \<in> actions \<and>
-                        LocMem a \<in> CapDerivationTargets action)" 
+                        LocMem a \<in> ActionTargets action)" 
         proof (clarify)
           fix action
           assume action: "action \<in> actions" 
-             and target: "LocMem a \<in> CapDerivationTargets action"
+             and target: "LocMem a \<in> ActionTargets action"
           thus False
             proof (cases action)
               case (StoreDataAction auth a' l)
@@ -1056,7 +1056,7 @@ proof (induct trace arbitrary: s')
                 by simp
             qed simp_all
         qed
-      hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocMem a \<notin> CapDerivationTargets prov"
+      hence "\<And>prov. prov \<in> actions \<Longrightarrow> LocMem a \<notin> ActionTargets prov"
         by auto
       from CanBeSimulatedE_CapabilityInvariant[OF abstraction intra_suc _ this valid2]
       show ?thesis by auto
