@@ -4080,38 +4080,38 @@ section \<open>Valid states\<close>
 
 subsection \<open>Ghost state\<close>
 
-definition EmptyGhostState where 
-  "EmptyGhostState \<equiv>
+definition GhostStateIsValid where 
+  "GhostStateIsValid \<equiv>
    \<not>\<^sub>b read_state isUnpredictable \<and>\<^sub>b
    \<not>\<^sub>b read_state getExceptionSignalled \<and>\<^sub>b
    (read_state getBranchTo =\<^sub>b return None) \<and>\<^sub>b
    (read_state BranchToPCC =\<^sub>b return None)"
 
-abbreviation "getEmptyGhostState \<equiv> ValuePart EmptyGhostState"
+abbreviation "getGhostStateIsValid \<equiv> ValuePart GhostStateIsValid"
 
-lemma EmptyGhostState_StatePart [simp]:
-  shows "StatePart EmptyGhostState = (\<lambda>s. s)"
-unfolding EmptyGhostState_def
+lemma GhostStateIsValid_StatePart [simp]:
+  shows "StatePart GhostStateIsValid = (\<lambda>s. s)"
+unfolding GhostStateIsValid_def
 by (simp add: ValueAndStatePart_simp)
 
-lemma getEmptyGhostStateI [intro]:
+lemma getGhostStateIsValidI [intro]:
   assumes "\<not> isUnpredictable s"
       and "\<not> getExceptionSignalled s"
       and "getBranchTo s = None"
       and "BranchToPCC s = None"
-  shows "getEmptyGhostState s"
+  shows "getGhostStateIsValid s"
 using assms
-unfolding EmptyGhostState_def
+unfolding GhostStateIsValid_def
 by (simp add: ValueAndStatePart_simp)
 
-lemma EmptyGhostStateE [elim!]:
-  assumes "getEmptyGhostState s"
+lemma GhostStateIsValidE [elim!]:
+  assumes "getGhostStateIsValid s"
   shows "\<not> isUnpredictable s"
     and "\<not> getExceptionSignalled s"
     and "getBranchTo s = None"
     and "BranchToPCC s = None"
 using assms
-unfolding EmptyGhostState_def
+unfolding GhostStateIsValid_def
 by (simp_all add: ValueAndStatePart_simp)
 
 definition NextWithGhostState where
@@ -4152,7 +4152,7 @@ subsection \<open>Valid states\<close>
 
 definition StateIsValid where 
   "StateIsValid =
-   EmptyGhostState \<and>\<^sub>b
+   GhostStateIsValid \<and>\<^sub>b
    read_state getCP0ConfigBE \<and>\<^sub>b
    \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
    (read_state getBranchDelay =\<^sub>b return None \<or>\<^sub>b
@@ -4166,7 +4166,7 @@ unfolding StateIsValid_def
 by (simp add: ValueAndStatePart_simp)
 
 lemma getStateIsValidI [intro]:
-  assumes "getEmptyGhostState s"
+  assumes "getGhostStateIsValid s"
       and "getCP0ConfigBE s"
       and "\<not> getCP0StatusRE s"
       and "getBranchDelay s = None \<or> BranchDelayPCC s = None"
@@ -4177,14 +4177,14 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma StateIsValidE [elim!]:
   assumes "getStateIsValid s"
-  shows "getEmptyGhostState s"
+  shows "getGhostStateIsValid s"
     and "getCP0ConfigBE s"
     and "\<not> getCP0StatusRE s"
 using assms
 unfolding StateIsValid_def
 by (simp_all add: ValueAndStatePart_simp)
 
-lemma StateIsValid_EmptyGhostStateE [elim!]:
+lemma StateIsValid_GhostStateIsValidE [elim!]:
   assumes "getStateIsValid s"
   shows "\<not> isUnpredictable s"
     and "\<not> getExceptionSignalled s"
@@ -4244,31 +4244,31 @@ using UnpredictableNextE[OF assms]
 unfolding getBranchDelayPccCap_def
 by auto
 
-lemma UnpredictableNextE_getEmptyGhostState [elim!]:
+lemma UnpredictableNextE_getGhostStateIsValid [elim!]:
   assumes "s' \<in> UnpredictableNext s"
-  shows "getEmptyGhostState s'"
+  shows "getGhostStateIsValid s'"
 using UnpredictableNextE[OF assms]
 by auto
 
 lemma UnpredictableNextE_getCapReg [elim]:
   assumes unpred: "s' \<in> UnpredictableNext s"
-      and ghost: "getEmptyGhostState s"
+      and ghost: "getGhostStateIsValid s"
   shows "getCapReg r s' = getCapReg r s"
 proof -
-  have ghost2: "getEmptyGhostState s'"
-    using UnpredictableNextE_getEmptyGhostState[OF unpred]
+  have ghost2: "getGhostStateIsValid s'"
+    using UnpredictableNextE_getGhostStateIsValid[OF unpred]
     by simp
   show ?thesis
     using UnpredictableNextE[OF unpred]
     using UnpredictableNextE_getBranchDelayPccCap[OF unpred]
-    using EmptyGhostStateE[OF ghost]
-    using EmptyGhostStateE[OF ghost2]
+    using GhostStateIsValidE[OF ghost]
+    using GhostStateIsValidE[OF ghost2]
     by (cases r) (auto simp: getBranchToPccCap_def)
 qed
 
 lemma UnpredictableNextE_getCap [elim]:
   assumes unpred: "s' \<in> UnpredictableNext s"
-      and ghost: "getEmptyGhostState s"
+      and ghost: "getGhostStateIsValid s"
   shows "getCap loc s' = getCap loc s"
 using UnpredictableNextE[OF unpred]
 using UnpredictableNextE_getCapReg[OF unpred ghost]

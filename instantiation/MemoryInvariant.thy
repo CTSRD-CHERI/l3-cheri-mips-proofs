@@ -2198,7 +2198,7 @@ lemmas MemoryInvariant_Fetch [MemoryInvariantI] =
           MemoryInvariant_Fetch_aux2[where a=a]] for a
 
 lemma MemoryInvariant_NextWithGhostState [MemoryInvariantI]:
-  shows "PrePost (read_state getEmptyGhostState \<and>\<^sub>b
+  shows "PrePost (read_state getGhostStateIsValid \<and>\<^sub>b
                   read_state getCP0ConfigBE \<and>\<^sub>b
                   \<not>\<^sub>b read_state getCP0StatusRE \<and>\<^sub>b
                   (read_state (getMemByte a) =\<^sub>b return val) \<and>\<^sub>b

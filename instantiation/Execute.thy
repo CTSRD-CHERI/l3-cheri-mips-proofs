@@ -204,7 +204,7 @@ using assms
 using NextWithGhostState_ValidPCC
       [where pcc="getPCC s" and pc="getPC s", THEN PrePostE[where s=s]]
 unfolding NextStates_def
-unfolding StateIsValid_def EmptyGhostState_def
+unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp add.commute split: if_splits)
 
 corollary ExecuteInstantiation:

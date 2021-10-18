@@ -194,7 +194,7 @@ using SemanticsInvoke_NextWithGhostState
           THEN PrePostE[where s=s]]
 unfolding CodeCap_def DataCap_def SemanticsInvokePost_def
 unfolding NextStates_def Next_NextWithGhostState
-unfolding StateIsValid_def EmptyGhostState_def
+unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary InvokeCapInstantiation:

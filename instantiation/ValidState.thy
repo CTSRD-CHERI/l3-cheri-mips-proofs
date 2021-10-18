@@ -1580,7 +1580,7 @@ using assms
 using ValidStateInvariant_NextWithGhostState[THEN PrePostE[where s=s]]
 using ValidStateInvariant_Unpredictable[where s=s and s'=s']
 unfolding NextStates_def Next_NextWithGhostState
-unfolding StateIsValid_def EmptyGhostState_def
+unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary ValidStateInstantiation:

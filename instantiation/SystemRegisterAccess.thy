@@ -28,7 +28,7 @@ proof -
               and cd: "cd \<in> CapDerivationRegisters ac"
     using reg
     by auto
-  have ghost: "getEmptyGhostState s"
+  have ghost: "getGhostStateIsValid s"
     using valid by auto
   show ?thesis
     proof (cases ac)

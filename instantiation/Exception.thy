@@ -1823,7 +1823,7 @@ theorem SemanticsException:
 using valid 
 using ExceptionCase_Next[where s=s]
 using NextStates_Exception[OF suc]
-unfolding StateIsValid_def EmptyGhostState_def
+unfolding StateIsValid_def GhostStateIsValid_def
 unfolding SignalExceptionSCAPR_def
 unfolding ExceptionOccurredPre_def ExceptionOccurredPost_def
 by (auto simp: ValueAndStatePart_simp)

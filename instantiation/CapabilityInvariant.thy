@@ -2247,7 +2247,7 @@ by CapInvariant
                getBranchToPccCap_def 
                CapInvariantTakeBranchPre_def
          split: option.splits
-         dest: EmptyGhostStateE
+         dest: GhostStateIsValidE
          elim!: CCallFastInstructionParam_None)
 
 (* Code generation - end override *)
