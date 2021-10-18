@@ -368,7 +368,7 @@ proof (intro conjI allI impI)
         by auto
     qed
   show "getSCAPR cd s' = getSCAPR cd s" if "cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31" for cd
-    using SystemRegisterInvariant[OF abstraction trace intra inter no_sys _ _ _ valid]
+    using SpecialCapRegisterInvariant[OF abstraction trace intra inter no_sys _ _ _ valid]
     using that
     by metis   
   show "getBase (getPCC s') + getPC s' \<in> exit"

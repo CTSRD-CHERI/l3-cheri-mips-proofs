@@ -779,7 +779,7 @@ qed
 
 subsection \<open>Invariance of system registers\<close>
 
-lemma SystemRegisterInvariant_aux:
+lemma SpecialCapRegisterInvariant_aux:
   assumes abstraction: "CanBeSimulated sem"
       and no_access: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and system: "cd \<noteq> 0" "cd \<noteq> 1"
@@ -818,7 +818,7 @@ next
   show ?thesis by auto
 qed
 
-lemma SystemRegisterInvariant_intra:
+lemma SpecialCapRegisterInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "TracePreservesDomain trace"
@@ -860,13 +860,13 @@ proof (induct trace arbitrary: s')
     using pcc
     by (auto simp: GetAuthority_accessors)
   hence "getSCAPR cd s' = getSCAPR cd r" 
-    using SystemRegisterInvariant_aux[OF abstraction _ system valid2 r\<^sub>2 no_ex2]
+    using SpecialCapRegisterInvariant_aux[OF abstraction _ system valid2 r\<^sub>2 no_ex2]
     by auto
   thus ?case
     using ih by auto
 qed simp
 
-theorem SystemRegisterInvariant:
+theorem SpecialCapRegisterInvariant:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(step # trace, s') \<in> Traces sem s"
       and intra: "TracePreservesDomain trace"
@@ -905,7 +905,7 @@ proof -
       show ?thesis by auto
     qed
   have "getSCAPR cd r = getSCAPR cd s"
-    using SystemRegisterInvariant_intra[OF abstraction r\<^sub>1 intra no_access system valid]
+    using SpecialCapRegisterInvariant_intra[OF abstraction r\<^sub>1 intra no_access system valid]
     by simp
   thus ?thesis
     using `getSCAPR cd s' = getSCAPR cd r`
