@@ -34,17 +34,17 @@ Open the top-level file [Examples.thy](properties/Examples.thy) in Isabelle.
 
 ## Correspondence to PhD thesis
 
-- For Theorem 3.17 (CHERI-MIPS satisfies the abstraction), see [`instantiation/CheriInstantiation.thy`](instantiation/CheriInstantiation.thy).
+- For Theorem 3.17 (CHERI-MIPS satisfies the abstraction), see [`CheriInstantiation`](instantiation/CheriInstantiation.thy).
 
-- For Theorem 4.4 (monotonicity of available capabilities), see `MonotonicityAvailableCaps` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+- For Theorem 4.4 (monotonicity of available capabilities), see `MonotonicityAvailableCaps` in [`TraceProperties`](properties/TraceProperties.thy).
 
-- For Theorem 4.5 (special capability register invariant), see `SpecialCapRegisterInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+- For Theorem 4.5 (special capability register invariant), see `SpecialCapRegisterInvariant` in [`TraceProperties`](properties/TraceProperties.thy).
 
-- For Theorem 4.6 (memory invariant), see `MemoryInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+- For Theorem 4.6 (memory invariant), see `MemoryInvariant` in [`TraceProperties`](properties/TraceProperties.thy).
 
-- For Theorem 4.7 (memory tag invariant), see `MemCapInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+- For Theorem 4.7 (memory tag invariant), see `MemCapInvariant` in [`TraceProperties`](properties/TraceProperties.thy).
 
-- For Theorem 4.9 (correctness of compartmentalistion scenario), see `CompartmentIsolation` in [`properties/Examples.thy`](properties/Examples.thy).
+- For Theorem 4.9 (correctness of compartmentalistion scenario), see `CompartmentIsolation` in [`Examples`](properties/Examples.thy).
 
 ## Building on our proofs
 
