@@ -168,7 +168,7 @@ theorem SemanticsInvokeCap:
   defines "CodeCap \<equiv> getCAPR cd s"
   defines "DataCap \<equiv> getCAPR cd' s"
   assumes valid: "getStateIsValid s"
-      and suc: "(SwitchDomain (InvokeCapability cd cd'), s') \<in> NextStates s"
+      and suc: "(SwitchDomain (InvokeCapability cd cd'), s') \<in> SemanticsCheriMips s"
   shows "getSealed CodeCap"
     and "getSealed DataCap"
     and "getTag CodeCap"
@@ -193,12 +193,12 @@ using SemanticsInvoke_NextWithGhostState
                 mem="\<lambda>a. getMEM a s",
           THEN HoareTripleE[where s=s]]
 unfolding CodeCap_def DataCap_def SemanticsInvokePost_def
-unfolding NextStates_def Next_NextWithGhostState
+unfolding SemanticsCheriMips_def Next_NextWithGhostState
 unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary InvokeCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "InvokeCapProp s lbl s'"
 unfolding InvokeCapProp_def
 using assms SemanticsInvokeCap

@@ -1574,17 +1574,17 @@ by auto
 
 theorem InvarianceValidState:
   assumes "getStateIsValid s"
-      and suc: "(step, s') \<in> NextStates s"
+      and suc: "(step, s') \<in> SemanticsCheriMips s"
   shows "getStateIsValid s'"
 using assms
 using ValidStateInvariant_NextWithGhostState[THEN HoareTripleE[where s=s]]
 using ValidStateInvariant_Unpredictable[where s=s and s'=s']
-unfolding NextStates_def Next_NextWithGhostState
+unfolding SemanticsCheriMips_def Next_NextWithGhostState
 unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary ValidStateInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "ValidStateProp s lbl s'"
 unfolding ValidStateProp_def
 using assms InvarianceValidState

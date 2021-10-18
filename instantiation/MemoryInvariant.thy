@@ -2218,18 +2218,18 @@ by MemoryInvariant
 theorem MemoryInvariant:
   assumes prov: "a \<notin> \<Union> (WrittenAddresses ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
   shows "getMemByte a s' = getMemByte a s"
 using assms
 using HoareTripleE[where s=s,
                OF MemoryInvariant_NextWithGhostState
                   [where a=a and val="getMemByte a s"]]
 unfolding StateIsValid_def
-unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
+unfolding SemanticsCheriMips_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
 corollary MemoryInvariantInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "MemoryInvariant s lbl s'"
 unfolding MemoryInvariant_def
 using assms MemoryInvariant

@@ -1291,20 +1291,20 @@ by auto
 theorem InvarianceAddressTranslation:
   assumes "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
-      and suc: "(step, s') \<in> NextStates s"
+      and suc: "(step, s') \<in> SemanticsCheriMips s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
   shows "getTranslateAddr a s' = getTranslateAddr a s"
 using assms
 using AddressTranslationInvariant_NextWithGhostState
         [where X="\<lambda>a. getTranslateAddr a s", THEN HoareTripleE[where s=s]]
 using AddressTranslationInvariant_Unpredictable[where s=s and s'=s']
-using NextStates_PredictableNonException[OF suc no_ex]
-unfolding NextStates_def
+using SemanticsCheriMips_PredictableNonException[OF suc no_ex]
+unfolding SemanticsCheriMips_def
 unfolding TranslateAddrFuncEquals_def
 by (cases a) (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary AddressTranslationInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "AddressTranslationProp s lbl s'"
 unfolding AddressTranslationProp_def
 using assms InvarianceAddressTranslation

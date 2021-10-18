@@ -2702,46 +2702,46 @@ section \<open>Next states\<close>
 text \<open>The following is a version of \<open>Next\<close> (the function that defines the semantics of CHERI) that
 takes unpredictable behaviour into account.\<close>
 
-definition NextStates where
-  "NextStates s \<equiv> 
+definition SemanticsCheriMips where
+  "SemanticsCheriMips s \<equiv> 
    if isUnpredictable (StatePart NextWithGhostState s) then 
      {(PreserveDomain {}, s') |s'. s' \<in> UnpredictableNext s}
    else if getExceptionSignalled (StatePart NextWithGhostState s) then 
      {(SwitchDomain RaiseException, StatePart Next s)}
    else {(NextNonExceptionStep s, StatePart Next s)}"
 
-lemma NextStates_Exception [elim!]:
-  assumes "(SwitchDomain RaiseException, s') \<in> NextStates s"
+lemma SemanticsCheriMips_Exception [elim!]:
+  assumes "(SwitchDomain RaiseException, s') \<in> SemanticsCheriMips s"
   shows "\<not> isUnpredictable (StatePart NextWithGhostState s)"
     and "getExceptionSignalled (StatePart NextWithGhostState s)"
     and "s' = StatePart Next s"
 using assms
-unfolding NextStates_def
+unfolding SemanticsCheriMips_def
 by (auto split: if_splits)
 
-lemma NextStates_PredictableNonException:
-  assumes suc: "(step, s') \<in> NextStates s"
+lemma SemanticsCheriMips_PredictableNonException:
+  assumes suc: "(step, s') \<in> SemanticsCheriMips s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
       and pred: "\<not> isUnpredictable (StatePart NextWithGhostState s)"
   shows "\<not> getExceptionSignalled (StatePart NextWithGhostState s)"
     and "StatePart Next s = StatePart NextWithGhostState s"
     and "s' = StatePart Next s"
 using assms
-unfolding Next_NextWithGhostState NextStates_def
+unfolding Next_NextWithGhostState SemanticsCheriMips_def
 by (auto simp: ValueAndStatePart_simp split: if_splits)
 
 text \<open>To check the correspondence with the semantics as defined in L3.\<close>
 
-lemma DefinedNext_NextStates:
+lemma DefinedNext_SemanticsCheriMips:
   assumes "\<not> isUnpredictable (StatePart Next s)"
-  shows "\<exists>action. NextStates s = {(action, StatePart Next s)}"
+  shows "\<exists>action. SemanticsCheriMips s = {(action, StatePart Next s)}"
 proof -  
   have "\<not> isUnpredictable (StatePart NextWithGhostState s)"
     using assms 
     unfolding Next_NextWithGhostState
     by (simp add: ValueAndStatePart_simp)
   thus ?thesis
-    unfolding NextStates_def Let_def
+    unfolding SemanticsCheriMips_def Let_def
     unfolding Next_NextWithGhostState
     by auto
 qed

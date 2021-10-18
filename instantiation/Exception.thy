@@ -1809,7 +1809,7 @@ qed
 
 theorem SemanticsException:
   assumes valid: "getStateIsValid s"
-      and suc: "(SwitchDomain RaiseException, s') \<in> NextStates s"
+      and suc: "(SwitchDomain RaiseException, s') \<in> SemanticsCheriMips s"
   shows "getCP0StatusEXL s'"
     and "getBase (getPCC s') + getPC s' \<in> ExceptionPCs"
     and "getPCC s' = getKCC s"
@@ -1822,7 +1822,7 @@ theorem SemanticsException:
     and "getBranchDelay s' = None"
 using valid 
 using ExceptionCase_Next[where s=s]
-using NextStates_Exception[OF suc]
+using SemanticsCheriMips_Exception[OF suc]
 unfolding StateIsValid_def GhostStateIsValid_def
 unfolding SignalExceptionSCAPR_def
 unfolding ExceptionOccurredPre_def ExceptionOccurredPost_def
@@ -1830,7 +1830,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 corollary SemanticsException_extra:
   assumes valid: "getStateIsValid s"
-      and suc: "(SwitchDomain RaiseException, s') \<in> NextStates s"
+      and suc: "(SwitchDomain RaiseException, s') \<in> SemanticsCheriMips s"
   shows "getMemCap a s' = getMemCap a s"
     and "getMemByte a' s' = getMemByte a' s"
     and "getBranchToPccCap s' = nullCap"
@@ -1843,7 +1843,7 @@ unfolding getBranchDelayPccCap_def
 by auto
 
 corollary ExceptionInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "ExceptionProp s lbl s'"
 unfolding ExceptionProp_def
 using assms SemanticsException

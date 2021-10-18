@@ -109,7 +109,7 @@ qed
 
 theorem SemanticsUnsealCap:
   assumes prov: "UnsealCapAction auth cd cd' \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
   shows "Permit_Unseal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
@@ -124,11 +124,11 @@ using SemanticsUnseal_NextWithGhostState
                 authAccessible="getRegisterIsAccessible auth s",
           THEN HoareTripleE[where s=s]]
 unfolding SemanticsUnsealPost_def
-unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
+unfolding SemanticsCheriMips_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
 corollary UnsealCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "UnsealCapProp s lbl s'"
 unfolding UnsealCapProp_def
 using assms SemanticsUnsealCap

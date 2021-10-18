@@ -2601,7 +2601,7 @@ qed
 theorem SemanticsRestrictCap:
   assumes prov: "RestrictCapAction r r' \<in> actions"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
   shows "getCapReg r' s' \<le> getCapReg r s"
         "getRegisterIsAccessible r s"
         "getRegisterIsAccessible r' s"
@@ -2612,11 +2612,11 @@ using SemanticsRestrict_NextWithGhostState
                 r'Accessible="getRegisterIsAccessible r' s",
           THEN HoareTripleE[where s=s]]
 using SemanticsExecute[OF suc] prov
-unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
+unfolding SemanticsCheriMips_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
 corollary RestrictCapInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "RestrictCapProp s lbl s'"
 unfolding RestrictCapProp_def
 using assms SemanticsRestrictCap

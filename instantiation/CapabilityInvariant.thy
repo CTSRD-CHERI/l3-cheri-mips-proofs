@@ -2257,7 +2257,7 @@ by CapInvariant
 theorem CapabilityCapInvariant:
   assumes prov: "loc \<notin> \<Union> (ActionTargets ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
   shows "getCap loc s' = getCap loc s"
 using assms
 using CapInvariant_NextWithGhostState
@@ -2265,11 +2265,11 @@ using CapInvariant_NextWithGhostState
          THEN HoareTripleE[where s=s]]
 using DefinedNextInstruction[OF suc]
 unfolding CapInvariantPost_def
-unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
+unfolding SemanticsCheriMips_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
 corollary CapabilityInvariantInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "CapabilityInvariant s lbl s'"
 unfolding CapabilityInvariant_def
 using assms CapabilityCapInvariant

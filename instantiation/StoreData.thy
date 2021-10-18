@@ -649,7 +649,7 @@ qed
 
 theorem SemanticsStoreData:
   assumes prov: "StoreDataAction auth a l \<in> actions"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
       and valid: "getStateIsValid s"
   shows "Permit_Store (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
@@ -670,11 +670,11 @@ using SemanticsStoreData_NextWithGhostState
 unfolding SemanticsStoreDataPost_def AddressIsDataWritable_def 
 unfolding getTranslateAddrFunc_def getTranslateAddresses_def
 unfolding StateIsValid_def
-unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
+unfolding SemanticsCheriMips_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 
 corollary StoreDataInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "StoreDataProp s lbl s'"
 unfolding StoreDataProp_def
 using assms SemanticsStoreData

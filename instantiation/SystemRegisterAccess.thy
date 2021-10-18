@@ -21,7 +21,7 @@ section \<open>System register access\<close>
 lemma NumberedRegisterIsAccessible:
   assumes reg: "cd \<in> \<Union> (SpecialRegisterParameters ` actions)"
       and valid: "getStateIsValid s"
-      and suc: "(PreserveDomain actions, s') \<in> NextStates s"
+      and suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
   shows "getSpecial_register_accessible cd s"
 proof -
   obtain ac where ac: "ac \<in> actions"
@@ -91,7 +91,7 @@ proof -
 qed
 
 corollary SystemRegisterInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "SpecialRegisterProp s lbl s'"
 unfolding SpecialRegisterProp_def
 proof clarify
@@ -101,7 +101,7 @@ proof clarify
      and system: "cd \<noteq> 0" "cd \<noteq> 1"
      and valid: "getStateIsValid s"
      and lbl: "lbl = PreserveDomain actions"
-  have suc: "(PreserveDomain actions, s') \<in> NextStates s"
+  have suc: "(PreserveDomain actions, s') \<in> SemanticsCheriMips s"
     using assms lbl by auto
   have "cd \<in> \<Union> (SpecialRegisterParameters ` actions)"
     using reg action by auto

@@ -26,11 +26,11 @@ begin
 (*>*)
 
 theorem CheriInstantiation:
-  shows "CanBeSimulated NextStates"
+  shows "CanBeSimulated SemanticsCheriMips"
 unfolding CanBeSimulated_def
 proof clarify
   fix s lbl s'
-  assume as: "(lbl, s') \<in> NextStates s"
+  assume as: "(lbl, s') \<in> SemanticsCheriMips s"
   show "(lbl, s') \<in> AbstractSemantics s"
     unfolding AbstractSemantics_def
     using AddressTranslationInstantiation[OF as]

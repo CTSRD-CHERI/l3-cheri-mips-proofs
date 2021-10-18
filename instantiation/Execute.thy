@@ -14,7 +14,7 @@ begin
 section \<open>Semantics of Execute\<close>
 
 lemma DefinedNextInstruction:
-  assumes suc: "(step, s') \<in> NextStates s"
+  assumes suc: "(step, s') \<in> SemanticsCheriMips s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
       and pred: "\<not> isUnpredictable (StatePart NextWithGhostState s)"
   shows "getNextInstruction s \<noteq> None"
@@ -36,7 +36,7 @@ proof -
   from HoareTripleE[where s=s, OF this]
   show ?thesis
     using assms
-    unfolding NextStates_def 
+    unfolding SemanticsCheriMips_def 
     by (auto simp: ValueAndStatePart_simp split: if_splits)
 qed
 
@@ -193,7 +193,7 @@ proof -
 qed
 
 lemma SemanticsExecute:
-  assumes suc: "(step, s') \<in> NextStates s"
+  assumes suc: "(step, s') \<in> SemanticsCheriMips s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
       and valid: "getStateIsValid s"
   shows "getTag (getPCC s)"
@@ -203,12 +203,12 @@ lemma SemanticsExecute:
 using assms
 using NextWithGhostState_ValidPCC
       [where pcc="getPCC s" and pc="getPC s", THEN HoareTripleE[where s=s]]
-unfolding NextStates_def
+unfolding SemanticsCheriMips_def
 unfolding StateIsValid_def GhostStateIsValid_def
 by (auto simp: ValueAndStatePart_simp add.commute split: if_splits)
 
 corollary ExecuteInstantiation:
-  assumes "(lbl, s') \<in> NextStates s"
+  assumes "(lbl, s') \<in> SemanticsCheriMips s"
   shows "ExecuteProp s lbl s'"
 unfolding ExecuteProp_def
 using assms SemanticsExecute
