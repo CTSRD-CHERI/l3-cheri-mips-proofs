@@ -65,92 +65,92 @@ qed
 subsection \<open>Transitively reachable capabilities\<close>
 
 inductive_set
-  ReachableCaps :: "state \<Rightarrow> Capability set" for s where
+  AvailableCaps :: "state \<Rightarrow> Capability set" for s where
 
 Reg:
   "\<lbrakk>RegisterIsAlwaysAccessible r;
     getTag (getCapReg r s)\<rbrakk> \<Longrightarrow> 
-    getCapReg r s \<in> ReachableCaps s"
+    getCapReg r s \<in> AvailableCaps s"
 
 | Memory:
-  "\<lbrakk>cap \<in> ReachableCaps s;
+  "\<lbrakk>cap \<in> AvailableCaps s;
     \<not> getSealed cap;
     Permit_Load_Capability (getPerms cap);
     addr \<in> getTranslateCapAddresses (RegionOfCap cap) LOAD s;
     getTag (getMemCap addr s)\<rbrakk> \<Longrightarrow> 
-    getMemCap addr s \<in> ReachableCaps s"
+    getMemCap addr s \<in> AvailableCaps s"
 
 | Restrict:
-  "\<lbrakk>cap \<in> ReachableCaps s;
+  "\<lbrakk>cap \<in> AvailableCaps s;
     cap' \<le> cap;
     getTag cap'\<rbrakk> \<Longrightarrow> 
-    cap' \<in> ReachableCaps s"
+    cap' \<in> AvailableCaps s"
 
 | Seal:
-  "\<lbrakk>cap \<in> ReachableCaps s;
+  "\<lbrakk>cap \<in> AvailableCaps s;
     \<not> getSealed cap;
-    sealer \<in> ReachableCaps s;
+    sealer \<in> AvailableCaps s;
     \<not> getSealed sealer;
     Permit_Seal (getPerms sealer);
     ucast t \<in> RegionOfCap sealer\<rbrakk> \<Longrightarrow> 
-    setType (setSealed (cap, True), t) \<in> ReachableCaps s"
+    setType (setSealed (cap, True), t) \<in> AvailableCaps s"
 
 | Unseal:
-  "\<lbrakk>cap \<in> ReachableCaps s; 
+  "\<lbrakk>cap \<in> AvailableCaps s; 
     getSealed cap;
-    unsealer \<in> ReachableCaps s;
+    unsealer \<in> AvailableCaps s;
     \<not> getSealed unsealer;
     Permit_Unseal (getPerms unsealer);
     ucast (getType cap) \<in> RegionOfCap unsealer\<rbrakk> \<Longrightarrow> 
-    setType (setSealed (cap, False), 0) \<in> ReachableCaps s"
+    setType (setSealed (cap, False), 0) \<in> AvailableCaps s"
 
-lemma ReachableCaps_getTag [elim!]:
-  assumes "cap \<in> ReachableCaps s"
+lemma AvailableCaps_getTag [elim!]:
+  assumes "cap \<in> AvailableCaps s"
   shows "getTag cap"
 using assms 
-by (rule ReachableCaps.induct) auto
+by (rule AvailableCaps.induct) auto
 
-lemma ReachableCaps_PCC [intro!]:
+lemma AvailableCaps_PCC [intro!]:
   assumes "getTag (getPCC s)"
-  shows "getPCC s \<in> ReachableCaps s"
+  shows "getPCC s \<in> AvailableCaps s"
 using Reg[where r=RegPCC] assms
 by auto
 
-lemma ReachableCaps_BranchToPCC [intro!]:
+lemma AvailableCaps_BranchToPCC [intro!]:
   assumes "getTag (getBranchToPccCap s)"
-  shows "getBranchToPccCap s \<in> ReachableCaps s"
+  shows "getBranchToPccCap s \<in> AvailableCaps s"
 using Reg[where r=RegBranchToPCC] assms
 by auto
 
-lemma ReachableCaps_BranchDelayPCC [intro!]:
+lemma AvailableCaps_BranchDelayPCC [intro!]:
   assumes tag: "getTag (getBranchDelayPccCap s)"
-  shows "getBranchDelayPccCap s \<in> ReachableCaps s"
+  shows "getBranchDelayPccCap s \<in> AvailableCaps s"
 using Reg[where r=RegBranchDelayPCC]
 using assms
 by auto
 
-lemma ReachableCaps_Capr [intro!]:
+lemma AvailableCaps_Capr [intro!]:
   assumes "getTag (getCAPR cd s)"
-  shows "getCAPR cd s \<in> ReachableCaps s"
+  shows "getCAPR cd s \<in> AvailableCaps s"
 using Reg[where r="RegGeneral cd"]
 using assms
 by auto
 
-lemma ReachableCaps_DDC [intro!]:
+lemma AvailableCaps_DDC [intro!]:
   assumes "getTag (getDDC s)"
-  shows "getDDC s \<in> ReachableCaps s"
+  shows "getDDC s \<in> AvailableCaps s"
 using Reg[where r="RegSpecial 0"]
 using assms
 by auto
 
-lemma ReachableCaps_TLSC [intro!]:
+lemma AvailableCaps_TLSC [intro!]:
   assumes "getTag (getTLSC s)"
-  shows "getTLSC s \<in> ReachableCaps s"
+  shows "getTLSC s \<in> AvailableCaps s"
 using Reg[where r="RegSpecial 1"]
 using assms
 by auto
 
-lemma ReachableCaps_SCapr [elim]:
+lemma AvailableCaps_SCapr [elim]:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
@@ -158,7 +158,7 @@ lemma ReachableCaps_SCapr [elim]:
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getSCAPR cd s)"
-  shows "getSCAPR cd s \<in> ReachableCaps s"
+  shows "getSCAPR cd s \<in> AvailableCaps s"
 proof -
   have "RegisterIsAlwaysAccessible (RegSpecial cd)"
     unfolding RegisterIsAlwaysAccessible_def
@@ -170,7 +170,7 @@ proof -
     using tag by auto
 qed
 
-lemma ReachableCaps_CapReg [elim]:
+lemma AvailableCaps_CapReg [elim]:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and action: "action \<in> actions"
@@ -178,17 +178,17 @@ lemma ReachableCaps_CapReg [elim]:
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getCapReg r s)"
-  shows "getCapReg r s \<in> ReachableCaps s"
-using assms ReachableCaps_SCapr
+  shows "getCapReg r s \<in> AvailableCaps s"
+using assms AvailableCaps_SCapr
 by (cases r) auto
 
 subsection \<open>Transitively usable capabilities\<close>
 
 definition TransUsableCaps where
-  "TransUsableCaps s \<equiv> {cap. cap \<in> ReachableCaps s \<and> \<not> getSealed cap}"
+  "TransUsableCaps s \<equiv> {cap. cap \<in> AvailableCaps s \<and> \<not> getSealed cap}"
 
 lemma TransUsableCapsI [intro]:
-  assumes "cap \<in> ReachableCaps s"
+  assumes "cap \<in> AvailableCaps s"
       and "\<not> getSealed cap"
   shows "cap \<in> TransUsableCaps s"
 using assms
@@ -199,7 +199,7 @@ lemma TransUsableCapsE [elim!]:
   assumes "cap \<in> TransUsableCaps s"
   shows "getTag cap"
     and "\<not> getSealed cap"
-    and "cap \<in> ReachableCaps s"
+    and "cap \<in> AvailableCaps s"
 using assms
 unfolding TransUsableCaps_def
 by auto
@@ -234,8 +234,8 @@ proof -
   thus ?thesis by auto
 qed
 
-lemma ReachableCaps_ReachablePermissions_le [elim!]:
-  assumes "ReachableCaps s \<subseteq> ReachableCaps s'"
+lemma AvailableCaps_ReachablePermissions_le [elim!]:
+  assumes "AvailableCaps s \<subseteq> AvailableCaps s'"
   shows "ReachablePermissions s \<le> ReachablePermissions s'"
 unfolding ReachablePermissions_def
 using assms
@@ -286,7 +286,7 @@ subsection \<open>Readable capabilities\<close>
 
 lemma ReadableCapsAreReachable [elim!]:
   assumes readable: "cap \<in> ReadableCaps (ReachablePermissions s) s"
-  shows "cap \<in> ReachableCaps s"
+  shows "cap \<in> AvailableCaps s"
 proof -
   obtain loc where [simp]: "cap = getCap loc s"
                and loc: "loc \<in> ReadableLocations (ReachablePermissions s) s"
@@ -341,7 +341,7 @@ unfolding InvokableCapsNotUnsealable_def
 by auto
 
 lemma ReachableInvokableCapsAreReadable:
-  assumes reachable: "cap \<in> ReachableCaps s"
+  assumes reachable: "cap \<in> AvailableCaps s"
       and ccall: "Permit_CCall (getPerms cap)"
       and base: "InvokableCapsNotUnsealable (ReachablePermissions s) s"
   shows "cap \<in> ReadableCaps (ReachablePermissions s) s"
@@ -365,7 +365,7 @@ proof -
         by auto
       note gperm = GetAuthority_ReachablePermissions_le[OF this]
       have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (GetAuthority cap)) LOAD s"
-        using Memory ReachableCaps_getTag
+        using Memory AvailableCaps_getTag
         by (auto simp: GetAuthority_accessors)
       hence "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (ReachablePermissions s)) LOAD s"
         using getTranslateCapAddresses_le[OF CapLoadableAddresses_le[OF gperm]]
@@ -440,7 +440,7 @@ lemma TransUsableCapsInClosedPerm:
       and usable: "cap \<in> TransUsableCaps s"
   shows "GetAuthority cap \<le> perm"
 proof -
-  have reachable: "cap \<in> ReachableCaps s" and
+  have reachable: "cap \<in> AvailableCaps s" and
        type: "getSealed cap \<longrightarrow> getType cap \<in> UnsealableTypes perm"
     using usable
     unfolding TransUsableCaps_def
@@ -463,7 +463,7 @@ proof -
         by auto
       from getTranslateCapAddresses_le[OF this]
       have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses perm) LOAD s"
-        using Memory ReachableCaps_getTag
+        using Memory AvailableCaps_getTag
         by (auto simp: GetAuthority_accessors)
       hence "LocMem addr \<in> ReadableLocations perm s" 
         by auto
@@ -512,7 +512,7 @@ lemma NewCapsAreReachable:
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
       and tag: "getTag (getCap loc s')"
-  shows "getCap loc s' \<in> ReachableCaps s \<or>
+  shows "getCap loc s' \<in> AvailableCaps s \<or>
          getCap loc s' = getCap loc s"
 proof -
   obtain parentLoc where "parentLoc \<in> ProvenanceParents actions loc"
@@ -541,10 +541,10 @@ proof -
         by auto
       have tag_original: "getTag (getCapReg r s)"
         using le tag RestrictedReg by auto
-      have "getCapReg r s \<in> ReachableCaps s"
-        using ReachableCaps_CapReg[OF abstraction suc RestrictedReg(1) _ no_sys valid tag_original]
+      have "getCapReg r s \<in> AvailableCaps s"
+        using AvailableCaps_CapReg[OF abstraction suc RestrictedReg(1) _ no_sys valid tag_original]
         by (cases r) auto
-      from ReachableCaps.Restrict[OF this le]
+      from AvailableCaps.Restrict[OF this le]
       show ?thesis
         using RestrictedReg tag
         by auto
@@ -564,15 +564,15 @@ proof -
       and perm: "Permit_Load_Capability (getPerms (getCapReg auth s))"
         using CanBeSimulatedE_LoadCap[OF abstraction suc _ Loaded(1) valid]
         by auto
-      have auth: "getCapReg auth s \<in> ReachableCaps s"
-        using ReachableCaps_CapReg[OF abstraction suc Loaded(1) _ no_sys valid tag_auth]
+      have auth: "getCapReg auth s \<in> AvailableCaps s"
+        using AvailableCaps_CapReg[OF abstraction suc Loaded(1) _ no_sys valid tag_auth]
         by (cases auth) auto
       hence "getTag (getMemCap a s)"
         using le tag Loaded by auto
-      hence "getMemCap a s \<in> ReachableCaps s"
+      hence "getMemCap a s \<in> AvailableCaps s"
         using Memory[OF auth unsealed perm segment]
         by auto
-      from ReachableCaps.Restrict[OF this le]
+      from AvailableCaps.Restrict[OF this le]
       show ?thesis 
         using Loaded tag
         by auto
@@ -583,8 +583,8 @@ proof -
         by auto
       hence "getTag (getCAPR cd s)"
         using tag Stored by auto
-      note ReachableCaps_Capr[OF this]
-      from ReachableCaps.Restrict[OF this le]
+      note AvailableCaps_Capr[OF this]
+      from AvailableCaps.Restrict[OF this le]
       show ?thesis 
         using Stored tag
         by auto
@@ -597,14 +597,14 @@ proof -
         using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using tag Sealed
         by auto
-      have "getCapReg auth s \<in> ReachableCaps s"
-        using ReachableCaps_CapReg[OF abstraction suc Sealed(1) _ no_sys valid tag_auth]
+      have "getCapReg auth s \<in> AvailableCaps s"
+        using AvailableCaps_CapReg[OF abstraction suc Sealed(1) _ no_sys valid tag_auth]
         by (cases auth) auto
-      hence "setType (setSealed (getCAPR cd s, True), t) \<in> ReachableCaps s"
+      hence "setType (setSealed (getCAPR cd s, True), t) \<in> AvailableCaps s"
         using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using tag_cd
         unfolding t_def
-        by (intro ReachableCaps.Seal[where sealer="getCapReg auth s"]) auto
+        by (intro AvailableCaps.Seal[where sealer="getCapReg auth s"]) auto
       thus ?thesis
         using CanBeSimulatedE_SealCap[OF abstraction suc _ Sealed(1) valid]
         using Sealed 
@@ -618,14 +618,14 @@ proof -
         using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using Unsealed
         by auto
-      have "getCapReg auth s \<in> ReachableCaps s"
-        using ReachableCaps_CapReg[OF abstraction suc Unsealed(1) _ no_sys valid tag_auth]
+      have "getCapReg auth s \<in> AvailableCaps s"
+        using AvailableCaps_CapReg[OF abstraction suc Unsealed(1) _ no_sys valid tag_auth]
         by (cases auth) auto
-      hence "setType (setSealed (getCAPR cd s, False), 0) \<in> ReachableCaps s"
+      hence "setType (setSealed (getCAPR cd s, False), 0) \<in> AvailableCaps s"
         using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using tag_cd
-        by (intro ReachableCaps.Unseal[where unsealer="getCapReg auth s"]) auto
-      from ReachableCaps.Restrict[OF this _ tag]
+        by (intro AvailableCaps.Unseal[where unsealer="getCapReg auth s"]) auto
+      from AvailableCaps.Restrict[OF this _ tag]
       show ?thesis
         using CanBeSimulatedE_UnsealCap[OF abstraction suc _ Unsealed(1) valid]
         using Unsealed
@@ -633,21 +633,21 @@ proof -
     qed
 qed
 
-lemma MonotonicityReachableCaps_Step:
+lemma MonotonicityAvailableCaps_Step:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
       and valid: "getStateIsValid s"
-  shows "ReachableCaps s' \<subseteq> ReachableCaps s"
+  shows "AvailableCaps s' \<subseteq> AvailableCaps s"
 proof 
   fix cap
-  assume "cap \<in> ReachableCaps s'"
-  thus "cap \<in> ReachableCaps s"
-    proof (induct rule: ReachableCaps.inducts)
+  assume "cap \<in> AvailableCaps s'"
+  thus "cap \<in> AvailableCaps s"
+    proof (induct rule: AvailableCaps.inducts)
       case (Reg r)
       thus ?case
         using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocReg r"]
-        using Reg ReachableCaps.Reg
+        using Reg AvailableCaps.Reg
         by auto
     next
       case (Memory cap' a)
@@ -660,40 +660,40 @@ proof
         by simp
       thus ?case 
         using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocMem a"]
-        using Memory ReachableCaps.Memory
+        using Memory AvailableCaps.Memory
         by auto
     next
       case Restrict
       thus ?case
-        using ReachableCaps.Restrict
+        using AvailableCaps.Restrict
         by auto
     next
       case Seal
       thus ?case
-        using ReachableCaps.Seal
+        using AvailableCaps.Seal
         by auto
     next
       case Unseal
       thus ?case 
-        using ReachableCaps.Unseal
+        using AvailableCaps.Unseal
         by auto
     qed
 qed
 
-theorem MonotonicityReachableCaps:
+theorem MonotonicityAvailableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-  shows "ReachableCaps s' \<subseteq> ReachableCaps s"
+  shows "AvailableCaps s' \<subseteq> AvailableCaps s"
 using trace intra
 proof (induct trace arbitrary: s')
   case (Cons step trace)
   then obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
                   and r\<^sub>2: "(step, s') \<in> sem r"
     by auto
-  have ih: "ReachableCaps r \<subseteq> ReachableCaps s" 
+  have ih: "AvailableCaps r \<subseteq> AvailableCaps s" 
     using Cons(1)[OF r\<^sub>1]
     using Cons(3)
     by simp
@@ -705,14 +705,14 @@ proof (induct trace arbitrary: s')
     using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
     by auto
   have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-    using ReachableCaps_ReachablePermissions_le[OF ih]
+    using AvailableCaps_ReachablePermissions_le[OF ih]
     using SystemRegisterAccess_le no_sys 
     by auto
   have "\<not> Access_System_Registers (getPerms (getPCC r))"
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex no_sys2 valid2]
     by auto
-  hence "ReachableCaps s' \<subseteq> ReachableCaps r"
-    using MonotonicityReachableCaps_Step[OF abstraction _ _ valid2, where s'=s']
+  hence "AvailableCaps s' \<subseteq> AvailableCaps r"
+    using MonotonicityAvailableCaps_Step[OF abstraction _ _ valid2, where s'=s']
     using r\<^sub>2 intra
     by (cases step) auto
   thus ?case
@@ -726,7 +726,7 @@ corollary MonotonicityTransUsableCaps:
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
   shows "TransUsableCaps s' \<subseteq> TransUsableCaps s"
-using MonotonicityReachableCaps[OF abstraction trace intra no_sys valid]
+using MonotonicityAvailableCaps[OF abstraction trace intra no_sys valid]
 by auto
 
 corollary MonotonicityReachablePermissions:
@@ -982,8 +982,8 @@ proof (induct trace arbitrary: s')
               have a: "a = GetCapAddress a'"
                 using target StoreDataAction
                 by auto
-              have "getCapReg auth r \<in> ReachableCaps r"
-                using ReachableCaps_CapReg
+              have "getCapReg auth r \<in> AvailableCaps r"
+                using AvailableCaps_CapReg
                       [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
                 using restrict StoreDataAction
                 by (cases auth) auto
@@ -1020,8 +1020,8 @@ proof (induct trace arbitrary: s')
                 using action target
                 by auto
               note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ this valid2]
-              have "getCapReg auth r \<in> ReachableCaps r"
-                using ReachableCaps_CapReg
+              have "getCapReg auth r \<in> AvailableCaps r"
+                using AvailableCaps_CapReg
                       [OF abstraction intra_suc action _ no_sys_pcc valid2, where r=auth]
                 using store StoreCapAction
                 by (cases auth) auto
@@ -1173,8 +1173,8 @@ proof (induct trace arbitrary: s')
           have *: "a \<in> getTranslateAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
             using store addr
             by (auto simp: GetAuthority_accessors intro: getTranslateAddressesI)
-          have "getCapReg auth r \<in> ReachableCaps r"
-            using ReachableCaps_CapReg
+          have "getCapReg auth r \<in> AvailableCaps r"
+            using AvailableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
             using store `l \<noteq> 0`
             by (cases auth) auto
@@ -1201,8 +1201,8 @@ proof (induct trace arbitrary: s')
           have *: "a \<in> getTranslateAddresses (StorableAddresses (GetAuthority (getCapReg auth r))) STORE r"
             using store addr
             by (auto simp: GetAuthority_accessors intro: getTranslateAddressesI)
-          have "getCapReg auth r \<in> ReachableCaps r"
-            using ReachableCaps_CapReg
+          have "getCapReg auth r \<in> AvailableCaps r"
+            using AvailableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
             using store
             by (cases auth) auto

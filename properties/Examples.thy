@@ -388,10 +388,10 @@ proof (intro conjI allI impI)
         using r\<^sub>2 by auto
       note invoke = CanBeSimulatedE_InvokeCap[OF abstraction this _ r_valid, 
                                               where cd=cd and cd'=cd']
-      have "getCAPR cd r \<in> ReachableCaps r"
+      have "getCAPR cd r \<in> AvailableCaps r"
         using invoke by auto
-      hence reachable: "getCAPR cd r \<in> ReachableCaps s"
-        using MonotonicityReachableCaps[OF abstraction r\<^sub>1 intra no_sys valid]
+      hence reachable: "getCAPR cd r \<in> AvailableCaps s"
+        using MonotonicityAvailableCaps[OF abstraction r\<^sub>1 intra no_sys valid]
         by auto
       have "InvokableCapsNotUnsealable gPerm s"
         using invokable
