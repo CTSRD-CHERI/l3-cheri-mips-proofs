@@ -213,20 +213,20 @@ by auto
 
 subsection \<open>Transitively reachable permissions\<close>
 
-definition ReachablePermissions :: "state \<Rightarrow> CompartmentAuthority" where
-  "ReachablePermissions s \<equiv> GetAuthorityOfCaps (TransUsableCaps s)"
+definition AvailableAuthority :: "state \<Rightarrow> CompartmentAuthority" where
+  "AvailableAuthority s \<equiv> GetAuthorityOfCaps (TransUsableCaps s)"
 
-lemma GetAuthority_ReachablePermissions_le [elim!]:
+lemma GetAuthority_AvailableAuthority_le [elim!]:
   assumes "cap \<in> TransUsableCaps s"
-  shows "GetAuthority cap \<le> ReachablePermissions s"
-unfolding ReachablePermissions_def GetAuthorityOfCaps_def
+  shows "GetAuthority cap \<le> AvailableAuthority s"
+unfolding AvailableAuthority_def GetAuthorityOfCaps_def
 using assms
 by (intro Sup_upper) auto
 
-lemma getPCC_ReachablePermissions_le [intro]:
+lemma getPCC_AvailableAuthority_le [intro]:
   assumes "getTag (getPCC s)"
       and "\<not> getSealed (getPCC s)"
-  shows "GetAuthority (getPCC s) \<le> ReachablePermissions s"
+  shows "GetAuthority (getPCC s) \<le> AvailableAuthority s"
 proof -
   have "getPCC s \<in> TransUsableCaps s"
     using assms
@@ -234,10 +234,10 @@ proof -
   thus ?thesis by auto
 qed
 
-lemma AvailableCaps_ReachablePermissions_le [elim!]:
+lemma AvailableCaps_AvailableAuthority_le [elim!]:
   assumes "AvailableCaps s \<subseteq> AvailableCaps s'"
-  shows "ReachablePermissions s \<le> ReachablePermissions s'"
-unfolding ReachablePermissions_def
+  shows "AvailableAuthority s \<le> AvailableAuthority s'"
+unfolding AvailableAuthority_def
 using assms
 by (intro GetAuthorityOfCaps_subset) auto
 
@@ -245,14 +245,14 @@ lemma SystemRegisterAccess_PCC:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(label, s') \<in> sem s"
       and no_ex: "label \<noteq> SwitchDomain RaiseException" 
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "\<not> Access_System_Registers (getPerms (getPCC s))"
 proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
     using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
     by auto
-  hence "GetAuthority (getPCC s) \<le> ReachablePermissions s" 
+  hence "GetAuthority (getPCC s) \<le> AvailableAuthority s" 
     by auto
   from SystemRegisterAccess_le[OF this]
   show "\<not> Access_System_Registers (getPerms (getPCC s))"
@@ -260,9 +260,9 @@ proof -
     by (auto simp: GetAuthority_accessors)
 qed
 
-lemma ReachablePermissions_AddressTranslation:
+lemma AvailableAuthority_AddressTranslation:
   assumes abstraction: "CanBeSimulated sem"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
       and suc: "(step, s') \<in> sem s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
@@ -271,7 +271,7 @@ proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
     using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
     by auto
-  hence "GetAuthority (getPCC s) \<le> ReachablePermissions s" 
+  hence "GetAuthority (getPCC s) \<le> AvailableAuthority s" 
     by auto
   from SystemRegisterAccess_le[OF this]
   have "\<not> Access_System_Registers (getPerms (getPCC s))"
@@ -285,11 +285,11 @@ qed
 subsection \<open>Readable capabilities\<close>
 
 lemma ReadableCapsAreReachable [elim!]:
-  assumes readable: "cap \<in> ReadableCaps (ReachablePermissions s) s"
+  assumes readable: "cap \<in> ReadableCaps (AvailableAuthority s) s"
   shows "cap \<in> AvailableCaps s"
 proof -
   obtain loc where [simp]: "cap = getCap loc s"
-               and loc: "loc \<in> ReadableLocations (ReachablePermissions s) s"
+               and loc: "loc \<in> ReadableLocations (AvailableAuthority s) s"
     using readable by auto
   have tag: "getTag cap"
     using readable by auto
@@ -307,7 +307,7 @@ proof -
       thus ?thesis
         using Memory[where addr=a and s=s]
         using LocMem tag loc
-        unfolding ReachablePermissions_def TransUsableCaps_def
+        unfolding AvailableAuthority_def TransUsableCaps_def
         by (auto simp: getTranslateCapAddresses_distrib_Union GetAuthority_accessors
                  split: if_splits)
     qed
@@ -343,16 +343,16 @@ by auto
 lemma ReachableInvokableCapsAreReadable:
   assumes reachable: "cap \<in> AvailableCaps s"
       and ccall: "Permit_CCall (getPerms cap)"
-      and base: "InvokableCapsNotUnsealable (ReachablePermissions s) s"
-  shows "cap \<in> ReadableCaps (ReachablePermissions s) s"
+      and base: "InvokableCapsNotUnsealable (AvailableAuthority s) s"
+  shows "cap \<in> ReadableCaps (AvailableAuthority s) s"
 proof -
-  have "cap \<in> ReadableCaps (ReachablePermissions s) s \<and>
+  have "cap \<in> ReadableCaps (AvailableAuthority s) s \<and>
         getSealed cap \<and> 
-        getType cap \<notin> UnsealableTypes (ReachablePermissions s)"
+        getType cap \<notin> UnsealableTypes (AvailableAuthority s)"
     using reachable ccall
     proof induct
       case (Reg r)
-      hence "getCapReg r s \<in> ReadableCaps (ReachablePermissions s) s"
+      hence "getCapReg r s \<in> ReadableCaps (AvailableAuthority s) s"
         using Reg
         by (auto intro: ReadableCapsI[where loc="LocReg r"])
       thus ?case
@@ -363,14 +363,14 @@ proof -
       case (Memory cap addr)
       hence "cap \<in> TransUsableCaps s"
         by auto
-      note gperm = GetAuthority_ReachablePermissions_le[OF this]
+      note gperm = GetAuthority_AvailableAuthority_le[OF this]
       have "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (GetAuthority cap)) LOAD s"
         using Memory AvailableCaps_getTag
         by (auto simp: GetAuthority_accessors)
-      hence "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (ReachablePermissions s)) LOAD s"
+      hence "addr \<in> getTranslateCapAddresses (CapLoadableAddresses (AvailableAuthority s)) LOAD s"
         using getTranslateCapAddresses_le[OF CapLoadableAddresses_le[OF gperm]]
         by auto
-      hence "getMemCap addr s \<in> ReadableCaps (ReachablePermissions s) s"
+      hence "getMemCap addr s \<in> ReadableCaps (AvailableAuthority s) s"
         using Memory
         by (auto intro: ReadableCapsI[where loc="LocMem addr"])
       thus ?case
@@ -404,7 +404,7 @@ proof -
       case (Unseal cap unsealer)
       hence "unsealer \<in> TransUsableCaps s"
         by auto
-      note gperm = GetAuthority_ReachablePermissions_le[OF this]
+      note gperm = GetAuthority_AvailableAuthority_le[OF this]
       have "getType cap \<in> UnsealableTypes (GetAuthority unsealer)"
         using Unseal
         by (auto simp: GetAuthority_accessors)
@@ -496,11 +496,11 @@ proof -
     qed
 qed
 
-lemma ReachablePermissionsInClosedPerm:
+lemma AvailableAuthorityInClosedPerm:
   assumes "PermIsClosed perm s"
-  shows "ReachablePermissions s \<le> perm"
+  shows "AvailableAuthority s \<le> perm"
 using TransUsableCapsInClosedPerm[OF assms]
-unfolding ReachablePermissions_def GetAuthorityOfCaps_def TransUsableCaps_def
+unfolding AvailableAuthority_def GetAuthorityOfCaps_def TransUsableCaps_def
 unfolding Sup_le_iff
 by auto
 
@@ -684,7 +684,7 @@ theorem MonotonicityAvailableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "AvailableCaps s' \<subseteq> AvailableCaps s"
 using trace intra
@@ -704,8 +704,8 @@ proof (induct trace arbitrary: s')
   have valid2: "getStateIsValid r"
     using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
     by auto
-  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
-    using AvailableCaps_ReachablePermissions_le[OF ih]
+  have no_sys2: "\<not> SystemRegisterAccess (AvailableAuthority r)"
+    using AvailableCaps_AvailableAuthority_le[OF ih]
     using SystemRegisterAccess_le no_sys 
     by auto
   have "\<not> Access_System_Registers (getPerms (getPCC r))"
@@ -723,21 +723,21 @@ corollary MonotonicityTransUsableCaps:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "TransUsableCaps s' \<subseteq> TransUsableCaps s"
 using MonotonicityAvailableCaps[OF abstraction trace intra no_sys valid]
 by auto
 
-corollary MonotonicityReachablePermissions:
+corollary MonotonicityAvailableAuthority:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
-  shows "ReachablePermissions s' \<le> ReachablePermissions s"
+  shows "AvailableAuthority s' \<le> AvailableAuthority s"
 using MonotonicityTransUsableCaps[OF abstraction trace intra no_sys valid]
-unfolding ReachablePermissions_def
+unfolding AvailableAuthority_def
 by auto
 
 subsection \<open>Invariance of address translation\<close>
@@ -746,7 +746,7 @@ lemma TraceInvarianceAddressTranslation:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getTranslateAddr addr s' = getTranslateAddr addr s"
 using trace intra
@@ -765,14 +765,14 @@ next
     by auto
   have no_ex: "step \<noteq> SwitchDomain RaiseException"
     using Cons by auto
-  note MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
+  note MonotonicityAvailableAuthority[OF abstraction r\<^sub>1 intra2 no_sys valid]
   from SystemRegisterAccess_le[OF this]
-  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+  have no_sys2: "\<not> SystemRegisterAccess (AvailableAuthority r)"
     using no_sys
     by auto
   thus ?case
     using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
-    using ReachablePermissions_AddressTranslation[OF abstraction _ _ r\<^sub>2 no_ex]
+    using AvailableAuthority_AddressTranslation[OF abstraction _ _ r\<^sub>2 no_ex]
     using ih
     by auto
 qed
@@ -822,7 +822,7 @@ lemma SystemRegisterInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and system: "cd \<noteq> 0" "cd \<noteq> 1"
       and valid: "getStateIsValid s"
   shows "getSCAPR cd s' = getSCAPR cd s"
@@ -841,17 +841,17 @@ proof (induct trace arbitrary: s')
   have no_ex2: "step \<noteq> SwitchDomain RaiseException"
     using Cons(3)
     by auto
-  have "ReachablePermissions r \<le> ReachablePermissions s"
-    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 _ no_access valid]
+  have "AvailableAuthority r \<le> AvailableAuthority s"
+    using MonotonicityAvailableAuthority[OF abstraction r\<^sub>1 _ no_access valid]
     using Cons(3)
     by auto
   from SystemRegisterAccess_le[OF this]
-  have no_access2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+  have no_access2: "\<not> SystemRegisterAccess (AvailableAuthority r)"
     using no_access by auto
   note pcc = CanBeSimulatedE_Execute[OF abstraction r\<^sub>2 no_ex2 valid2]
   hence "getPCC r \<in> TransUsableCaps r"
     by auto
-  hence "GetAuthority (getPCC r) \<le> ReachablePermissions r"
+  hence "GetAuthority (getPCC r) \<le> AvailableAuthority r"
     by auto
   from SystemRegisterAccess_le[OF this]
   have "\<not> SystemRegisterAccess (GetAuthority (getPCC r))"
@@ -871,7 +871,7 @@ theorem SystemRegisterInvariant:
       and trace: "(step # trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and inter: "\<not> PreservesDomain step"
-      and no_access: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and system: "cd \<noteq> 0" "cd \<noteq> 1" 
       and non_eppc: "cd \<noteq> 31"
       and valid: "getStateIsValid s"
@@ -918,8 +918,8 @@ lemma MemCapInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "a \<notin> StorablePhysCapAddresses (AvailableAuthority s) s"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getMemCap a s' = getMemCap a s"
 using trace intra
@@ -939,11 +939,11 @@ proof (induct trace arbitrary: s')
   have no_ex2: "step \<noteq> SwitchDomain RaiseException"
     using Cons(3)
     by auto
-  have perms: "ReachablePermissions r \<le> ReachablePermissions s"
-    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
+  have perms: "AvailableAuthority r \<le> AvailableAuthority s"
+    using MonotonicityAvailableAuthority[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from SystemRegisterAccess_le[OF this]
-  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+  have no_sys2: "\<not> SystemRegisterAccess (AvailableAuthority r)"
     using no_sys by auto
   have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
@@ -952,7 +952,7 @@ proof (induct trace arbitrary: s')
     using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from StorablePhysCapAddresses_le[OF perms]
-  have no_access2: "a \<notin> StorablePhysCapAddresses (ReachablePermissions r) r"
+  have no_access2: "a \<notin> StorablePhysCapAddresses (AvailableAuthority r) r"
     using getTranslateCapAddresses_eqI_getTranslateAddr[OF addrTrans]
     using no_access
     unfolding StorablePhysCapAddresses_def
@@ -990,7 +990,7 @@ proof (induct trace arbitrary: s')
               hence "getCapReg auth r \<in> TransUsableCaps r"
                 using restrict 
                 by auto
-              hence gperm: "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
+              hence gperm: "GetAuthority (getCapReg auth r) \<le> AvailableAuthority r"
                 by auto
               have "StoreDataProp r (PreserveDomain actions) s'"
                 using CanBeSimulatedE[OF abstraction intra_suc]
@@ -1006,7 +1006,7 @@ proof (induct trace arbitrary: s')
                 using a restrict
                 by (auto simp: GetAuthority_accessors 
                          intro: getTranslateCapAddressesI)
-              hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (AvailableAuthority r)) STORE r"
                 using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
                 by auto
               thus False
@@ -1028,7 +1028,7 @@ proof (induct trace arbitrary: s')
               hence "getCapReg auth r \<in> TransUsableCaps r"
                 using store 
                 by auto
-              hence gperm: "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
+              hence gperm: "GetAuthority (getCapReg auth r) \<le> AvailableAuthority r"
                 by auto
               have "StoreCapProp r (PreserveDomain actions) s'"
                 using CanBeSimulatedE[OF abstraction intra_suc]
@@ -1046,7 +1046,7 @@ proof (induct trace arbitrary: s')
                 unfolding word_size
                 by (auto simp: GetAuthority_accessors
                          intro: getTranslateCapAddressesI)
-              hence "a \<in> getTranslateCapAddresses (StorableAddresses (ReachablePermissions r)) STORE r"
+              hence "a \<in> getTranslateCapAddresses (StorableAddresses (AvailableAuthority r)) STORE r"
                 using getTranslateCapAddresses_le[OF StorableAddresses_le[OF gperm]]
                 by auto
               thus False
@@ -1069,8 +1069,8 @@ theorem MemCapInvariant:
       and trace: "(step # trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and inter: "\<not> PreservesDomain step"
-      and no_access: "a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "a \<notin> StorablePhysCapAddresses (AvailableAuthority s) s"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getMemCap a s' = getMemCap a s"
 proof -
@@ -1114,8 +1114,8 @@ lemma MemoryInvariant_intra:
   assumes abstraction: "CanBeSimulated sem"
       and trace: "(trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
-      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "a \<notin> StorablePhysAddresses (AvailableAuthority s) s"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getMemByte a s' = getMemByte a s"
 using trace intra
@@ -1135,11 +1135,11 @@ proof (induct trace arbitrary: s')
   have no_ex2: "step \<noteq> SwitchDomain RaiseException"
     using Cons(3)
     by auto
-  have perms: "ReachablePermissions r \<le> ReachablePermissions s"
-    using MonotonicityReachablePermissions[OF abstraction r\<^sub>1 intra2 no_sys valid]
+  have perms: "AvailableAuthority r \<le> AvailableAuthority s"
+    using MonotonicityAvailableAuthority[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from SystemRegisterAccess_le[OF this]
-  have no_sys2: "\<not> SystemRegisterAccess (ReachablePermissions r)"
+  have no_sys2: "\<not> SystemRegisterAccess (AvailableAuthority r)"
     using no_sys by auto
   have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
@@ -1148,7 +1148,7 @@ proof (induct trace arbitrary: s')
     using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from StorablePhysAddresses_le[OF perms]
-  have no_access2: "a \<notin> StorablePhysAddresses (ReachablePermissions r) r"
+  have no_access2: "a \<notin> StorablePhysAddresses (AvailableAuthority r) r"
     using getTranslateAddresses_eqI_getTranslateAddr[OF addrTrans]
     using no_access
     unfolding StorablePhysAddresses_def
@@ -1181,7 +1181,7 @@ proof (induct trace arbitrary: s')
           hence "getCapReg auth r \<in> TransUsableCaps r"
             using store 
             by auto
-          hence "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
+          hence "GetAuthority (getCapReg auth r) \<le> AvailableAuthority r"
             by auto
           note StorableAddresses_le[OF this]
           from getTranslateAddresses_le[OF this]
@@ -1209,7 +1209,7 @@ proof (induct trace arbitrary: s')
           hence "getCapReg auth r \<in> TransUsableCaps r"
             using store 
             by auto
-          hence "GetAuthority (getCapReg auth r) \<le> ReachablePermissions r"
+          hence "GetAuthority (getCapReg auth r) \<le> AvailableAuthority r"
             by auto
           note StorableAddresses_le[OF this]
           from getTranslateAddresses_le[OF this]
@@ -1235,8 +1235,8 @@ theorem MemoryInvariant:
       and trace: "(step # trace, s') \<in> Traces sem s"
       and intra: "IntraDomainTrace trace"
       and inter: "\<not> PreservesDomain step"
-      and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
-      and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+      and no_access: "a \<notin> StorablePhysAddresses (AvailableAuthority s) s"
+      and no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
       and valid: "getStateIsValid s"
   shows "getMemByte a s' = getMemByte a s"
 proof -

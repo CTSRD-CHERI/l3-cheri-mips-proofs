@@ -314,8 +314,8 @@ proof (intro conjI allI impI)
         by simp
      qed
   note gPerm_def [simp]
-  note gperm = ReachablePermissionsInClosedPerm[OF closed]
-  have no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
+  note gperm = AvailableAuthorityInClosedPerm[OF closed]
+  have no_sys: "\<not> SystemRegisterAccess (AvailableAuthority s)"
     using SystemRegisterAccess_le[OF gperm]
     by auto
   obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
@@ -331,7 +331,7 @@ proof (intro conjI allI impI)
         using that
         unfolding StorablePhysAddresses_def
         by auto
-      hence "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
+      hence "a \<notin> StorablePhysAddresses (AvailableAuthority s) s"
         using StorablePhysAddresses_le[OF gperm]
         by auto
       thus ?thesis
@@ -357,7 +357,7 @@ proof (intro conjI allI impI)
             using that
             by auto
         qed
-      hence "GetCapAddress a \<notin> StorablePhysCapAddresses (ReachablePermissions s) s"
+      hence "GetCapAddress a \<notin> StorablePhysCapAddresses (AvailableAuthority s) s"
         using StorablePhysCapAddresses_le[OF gperm]
         by auto
       hence "getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"  
@@ -399,7 +399,7 @@ proof (intro conjI allI impI)
         unfolding InvokableCaps_def
         by auto
       from InvokableCapsNotUnsealable_le[OF gperm this]
-      have "getCAPR cd r \<in> ReadableCaps (ReachablePermissions s) s"
+      have "getCAPR cd r \<in> ReadableCaps (AvailableAuthority s) s"
         using ReachableInvokableCapsAreReadable[OF reachable]
         using invoke
         by metis
