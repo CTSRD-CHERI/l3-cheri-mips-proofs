@@ -1117,7 +1117,7 @@ lemma MemoryInvariant_intra:
       and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-  shows "getMemData a s' = getMemData a s"
+  shows "getMemByte a s' = getMemByte a s"
 using trace intra
 proof (induct trace arbitrary: s')
   case (Cons step trace)
@@ -1126,7 +1126,7 @@ proof (induct trace arbitrary: s')
     by auto
   have intra2: "IntraDomainTrace trace"
     using Cons by auto
-  have ih: "getMemData a r = getMemData a s"
+  have ih: "getMemByte a r = getMemByte a s"
     using Cons(1)[OF r\<^sub>1] Cons(3)
     by auto
   have valid2: "getStateIsValid r"
@@ -1153,7 +1153,7 @@ proof (induct trace arbitrary: s')
     using no_access
     unfolding StorablePhysAddresses_def
     by auto
-  hence "getMemData a s' = getMemData a r"
+  hence "getMemByte a s' = getMemByte a r"
     proof -
       obtain actions where "step = PreserveDomain actions"
         using Cons(3)
@@ -1238,7 +1238,7 @@ theorem MemoryInvariant:
       and no_access: "a \<notin> StorablePhysAddresses (ReachablePermissions s) s"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-  shows "getMemData a s' = getMemData a s"
+  shows "getMemByte a s' = getMemByte a s"
 proof -
   obtain r where r\<^sub>1: "(trace, r) \<in> Traces sem s"
              and r\<^sub>2: "(step, s') \<in> sem r"
@@ -1248,14 +1248,14 @@ proof -
   have valid2: "getStateIsValid r"
     using TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
     by auto
-  have "getMemData a s' = getMemData a r"
+  have "getMemByte a s' = getMemByte a r"
     proof (cases crossing)
       case RaiseException
       hence "(SwitchDomain RaiseException, s') \<in> sem r"
         using r\<^sub>2 step by auto
       from CanBeSimulatedE_Exception[OF abstraction this _ valid2]
       show ?thesis
-        unfolding getMemData_def
+        unfolding getMemByte_def
         by auto
     next
       case (InvokeCapability cd cd')
@@ -1263,14 +1263,14 @@ proof -
         using r\<^sub>2 step by auto
       from CanBeSimulatedE_InvokeCap[OF abstraction this _ valid2]
       show ?thesis
-        unfolding getMemData_def
+        unfolding getMemByte_def
         by auto
     qed
-  have "getMemData a r = getMemData a s"
+  have "getMemByte a r = getMemByte a s"
     using MemoryInvariant_intra[OF abstraction r\<^sub>1 intra no_access no_sys valid]
     by metis
   thus ?thesis
-    using `getMemData a s' = getMemData a r`
+    using `getMemByte a s' = getMemByte a r`
     by auto
 qed
 

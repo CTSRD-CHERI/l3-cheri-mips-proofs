@@ -1832,12 +1832,12 @@ corollary SemanticsException_extra:
   assumes valid: "getStateIsValid s"
       and suc: "(SwitchDomain RaiseException, s') \<in> NextStates s"
   shows "getMemCap a s' = getMemCap a s"
-    and "getMemData a' s' = getMemData a' s"
+    and "getMemByte a' s' = getMemByte a' s"
     and "getBranchToPccCap s' = nullCap"
     and "getBranchDelayPccCap s' = nullCap"
 using SemanticsException[OF assms]
 using getMemCap_getMEM[where s=s and s'=s' and a=a]
-using getMemData_getMEM[where s=s and s'=s' and a=a']
+using getMemByte_getMEM[where s=s and s'=s' and a=a']
 unfolding getBranchToPccCap_def
 unfolding getBranchDelayPccCap_def
 by auto

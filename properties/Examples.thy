@@ -249,7 +249,7 @@ definition IsolationGuarantees where
   "IsolationGuarantees segment exit s s' \<equiv>
    (getBase (getPCC s') + getPC s' \<in> exit) \<and>
    (\<forall>a. a \<notin> getPhysicalAddresses segment STORE s \<longrightarrow> 
-        (getMemData a s' = getMemData a s \<and>
+        (getMemByte a s' = getMemByte a s \<and>
          getMemTag (GetCapAddress a) s' = getMemTag (GetCapAddress a) s)) \<and>
    (\<forall>cd. (cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31) \<longrightarrow> 
          getSCAPR cd s' = getSCAPR cd s)"
@@ -324,7 +324,7 @@ proof (intro conjI allI impI)
   note r_valid = TraceInvarianceStateIsValid[OF abstraction valid r\<^sub>1]
   obtain crossing where [simp]: "step = SwitchDomain crossing"
     using inter by (cases step) auto
-  show "getMemData a s' = getMemData a s"
+  show "getMemByte a s' = getMemByte a s"
   if "a \<notin> getPhysicalAddresses segment STORE s" for a
     proof -
       have "a \<notin> StorablePhysAddresses gPerm s"

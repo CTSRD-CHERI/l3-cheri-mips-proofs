@@ -562,14 +562,14 @@ definition MemoryInvariant :: "state \<Rightarrow> AbstractStep \<Rightarrow> st
    (getStateIsValid s \<and>
     (lbl = PreserveDomain actions) \<and>   
     (\<nexists>prov. prov \<in> actions \<and> a \<in> WrittenAddresses prov)) \<longrightarrow>
-   (getMemData a s' = getMemData a s)"
+   (getMemByte a s' = getMemByte a s)"
 
 lemma MemoryInvariantE [elim]:
   assumes "MemoryInvariant s lbl s'"
       and "lbl = PreserveDomain actions"
       and "\<And>prov. prov \<in> actions \<Longrightarrow> a \<notin> WrittenAddresses prov"
       and "getStateIsValid s"
-  shows "getMemData a s' = getMemData a s"
+  shows "getMemByte a s' = getMemByte a s"
 using assms
 unfolding MemoryInvariant_def
 by auto

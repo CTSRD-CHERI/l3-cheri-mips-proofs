@@ -3069,10 +3069,10 @@ by (Commute intro: assms)
 
 section \<open>Memory accessors\<close>
 
-subsection \<open>\<open>getMemData\<close>\<close>
+subsection \<open>\<open>getMemByte\<close>\<close>
 
-definition getMemData :: "PhysicalAddress \<Rightarrow> state \<Rightarrow> 8 word" where
-  "getMemData a s \<equiv>
+definition getMemByte :: "PhysicalAddress \<Rightarrow> state \<Rightarrow> 8 word" where
+  "getMemByte a s \<equiv>
      let upper = slice (log2 CAPBYTEWIDTH) a in
      let lower = a AND mask (log2 CAPBYTEWIDTH) in
      let big_endian = lower XOR mask 3 in 
@@ -3080,45 +3080,45 @@ definition getMemData :: "PhysicalAddress \<Rightarrow> state \<Rightarrow> 8 wo
                   (case getMEM upper s of Cap cap \<Rightarrow> capToBits cap 
                                         | Raw x \<Rightarrow> x)"
 
-lemma Commute_getMemData [Commute_compositeI]:
+lemma Commute_getMemByte [Commute_compositeI]:
   assumes "Commute (read_state (getMEM (slice (log2 CAPBYTEWIDTH) a))) m"
-  shows "Commute (read_state (getMemData a)) m"
-unfolding getMemData_def
+  shows "Commute (read_state (getMemByte a)) m"
+unfolding getMemByte_def
 using assms
 by auto
 
-lemma getMemData_simps [simp]:
-  shows "getMemData a (BranchToPCC_update x_BranchToPCC s) = getMemData a s"
-    and "getMemData a (BranchDelayPCC_update x_BranchDelayPCC s) = getMemData a s"
-    and "getMemData a (setPCC x_PCC s) = getMemData a s"
-    and "getMemData a (setCAPR x_CAPR s) = getMemData a s"
-    and "getMemData a (setSCAPR x_SCAPR s) = getMemData a s"
-    and "getMemData a (setBranchTo x_BranchTo s) = getMemData a s"
-    and "getMemData a (setBranchDelay x_BranchDelay s) = getMemData a s"
-    and "getMemData a (exception_update x_exception s) = getMemData a s"
-    and "getMemData a (setExceptionSignalled x_ExceptionSignalled s) = getMemData a s"
-    and "getMemData a (c_state_update x_c_state s) = getMemData a s"
+lemma getMemByte_simps [simp]:
+  shows "getMemByte a (BranchToPCC_update x_BranchToPCC s) = getMemByte a s"
+    and "getMemByte a (BranchDelayPCC_update x_BranchDelayPCC s) = getMemByte a s"
+    and "getMemByte a (setPCC x_PCC s) = getMemByte a s"
+    and "getMemByte a (setCAPR x_CAPR s) = getMemByte a s"
+    and "getMemByte a (setSCAPR x_SCAPR s) = getMemByte a s"
+    and "getMemByte a (setBranchTo x_BranchTo s) = getMemByte a s"
+    and "getMemByte a (setBranchDelay x_BranchDelay s) = getMemByte a s"
+    and "getMemByte a (exception_update x_exception s) = getMemByte a s"
+    and "getMemByte a (setExceptionSignalled x_ExceptionSignalled s) = getMemByte a s"
+    and "getMemByte a (c_state_update x_c_state s) = getMemByte a s"
 by (rule Commute_read_state_update_stateE, Commute)+
 
-lemma getMemData_setSignalException [simp]:
-  shows "getMemData a (setSignalException v s) = getMemData a s"
-unfolding getMemData_def
+lemma getMemByte_setSignalException [simp]:
+  shows "getMemByte a (setSignalException v s) = getMemByte a s"
+unfolding getMemByte_def
 by simp
 
-lemma getMemData_getMEM:
+lemma getMemByte_getMEM:
   assumes "getMEM (slice (log2 CAPBYTEWIDTH) a) s = getMEM (slice (log2 CAPBYTEWIDTH) a) s'"
-  shows "getMemData a s = getMemData a s'"
+  shows "getMemByte a s = getMemByte a s'"
 using assms
-unfolding getMemData_def
+unfolding getMemByte_def
 by simp
 
-lemma getMemData_getMemCap:
-  shows "getMemData a s =
+lemma getMemByte_getMemCap:
+  shows "getMemByte a s =
      (let upper = slice (log2 CAPBYTEWIDTH) a in
       let lower = a AND mask (log2 CAPBYTEWIDTH) in
       let big_endian = lower XOR mask 3 in 
       extract_byte (unat big_endian) (capToBits (getMemCap upper s)))"
-unfolding getMemData_def getMemCap_def
+unfolding getMemByte_def getMemCap_def
 unfolding DataType.case_distrib[where h=capToBits]
 by strong_cong_simp
 
@@ -4230,11 +4230,11 @@ using assms
 unfolding UnpredictableNext_def
 by (auto split: prod.splits)
 
-lemma UnpredictableNextE_getMemData [elim!]:
+lemma UnpredictableNextE_getMemByte [elim!]:
   assumes "s' \<in> UnpredictableNext s"
-  shows "getMemData a s' = getMemData a s"
+  shows "getMemByte a s' = getMemByte a s"
 using UnpredictableNextE[OF assms]
-using getMemData_getMemCap
+using getMemByte_getMemCap
 by auto
 
 lemma UnpredictableNextE_getBranchDelayPccCap [elim!]:
