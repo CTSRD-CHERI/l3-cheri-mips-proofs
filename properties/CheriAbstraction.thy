@@ -454,8 +454,8 @@ using assms
 unfolding UnsealCapProp_def
 by auto
 
-definition SystemRegisterProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
-  "SystemRegisterProp s lbl s' \<equiv>
+definition SpecialRegisterProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
+  "SpecialRegisterProp s lbl s' \<equiv>
    \<forall>actions cd.
    (getStateIsValid s \<and>
     (lbl = PreserveDomain actions) \<and>
@@ -463,15 +463,15 @@ definition SystemRegisterProp :: "state \<Rightarrow> AbstractStep \<Rightarrow>
     cd \<in> \<Union> (SpecialRegisterParameters ` actions)) \<longrightarrow>
    Access_System_Registers (getPerms (getPCC s))"
 
-lemma SystemRegisterPropE [elim]:
-  assumes "SystemRegisterProp s lbl s'"
+lemma SpecialRegisterPropE [elim]:
+  assumes "SpecialRegisterProp s lbl s'"
       and "lbl = PreserveDomain actions"
       and "cd \<in> \<Union> (SpecialRegisterParameters ` actions)"
       and "cd \<noteq> 0" "cd \<noteq> 1"
       and "getStateIsValid s"
   shows "Access_System_Registers (getPerms (getPCC s))"
 using assms
-unfolding SystemRegisterProp_def
+unfolding SpecialRegisterProp_def
 by auto
 
 definition InvokeCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state \<Rightarrow> bool" where
@@ -634,7 +634,7 @@ definition AbstractSemantics :: Semantics where
    StoreLocalCapProp s lbl s' \<and>
    SealCapProp s lbl s' \<and>
    UnsealCapProp s lbl s' \<and>
-   SystemRegisterProp s lbl s' \<and> 
+   SpecialRegisterProp s lbl s' \<and> 
    InvokeCapProp s lbl s' \<and>
    ExceptionProp s lbl s' \<and>
    MemoryInvariant s lbl s' \<and>
@@ -653,7 +653,7 @@ lemma AbstractSemanticsE [elim!]:
     and "StoreLocalCapProp s lbl s'"
     and "SealCapProp s lbl s'"
     and "UnsealCapProp s lbl s'"
-    and "SystemRegisterProp s lbl s'"
+    and "SpecialRegisterProp s lbl s'"
     and "InvokeCapProp s lbl s'"
     and "ExceptionProp s lbl s'"
     and "MemoryInvariant s lbl s'"
@@ -685,7 +685,7 @@ lemmas CanBeSimulatedE_StoreCap = StoreCapPropE[OF CanBeSimulatedE[THEN Abstract
 lemmas CanBeSimulatedE_StoreLocalCap = StoreLocalCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(7)]]
 lemmas CanBeSimulatedE_SealCap = SealCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(8)]]
 lemmas CanBeSimulatedE_UnsealCap = UnsealCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(9)]]
-lemmas CanBeSimulatedE_SystemRegister = SystemRegisterPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(10)]]
+lemmas CanBeSimulatedE_SystemRegister = SpecialRegisterPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(10)]]
 lemmas CanBeSimulatedE_InvokeCap = InvokeCapPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(11)]]
 lemmas CanBeSimulatedE_Exception = ExceptionPropE[OF CanBeSimulatedE[THEN AbstractSemanticsE(12)]]
 lemmas CanBeSimulatedE_MemoryInvariant = MemoryInvariantE[OF CanBeSimulatedE[THEN AbstractSemanticsE(13)]]

@@ -92,8 +92,8 @@ qed
 
 corollary SystemRegisterInstantiation:
   assumes "(lbl, s') \<in> NextStates s"
-  shows "SystemRegisterProp s lbl s'"
-unfolding SystemRegisterProp_def
+  shows "SpecialRegisterProp s lbl s'"
+unfolding SpecialRegisterProp_def
 proof clarify
   fix actions action cd
   assume reg: "cd \<in> SpecialRegisterParameters action"
