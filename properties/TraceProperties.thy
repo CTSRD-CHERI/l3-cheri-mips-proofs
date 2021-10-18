@@ -62,7 +62,7 @@ next
     by auto
 qed
 
-subsection \<open>Transitively reachable capabilities\<close>
+subsection \<open>Transitively available capabilities\<close>
 
 inductive_set
   AvailableCaps :: "state \<Rightarrow> Capability set" for s where
@@ -211,7 +211,7 @@ lemma TransUsableCapsPcc [intro!]:
 using assms
 by auto
 
-subsection \<open>Transitively reachable permissions\<close>
+subsection \<open>Transitively available permissions\<close>
 
 definition AvailableAuthority :: "state \<Rightarrow> CompartmentAuthority" where
   "AvailableAuthority s \<equiv> GetAuthorityOfCaps (TransUsableCaps s)"
@@ -284,7 +284,7 @@ qed
 
 subsection \<open>Readable capabilities\<close>
 
-lemma ReadableCapsAreReachable [elim!]:
+lemma ReadableCapsAreAvailable [elim!]:
   assumes readable: "cap \<in> ReadableCaps (AvailableAuthority s) s"
   shows "cap \<in> AvailableCaps s"
 proof -
@@ -340,8 +340,8 @@ using UnsealableTypes_le[OF assms(1)]
 unfolding InvokableCapsNotUnsealable_def
 by auto
 
-lemma ReachableInvokableCapsAreReadable:
-  assumes reachable: "cap \<in> AvailableCaps s"
+lemma AvailableInvokableCapsAreReadable:
+  assumes available: "cap \<in> AvailableCaps s"
       and ccall: "Permit_CCall (getPerms cap)"
       and base: "InvokableCapsNotUnsealable (AvailableAuthority s) s"
   shows "cap \<in> ReadableCaps (AvailableAuthority s) s"
@@ -349,7 +349,7 @@ proof -
   have "cap \<in> ReadableCaps (AvailableAuthority s) s \<and>
         getSealed cap \<and> 
         getType cap \<notin> UnsealableTypes (AvailableAuthority s)"
-    using reachable ccall
+    using available ccall
     proof induct
       case (Reg r)
       hence "getCapReg r s \<in> ReadableCaps (AvailableAuthority s) s"
@@ -440,7 +440,7 @@ lemma TransUsableCapsInClosedPerm:
       and usable: "cap \<in> TransUsableCaps s"
   shows "GetAuthority cap \<le> perm"
 proof -
-  have reachable: "cap \<in> AvailableCaps s" and
+  have available: "cap \<in> AvailableCaps s" and
        type: "getSealed cap \<longrightarrow> getType cap \<in> UnsealableTypes perm"
     using usable
     unfolding TransUsableCaps_def
@@ -504,9 +504,9 @@ unfolding AvailableAuthority_def GetAuthorityOfCaps_def TransUsableCaps_def
 unfolding Sup_le_iff
 by auto
 
-subsection \<open>Monotonicity of reachable capabilities\<close>
+subsection \<open>Monotonicity of available capabilities\<close>
 
-lemma NewCapsAreReachable:
+lemma NewCapsAreAvailable:
   assumes abstraction: "CanBeSimulated sem"
       and suc: "(PreserveDomain actions, s') \<in> sem s"
       and no_sys: "\<not> Access_System_Registers (getPerms (getPCC s))"
@@ -646,7 +646,7 @@ proof
     proof (induct rule: AvailableCaps.inducts)
       case (Reg r)
       thus ?case
-        using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocReg r"]
+        using NewCapsAreAvailable[OF abstraction suc no_sys valid, where loc="LocReg r"]
         using Reg AvailableCaps.Reg
         by auto
     next
@@ -659,7 +659,7 @@ proof
         unfolding getTranslateAddresses_def
         by simp
       thus ?case 
-        using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocMem a"]
+        using NewCapsAreAvailable[OF abstraction suc no_sys valid, where loc="LocMem a"]
         using Memory AvailableCaps.Memory
         by auto
     next

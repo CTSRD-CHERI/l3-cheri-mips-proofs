@@ -390,7 +390,7 @@ proof (intro conjI allI impI)
                                               where cd=cd and cd'=cd']
       have "getCAPR cd r \<in> AvailableCaps r"
         using invoke by auto
-      hence reachable: "getCAPR cd r \<in> AvailableCaps s"
+      hence available: "getCAPR cd r \<in> AvailableCaps s"
         using MonotonicityAvailableCaps[OF abstraction r\<^sub>1 intra no_sys valid]
         by auto
       have "InvokableCapsNotUnsealable gPerm s"
@@ -400,7 +400,7 @@ proof (intro conjI allI impI)
         by auto
       from InvokableCapsNotUnsealable_le[OF gperm this]
       have "getCAPR cd r \<in> ReadableCaps (AvailableAuthority s) s"
-        using ReachableInvokableCapsAreReadable[OF reachable]
+        using AvailableInvokableCapsAreReadable[OF available]
         using invoke
         by metis
       hence "getCAPR cd r \<in> InvokableCaps segment s"
