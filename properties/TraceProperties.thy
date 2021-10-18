@@ -76,7 +76,7 @@ Reg:
   "\<lbrakk>cap \<in> ReachableCaps s;
     \<not> getSealed cap;
     Permit_Load_Capability (getPerms cap);
-    addr \<in> getPhysicalCapAddresses (MemSegmentCap cap) LOAD s;
+    addr \<in> getPhysicalCapAddresses (RegionOfCap cap) LOAD s;
     getTag (getMemCap addr s)\<rbrakk> \<Longrightarrow> 
     getMemCap addr s \<in> ReachableCaps s"
 
@@ -92,7 +92,7 @@ Reg:
     sealer \<in> ReachableCaps s;
     \<not> getSealed sealer;
     Permit_Seal (getPerms sealer);
-    ucast t \<in> MemSegmentCap sealer\<rbrakk> \<Longrightarrow> 
+    ucast t \<in> RegionOfCap sealer\<rbrakk> \<Longrightarrow> 
     setType (setSealed (cap, True), t) \<in> ReachableCaps s"
 
 | Unseal:
@@ -101,7 +101,7 @@ Reg:
     unsealer \<in> ReachableCaps s;
     \<not> getSealed unsealer;
     Permit_Unseal (getPerms unsealer);
-    ucast (getType cap) \<in> MemSegmentCap unsealer\<rbrakk> \<Longrightarrow> 
+    ucast (getType cap) \<in> RegionOfCap unsealer\<rbrakk> \<Longrightarrow> 
     setType (setSealed (cap, False), 0) \<in> ReachableCaps s"
 
 lemma ReachableCaps_getTag [elim!]:
@@ -554,12 +554,12 @@ proof -
         using CanBeSimulatedE[OF abstraction suc]
         by auto
       from LoadCapPropE_mem[OF this _ Loaded(1) valid, where a'="ExtendCapAddress a"]
-      obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth s)" 
+      obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth s)" 
                          "getPhysicalAddress (vAddr, LOAD) s = Some (ExtendCapAddress a)"
         by auto
       hence le: "getCAPR cd s' \<le> getMemCap a s"
       and tag_auth: "getTag (getCapReg auth s)"
-      and segment: "a \<in> getPhysicalCapAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
+      and segment: "a \<in> getPhysicalCapAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
       and unsealed: "\<not> getSealed (getCapReg auth s)"
       and perm: "Permit_Load_Capability (getPerms (getCapReg auth s))"
         using CanBeSimulatedE_LoadCap[OF abstraction suc _ Loaded(1) valid]
@@ -998,7 +998,7 @@ proof (induct trace arbitrary: s')
               from StoreDataPropE_mem
                    [OF this _ _ valid2, 
                     where a=a' and a'=a' and auth=auth and l=l and actions=actions]
-              obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
+              obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth r)" 
                                  "getPhysicalAddress (vAddr, STORE) r = Some a'"
                 using action StoreDataAction target restrict
                 by auto
@@ -1036,7 +1036,7 @@ proof (induct trace arbitrary: s')
               from StoreCapPropE_mem
                    [OF this _ _ valid2, 
                     where a=a and a'="ExtendCapAddress a" and actions=actions]
-              obtain vAddr where "vAddr \<in> MemSegmentCap (getCapReg auth r)" 
+              obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth r)" 
                                  "getPhysicalAddress (vAddr, STORE) r = Some (ExtendCapAddress a)"
                 using action StoreCapAction target
                 by auto
@@ -1162,11 +1162,11 @@ proof (induct trace arbitrary: s')
         using r\<^sub>2
         by auto
       have no_store_data: 
-        "\<not> (\<exists>auth a' l. StoreDataAction auth a' l \<in> actions \<and> a \<in> MemSegment a' l)" 
+        "\<not> (\<exists>auth a' l. StoreDataAction auth a' l \<in> actions \<and> a \<in> Region a' l)" 
         proof (clarify)
           fix auth a' l
           assume prov: "StoreDataAction auth a' l \<in> actions" 
-             and addr: "a \<in> MemSegment a' l "
+             and addr: "a \<in> Region a' l "
           hence "l \<noteq> 0"
             by auto
           note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
@@ -1192,11 +1192,11 @@ proof (induct trace arbitrary: s')
         qed
       have no_store_cap: 
         "\<not> (\<exists>auth cd a'. StoreCapAction auth cd a' \<in> actions \<and> 
-                         a \<in> MemSegment (ExtendCapAddress a') 32)" 
+                         a \<in> Region (ExtendCapAddress a') 32)" 
         proof (clarify)
           fix auth cd a'
           assume prov: "StoreCapAction auth cd a' \<in> actions" 
-             and addr: "a \<in> MemSegment (ExtendCapAddress a') 32"
+             and addr: "a \<in> Region (ExtendCapAddress a') 32"
           note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
           have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
             using store addr

@@ -29,8 +29,8 @@ where
    getTag authCap \<and>
    \<not> getSealed authCap \<and>
    l \<noteq> 0 \<and>
-   (\<forall>a'\<in>MemSegment a l. 
-    \<exists>vAddr\<in>MemSegmentCap authCap.
+   (\<forall>a'\<in>Region a l. 
+    \<exists>vAddr\<in>RegionOfCap authCap.
     addrTrans (vAddr, STORE) = Some a')"
 
 definition SemanticsStoreDataPost where
@@ -655,7 +655,7 @@ theorem SemanticsStoreData:
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
         "getRegisterIsAccessible auth s"
-        "MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s"
+        "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
         "getTag (getMemCap (GetCapAddress a) s') \<Longrightarrow>
          getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
         "l \<noteq> 0"

@@ -121,10 +121,10 @@ lemma Fetch_ValidPCC_aux2:
                  (\<lambda>x. case x of None \<Rightarrow> return True
                               | Some w \<Rightarrow> return (getTag pcc \<and> 
                                                   \<not> getSealed pcc \<and> 
-                                                  pc + getBase pcc \<in> MemSegmentCap pcc \<and>
+                                                  pc + getBase pcc \<in> RegionOfCap pcc \<and>
                                                   Permit_Execute (getPerms pcc)))"
 proof -
-  note memberI = MemSegment_memberI_65word[where y="4::65 word"]
+  note memberI = Region_memberI_65word[where y="4::65 word"]
   have intros: "PrePost (return x) 
                         (AddressTranslation v) 
                         (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b return x)" for x v
@@ -154,7 +154,7 @@ lemma Fetch_ValidPCC:
                                          (read_state BranchDelayPCC =\<^sub>b return None))
                               | Some w \<Rightarrow> return (getTag pcc \<and> 
                                                   \<not> getSealed pcc \<and> 
-                                                  pc + getBase pcc \<in> MemSegmentCap pcc \<and>
+                                                  pc + getBase pcc \<in> RegionOfCap pcc \<and>
                                                   Permit_Execute (getPerms pcc)))"
 proof -
   note Fetch_Delay = PrePost_weakest_pre_disj[OF Fetch_Branch(3) Fetch_Branch(4)]
@@ -181,7 +181,7 @@ lemma NextWithGhostState_ValidPCC:
                        \<not>\<^sub>b read_state isUnpredictable) \<or>\<^sub>b
                       return (getTag pcc \<and> 
                               \<not> getSealed pcc \<and> 
-                              pc + getBase pcc \<in> MemSegmentCap pcc \<and>
+                              pc + getBase pcc \<in> RegionOfCap pcc \<and>
                               Permit_Execute (getPerms pcc)))"
 proof -
   have intro_run: "PrePost (return x) (Run w) (\<lambda>_. Q \<or>\<^sub>b return x)" for x w Q
@@ -198,7 +198,7 @@ lemma SemanticsExecute:
       and valid: "getStateIsValid s"
   shows "getTag (getPCC s)"
     and "\<not> getSealed (getPCC s)"
-    and "getBase (getPCC s) + getPC s \<in> MemSegmentCap (getPCC s)"
+    and "getBase (getPCC s) + getPC s \<in> RegionOfCap (getPCC s)"
     and "Permit_Execute (getPerms (getPCC s))"
 using assms
 using NextWithGhostState_ValidPCC

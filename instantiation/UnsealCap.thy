@@ -19,7 +19,7 @@ definition SemanticsUnsealPost where
            Permit_Unseal (getPerms authCap) \<and> 
            getTag authCap \<and>
            \<not> getSealed authCap \<and>
-           ucast (getType cap) \<in> MemSegmentCap authCap) \<and>\<^sub>b
+           ucast (getType cap) \<in> RegionOfCap authCap) \<and>\<^sub>b
    bind (read_state (getCAPR cd'))
         (\<lambda>cap'. return (cap' \<le> setType (setSealed (cap, False), 0)))"
 
@@ -48,7 +48,7 @@ unfolding dfn'CUnseal_alt_def CUnsealActions_def
 unfolding SemanticsUnsealPost_def
 by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
    (auto simp: not_less not_le setPerms_le
-               MemSegment_member_simp
+               Region_member_simp
                SemanticsUnseal_CUnseal_aux
          split: if_splits
          elim!: notE[OF _ rec'Perms_AND_leq_forget_right])
@@ -113,7 +113,7 @@ theorem SemanticsUnsealCap:
   shows "Permit_Unseal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
-        "ucast (getType (getCAPR cd s)) \<in> MemSegmentCap (getCapReg auth s)"
+        "ucast (getType (getCAPR cd s)) \<in> RegionOfCap (getCapReg auth s)"
         "getSealed (getCAPR cd s)"
         "getRegisterIsAccessible auth s"
         "getCAPR cd' s' \<le> setType (setSealed ((getCAPR cd s), False), 0)"

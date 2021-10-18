@@ -774,14 +774,14 @@ definition Generalise :: "Capability \<Rightarrow> GeneralisedPerm" where
    if getTag cap
    then let perms = getPerms cap in
          \<lparr>SystemRegisterAccess = Access_System_Registers perms,
-          ExecutableAddresses = if Permit_Execute perms then MemSegmentCap cap else {},
-          LoadableAddresses = if Permit_Load perms then MemSegmentCap cap else {},
-          CapLoadableAddresses = if Permit_Load_Capability perms then MemSegmentCap cap else {},
-          StorableAddresses = if Permit_Store perms then MemSegmentCap cap else {},
-          CapStorableAddresses = if Permit_Store_Capability perms then MemSegmentCap cap else {},
-          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms then MemSegmentCap cap else {},
-          SealableTypes = if Permit_Seal perms then {t. ucast t \<in> MemSegmentCap cap} else {},
-          UnsealableTypes = if Permit_Unseal perms then {t. ucast t \<in> MemSegmentCap cap} else {}\<rparr>
+          ExecutableAddresses = if Permit_Execute perms then RegionOfCap cap else {},
+          LoadableAddresses = if Permit_Load perms then RegionOfCap cap else {},
+          CapLoadableAddresses = if Permit_Load_Capability perms then RegionOfCap cap else {},
+          StorableAddresses = if Permit_Store perms then RegionOfCap cap else {},
+          CapStorableAddresses = if Permit_Store_Capability perms then RegionOfCap cap else {},
+          LocalCapStorableAddresses = if Permit_Store_Local_Capability perms then RegionOfCap cap else {},
+          SealableTypes = if Permit_Seal perms then {t. ucast t \<in> RegionOfCap cap} else {},
+          UnsealableTypes = if Permit_Unseal perms then {t. ucast t \<in> RegionOfCap cap} else {}\<rparr>
    else bot"
 
 lemma Generalise_accessors:
@@ -789,28 +789,28 @@ lemma Generalise_accessors:
          (getTag cap \<and> Access_System_Registers (getPerms cap))"
     and "ExecutableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Execute (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "LoadableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Load (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "CapLoadableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Load_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "StorableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Store (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "CapStorableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Store_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "LocalCapStorableAddresses (Generalise cap) = 
          (if getTag cap \<and> Permit_Store_Local_Capability (getPerms cap) 
-          then MemSegmentCap cap else {})"
+          then RegionOfCap cap else {})"
     and "SealableTypes (Generalise cap) = 
          (if getTag cap \<and> Permit_Seal (getPerms cap) 
-          then {t. ucast t \<in> MemSegmentCap cap} else {})"
+          then {t. ucast t \<in> RegionOfCap cap} else {})"
     and "UnsealableTypes (Generalise cap) = 
          (if getTag cap \<and> Permit_Unseal (getPerms cap) 
-          then {t. ucast t \<in> MemSegmentCap cap} else {})"
+          then {t. ucast t \<in> RegionOfCap cap} else {})"
 unfolding Generalise_def Let_def
 by simp_all
 
@@ -835,17 +835,17 @@ proof (cases "getTag cap'")
 next
   case True
   have tag: "getTag cap" 
-  and segment: "MemSegmentCap cap' \<subseteq> MemSegmentCap cap" 
+  and segment: "RegionOfCap cap' \<subseteq> RegionOfCap cap" 
   and perms: "getPerms cap' \<le> getPerms cap"
     using True assms
     by auto
-  have *: "(if b then MemSegmentCap cap' else {}) \<subseteq> 
-           (if b' then MemSegmentCap cap else {})"
-     if "MemSegmentCap cap' \<noteq> {} \<longrightarrow> b \<longrightarrow> b'" for b b'
+  have *: "(if b then RegionOfCap cap' else {}) \<subseteq> 
+           (if b' then RegionOfCap cap else {})"
+     if "RegionOfCap cap' \<noteq> {} \<longrightarrow> b \<longrightarrow> b'" for b b'
     using segment that by auto
-  have "(if b then ({t. ucast t \<in> MemSegmentCap cap'}::ObjectType set) else {}) \<subseteq> 
-        (if b' then {t. ucast t \<in> MemSegmentCap cap} else {})"
-     if "MemSegmentCap cap' \<noteq> {} \<longrightarrow> b \<longrightarrow> b'" for b b'
+  have "(if b then ({t. ucast t \<in> RegionOfCap cap'}::ObjectType set) else {}) \<subseteq> 
+        (if b' then {t. ucast t \<in> RegionOfCap cap} else {})"
+     if "RegionOfCap cap' \<noteq> {} \<longrightarrow> b \<longrightarrow> b'" for b b'
     using segment that by auto
   thus ?thesis 
     using True tag perms *

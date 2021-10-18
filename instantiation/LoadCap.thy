@@ -28,8 +28,8 @@ where
    Permit_Load (getPerms authCap) \<and> 
    getTag authCap \<and>
    \<not> getSealed authCap \<and>
-   (\<forall>a'\<in>MemSegment (ExtendCapAddress a) 32. 
-    \<exists>vAddr\<in>MemSegmentCap authCap.
+   (\<forall>a'\<in>Region (ExtendCapAddress a) 32. 
+    \<exists>vAddr\<in>RegionOfCap authCap.
     addrTrans (vAddr, LOAD) = Some a')"
 
 lemma AddressIsCapReadableI:
@@ -248,8 +248,8 @@ theorem SemanticsLoadCap:
         "Permit_Load_Capability (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
-        "MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
+        "Region (ExtendCapAddress a) 32 \<subseteq> 
+         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
         "getRegisterIsAccessible auth s"
         "getCAPR cd s' \<le> getMemCap a s"
 using assms

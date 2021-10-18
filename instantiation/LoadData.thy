@@ -29,8 +29,8 @@ where
    getTag authCap \<and>
    \<not> getSealed authCap \<and>
    l \<noteq> 0 \<and>
-   (\<forall>a'\<in>MemSegment a l. 
-    \<exists>vAddr\<in>MemSegmentCap authCap.
+   (\<forall>a'\<in>Region a l. 
+    \<exists>vAddr\<in>RegionOfCap authCap.
     addrTrans (vAddr, LOAD) = Some a')"
 
 lemma getExceptionSignalled_AdjustEndian:
@@ -546,8 +546,8 @@ lemma SemanticsLoadData_dfn'CLLx_aux:
       and alignment: "unat vAddr mod 32 + unat accessLength \<le> 32"
       and pAddr: "getPhysicalAddress (vAddr, LOAD) s = Some a"
       and length: "l = ucast accessLength"
-  shows "\<forall>a'\<in>MemSegment a l.
-         \<exists>vAddr \<in> MemSegmentCap cap. 
+  shows "\<forall>a'\<in>Region a l.
+         \<exists>vAddr \<in> RegionOfCap cap. 
          getPhysicalAddress (vAddr, LOAD) s = Some a'"
 proof -
   have min: "1 \<le> accessLength"
@@ -703,7 +703,7 @@ theorem SemanticsLoadData:
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
-        "MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
+        "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
         "getRegisterIsAccessible auth s"
         "l \<noteq> 0"
 using assms

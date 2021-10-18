@@ -197,14 +197,14 @@ lemma GPerm_le_GPermOfSegment:
          (\<not> getTag cap \<or>
           ((Permit_Seal (getPerms cap) \<or>
             Permit_Unseal (getPerms cap)) \<longrightarrow>
-           (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)) \<and>
+           (\<forall>t. ucast t \<in> RegionOfCap cap \<longrightarrow> t \<in> types)) \<and>
           ((Permit_Execute (getPerms cap) \<or>
             Permit_Load (getPerms cap) \<or>
             Permit_Load_Capability (getPerms cap) \<or>
             Permit_Store (getPerms cap) \<or>
             Permit_Store_Capability (getPerms cap) \<or>
             Permit_Store_Local_Capability (getPerms cap)) \<longrightarrow>
-           MemSegmentCap cap \<subseteq> segment) \<and>
+           RegionOfCap cap \<subseteq> segment) \<and>
           \<not> Access_System_Registers (getPerms cap))"
 unfolding less_eq_GeneralisedPerm_ext_def
 unfolding Generalise_accessors
@@ -224,14 +224,14 @@ definition ContainedCapBounds where
            Permit_Store (getPerms cap) \<or>
            Permit_Store_Capability (getPerms cap) \<or>
            Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
-          MemSegmentCap cap \<subseteq> segment"
+          RegionOfCap cap \<subseteq> segment"
 
 definition ContainedObjectTypes where 
   "ContainedObjectTypes segment types s \<equiv>
    \<forall>cap. (cap \<in> UsableCaps segment types s \<and>
           (Permit_Seal (getPerms cap) \<or>
            Permit_Unseal (getPerms cap))) \<longrightarrow>
-         (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)"
+         (\<forall>t. ucast t \<in> RegionOfCap cap \<longrightarrow> t \<in> types)"
 
 definition InvokableCapsSetup where 
   "InvokableCapsSetup segment types exit s ==  
@@ -278,14 +278,14 @@ proof (intro conjI allI impI)
                   Permit_Store (getPerms cap) \<or>
                   Permit_Store_Capability (getPerms cap) \<or>
                   Permit_Store_Local_Capability (getPerms cap))) \<longrightarrow>
-                 MemSegmentCap cap \<subseteq> segment"
+                 RegionOfCap cap \<subseteq> segment"
     using caps
     unfolding CapabilitySetup_def ContainedCapBounds_def
     by simp
   have types: "\<forall>cap. (cap \<in> UsableCaps segment types s \<and>
               (Permit_Seal (getPerms cap) \<or>
                Permit_Unseal (getPerms cap))) \<longrightarrow>
-              (\<forall>t. ucast t \<in> MemSegmentCap cap \<longrightarrow> t \<in> types)"
+              (\<forall>t. ucast t \<in> RegionOfCap cap \<longrightarrow> t \<in> types)"
     using caps
     unfolding CapabilitySetup_def ContainedObjectTypes_def
     by simp

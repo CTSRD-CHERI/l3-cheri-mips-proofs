@@ -2252,32 +2252,32 @@ definition CapabilityWraps :: "Capability \<Rightarrow> bool" where
 
 text {* The following defines the region of memory specified by a base and length. *}
 
-definition MemSegment :: "('a::len) word \<Rightarrow> 'a word \<Rightarrow> 'a word set" where
-  "MemSegment b l = 
+definition Region :: "('a::len) word \<Rightarrow> 'a word \<Rightarrow> 'a word set" where
+  "Region b l = 
    (if uint b + uint l \<le> 2 ^ LENGTH('a) 
     then {b + i |i. i < l} else UNIV)"
 
-abbreviation "MemSegmentCap cap \<equiv> MemSegment (getBase cap) (getLength cap)"
+abbreviation "RegionOfCap cap \<equiv> Region (getBase cap) (getLength cap)"
 
-lemma MemSegment_zero [simp]:
-  shows "MemSegment b 0 = {}"
-unfolding MemSegment_def
+lemma Region_zero [simp]:
+  shows "Region b 0 = {}"
+unfolding Region_def
 by simp
 
-lemma MemSegment_first [simp]:
-  shows "(x \<in> MemSegment x l) = (l \<noteq> 0)"
-unfolding MemSegment_def
+lemma Region_first [simp]:
+  shows "(x \<in> Region x l) = (l \<noteq> 0)"
+unfolding Region_def
 by (auto simp: word_gt_0)
 
-lemma MemSegment_member_simp:
+lemma Region_member_simp:
   fixes x :: "'a::len word"
-  shows "(x \<in> MemSegment b l) = 
+  shows "(x \<in> Region b l) = 
          (uint b + uint l \<le> 2 ^ LENGTH('a)  \<longrightarrow> x - b < l)" 
   (is "?l \<longleftrightarrow> ?r\<^sub>1 \<longrightarrow> ?r\<^sub>2")
 proof (intro iffI)
   assume ?l
   thus "?r\<^sub>1 \<longrightarrow> ?r\<^sub>2"
-    unfolding MemSegment_def
+    unfolding Region_def
     by (auto simp: if_distrib)
 next
   assume "?r\<^sub>1 \<longrightarrow> ?r\<^sub>2"
@@ -2289,39 +2289,39 @@ next
       hence "\<exists>i. x = b + i \<and> i < l"
         by (intro exI[where x="x - b"]) auto
       thus ?thesis 
-        unfolding MemSegment_def
+        unfolding Region_def
         by auto
     next
       case False
       thus ?thesis 
-        unfolding MemSegment_def
+        unfolding Region_def
         by auto
     qed
 qed
 
-lemma MemSegment_memberI [intro]:
+lemma Region_memberI [intro]:
   fixes x :: "'a::len word"
   assumes "uint b + uint l \<le> 2 ^ LENGTH('a) \<Longrightarrow> x - b < l"
-  shows "x \<in> MemSegment b l"
+  shows "x \<in> Region b l"
 using assms
-unfolding MemSegment_member_simp
+unfolding Region_member_simp
 by simp
 
-lemma MemSegment_memberE [elim]:
+lemma Region_memberE [elim]:
   fixes x :: "'a::len word"
-  assumes "x \<in> MemSegment b l"
+  assumes "x \<in> Region b l"
       and "uint b + uint l \<le> 2 ^ LENGTH('a)"
   shows "x - b < l"
 using assms
-unfolding MemSegment_member_simp
+unfolding Region_member_simp
 by simp
 
-lemma MemSegment_memberI_65word:
+lemma Region_memberI_65word:
   fixes x b l :: "64 word" and y :: "65 word"
   assumes "(ucast x::65 word) + y \<le> ucast b + ucast l"
       and "b \<le> x"
       and "1 \<le> y" "y < 2 ^ 64"
-  shows "x \<in> MemSegment b l"
+  shows "x \<in> Region b l"
 proof -
   define y' :: "64 word" where "y' = ucast y"    
   have "uint y mod 2 ^ 64 = uint y"
@@ -2347,10 +2347,10 @@ proof -
   thus ?thesis by auto
 qed
 
-lemma MemSegment_subsetI:
+lemma Region_subsetI:
   fixes b b' l l' :: "('a::len) word"
   assumes shorter: "uint (b - b') + uint l \<le> uint l'"
-  shows "MemSegment b l \<subseteq> MemSegment b' l'"
+  shows "Region b l \<subseteq> Region b' l'"
 proof (cases "uint b + uint l \<le> 2 ^ LENGTH('a)")
   case True
   let ?d = "b - b'"
@@ -2367,13 +2367,13 @@ proof (cases "uint b + uint l \<le> 2 ^ LENGTH('a)")
       thus "b + i - b' < l'"
         using `?d + i < l'` by arith
     qed  
-  hence "b + i \<in> MemSegment b' l'" if "i < l" for i
+  hence "b + i \<in> Region b' l'" if "i < l" for i
     using that 
-    unfolding MemSegment_member_simp
+    unfolding Region_member_simp
     by auto
-  thus "MemSegment b l \<subseteq> MemSegment b' l'"
+  thus "Region b l \<subseteq> Region b' l'"
     using True
-    unfolding MemSegment_def
+    unfolding Region_def
     by auto
 next
   case False
@@ -2381,14 +2381,14 @@ next
     using shorter uint_sub_ge[where x=b and y=b']
     by auto
   thus ?thesis 
-    unfolding MemSegment_def by auto
+    unfolding Region_def by auto
 qed
 
-lemma aligned_MemSegment_member:
+lemma aligned_Region_member:
   fixes a b :: "'a::len word"
   assumes "a AND NOT mask n = b AND NOT mask n"
       and "n < LENGTH('a)"
-  shows "a \<in> MemSegment (b AND NOT mask n) (2 ^ n)"
+  shows "a \<in> Region (b AND NOT mask n) (2 ^ n)"
 proof -
   have "a - (a AND NOT mask n) < 2 ^ n"
     using assms(2)
@@ -2411,7 +2411,7 @@ definition less_eq_Capability :: "Capability \<Rightarrow> Capability \<Rightarr
      ((\<not> getSealed cap\<^sub>1) \<and>
       (\<not> getSealed cap\<^sub>2) \<and>
       (getTag cap\<^sub>2) \<and>
-      (MemSegmentCap cap\<^sub>1 \<subseteq> MemSegmentCap cap\<^sub>2) \<and>
+      (RegionOfCap cap\<^sub>1 \<subseteq> RegionOfCap cap\<^sub>2) \<and>
       (getPerms cap\<^sub>1 \<le> getPerms cap\<^sub>2) \<and>
       (getUPerms cap\<^sub>1 \<le> getUPerms cap\<^sub>2) \<and>
       (getType cap\<^sub>1 = getType cap\<^sub>2) \<and>
@@ -2538,8 +2538,8 @@ lemma setBounds_le:
   shows "(setBounds (cap, v) \<le> cap) =
          (\<not> getTag cap \<or> 
           (if getSealed cap then getOffset cap = 0 \<and> getLength cap = v
-           else MemSegment (getBase cap + getOffset cap) v \<subseteq> 
-                MemSegment (getBase cap) (getLength cap)))"
+           else Region (getBase cap + getOffset cap) v \<subseteq> 
+                Region (getBase cap) (getLength cap)))"
 proof (cases "setBounds (cap, v) = cap")
   case True
   from arg_cong[OF this, where f=getBase]
@@ -2601,20 +2601,20 @@ using assms
 unfolding less_eq_Capability_ext_def less_eq_Capability_def
 by auto
                                     
-lemma less_eq_CapabilityE_MemSegment [elim]:
+lemma less_eq_CapabilityE_Region [elim]:
   assumes "cap \<le> cap'"
       and "getTag cap"
-  shows "MemSegmentCap cap \<subseteq> MemSegmentCap cap'"
+  shows "RegionOfCap cap \<subseteq> RegionOfCap cap'"
 using assms
 unfolding less_eq_Capability_ext_def less_eq_Capability_def
 by auto
 
-lemma MemSegmentGreaterCap [elim]:
+lemma RegionGreaterCap [elim]:
   assumes "cap \<le> cap'"
       and "getTag cap"
-      and "a \<in> MemSegmentCap cap"
-  shows "a \<in> MemSegmentCap cap'"
-using less_eq_CapabilityE_MemSegment[OF assms(1, 2)] assms(3)
+      and "a \<in> RegionOfCap cap"
+  shows "a \<in> RegionOfCap cap'"
+using less_eq_CapabilityE_Region[OF assms(1, 2)] assms(3)
 by auto
 
 lemma less_eq_CapabilityE_getPerms [elim]:
@@ -3685,10 +3685,10 @@ lemma TranslateNearbyAddress:
       and length: "1 \<le> accessLength" "accessLength \<le> 32"
       and alignment: "unat vAddr mod 32 + unat accessLength \<le> 32"
       and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
-      and pAddr': "pAddr' \<in> MemSegment pAddr (ucast accessLength)"
+      and pAddr': "pAddr' \<in> Region pAddr (ucast accessLength)"
   obtains vAddr' where
     "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
-    "vAddr' \<in> MemSegmentCap cap"
+    "vAddr' \<in> RegionOfCap cap"
 proof -
 
   -- \<open>We rewrite @{term accessLength} to a smaller length word.\<close>
@@ -3741,7 +3741,7 @@ proof -
   have pDelta_upper: "pDelta \<le> ucast accessLength'"
     proof -
       have "pDelta < ucast accessLength' + 1"
-        using MemSegment_memberE[OF pAddr'] pAddr_no_wrap
+        using Region_memberE[OF pAddr'] pAddr_no_wrap
         unfolding pDelta_def accessLength_alt
         by (simp add: uint_and_mask)
       thus ?thesis
@@ -3887,9 +3887,9 @@ proof -
     qed
 
   -- \<open>We prove that @{term vAddr'} lies in the memory segment of @{term cap}.\<close>
-  have "vAddr' \<in> MemSegmentCap cap"
+  have "vAddr' \<in> RegionOfCap cap"
     using vAddr'_lower vAddr'_upper
-    by (intro MemSegment_memberI_65word) auto
+    by (intro Region_memberI_65word) auto
 
   thus ?thesis
     using vAddr'_trans that
@@ -3905,10 +3905,10 @@ lemma TranslateNearbyAddress_LegacyInstructions:
       and v_lower: "getBase cap \<le> vAddr"
       and alignment: "unat vAddr mod 8 + unat accessLength < 8"
       and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
-      and pAddr': "pAddr' \<in> MemSegment pAddr (ucast accessLength + 1)"
+      and pAddr': "pAddr' \<in> Region pAddr (ucast accessLength + 1)"
   obtains vAddr' where
     "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
-    "vAddr' \<in> MemSegmentCap cap"
+    "vAddr' \<in> RegionOfCap cap"
 proof -
   define accessLength' :: "65 word" where "accessLength' \<equiv> ucast accessLength + 1"
   have alignment': "unat vAddr mod 32 + unat accessLength' \<le> 32"
@@ -3950,10 +3950,10 @@ lemma TranslateNearbyAddress_CapAligned:
       and v_lower: "getBase cap \<le> vAddr"
       and alignment: "isCapAligned vAddr"
       and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
-      and pAddr': "pAddr' \<in> MemSegment pAddr 32"
+      and pAddr': "pAddr' \<in> Region pAddr 32"
   obtains vAddr' where
     "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
-    "vAddr' \<in> MemSegmentCap cap"
+    "vAddr' \<in> RegionOfCap cap"
 proof -
   define accessLength' :: "65 word" where "accessLength' \<equiv> 32"
   have v_upper': "ucast vAddr + accessLength' \<le> ucast (getBase cap) + ucast (getLength cap)"

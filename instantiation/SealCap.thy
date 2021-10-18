@@ -20,7 +20,7 @@ definition SemanticsSealPost where
            Permit_Seal (getPerms authCap) \<and> 
            getTag authCap \<and>
            \<not> getSealed authCap \<and>
-           ucast t \<in> MemSegmentCap authCap) \<and>\<^sub>b
+           ucast t \<in> RegionOfCap authCap) \<and>\<^sub>b
    bind (read_state (getCAPR cd'))
         (\<lambda>cap'. return (cap' = setType (setSealed (cap, True), t)))"
 
@@ -52,7 +52,7 @@ unfolding SemanticsSealPost_def
 by (PrePost intro: nonExceptionCase_exceptions[THEN PrePost_post_weakening])
    (auto simp: not_less not_le
                ucast_plus_down[THEN sym]
-               MemSegment_member_simp
+               Region_member_simp
                less_mask_eq_24
          split: if_splits)
 
@@ -118,7 +118,7 @@ theorem SemanticsSealCap:
   shows "Permit_Seal (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
-        "ucast t \<in> MemSegmentCap (getCapReg auth s)"
+        "ucast t \<in> RegionOfCap (getCapReg auth s)"
         "\<not> getSealed (getCAPR cd s)"
         "getRegisterIsAccessible auth s"
         "getCAPR cd' s' = setType (setSealed ((getCAPR cd s), True), t)"

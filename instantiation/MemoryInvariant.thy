@@ -325,13 +325,13 @@ lemma MemoryInvariant_AdjustEndian [MemoryInvariantI]:
 unfolding AdjustEndian_alt_def
 by PrePost (auto simp: slice_xor)
 
-lemma MemoryInvariant_MemSegmentI:
+lemma MemoryInvariant_RegionI:
   fixes accessLength :: "3 word"
   assumes trans: "getPhysicalAddress (vAddr', STORE) s = Some pAddr'"
       and slice: "(slice 3 pAddr::37 word) = slice 3 pAddr'"
       and lower: "unat vAddr' mod 8 \<le> unat pAddr mod 8"
       and upper: "unat pAddr mod 8 \<le> unat accessLength + unat vAddr' mod 8"
-  shows "pAddr \<in> MemSegment pAddr' (ucast accessLength + 1)"
+  shows "pAddr \<in> Region pAddr' (ucast accessLength + 1)"
 proof
   note getPhysicalAddress_ucast12[OF trans]
   from arg_cong[OF this, where f="\<lambda>x. (ucast x::3 word)"]
@@ -370,13 +370,13 @@ proof
     using * by auto
 qed
 
-lemma MemoryInvariant_MemSegmentI_length_1:
+lemma MemoryInvariant_RegionI_length_1:
   assumes trans: "getPhysicalAddress (vAddr', STORE) s = Some pAddr'"
       and slice: "(slice 3 pAddr::37 word) = slice 3 pAddr'"
       and lower: "unat vAddr' mod 8 = unat pAddr mod 8"
-  shows "pAddr \<in> MemSegment pAddr' 1"
+  shows "pAddr \<in> Region pAddr' 1"
 using assms
-using MemoryInvariant_MemSegmentI[where accessLength=0]
+using MemoryInvariant_RegionI[where accessLength=0]
 by auto
 
 lemma MemoryInvariant_StoreMemoryCap [MemoryInvariantI]:
@@ -386,7 +386,7 @@ lemma MemoryInvariant_StoreMemoryCap [MemoryInvariantI]:
                                      | Some a' \<Rightarrow> 
                                         return ((needAlign \<and> memType = accessLength) \<or> 
                                                 unat vAddr mod 8 + unat accessLength < 8) \<and>\<^sub>b 
-                                        return (a \<notin> MemSegment a' (ucast accessLength + 1)))) \<and>\<^sub>b
+                                        return (a \<notin> Region a' (ucast accessLength + 1)))) \<and>\<^sub>b
                    (read_state (getMemData a) =\<^sub>b return val))
                  (StoreMemoryCap v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b
@@ -396,9 +396,9 @@ unfolding StoreMemoryCap_alt_def
 by (MemoryInvariant intro: PrePost_DefinedAddressTranslation)
    (auto simp: not_le not_less
          intro: isAligned_max_length 
-         elim!: MemoryInvariant_MemSegmentI
-                MemoryInvariant_MemSegmentI_length_1
-                contrapos_np[where Q="_ \<in> MemSegment _ _"])
+         elim!: MemoryInvariant_RegionI
+                MemoryInvariant_RegionI_length_1
+                contrapos_np[where Q="_ \<in> Region _ _"])
 
 (* Code generation - end override *)
 
@@ -411,7 +411,7 @@ lemma MemoryInvariant_StoreMemory [MemoryInvariantI]:
                                      | Some a' \<Rightarrow> 
                                         return ((needAlign \<and> memType = accessLength) \<or> 
                                                 unat vAddr mod 8 + unat accessLength < 8) \<and>\<^sub>b 
-                                        return (a \<notin> MemSegment a' (ucast accessLength + 1)))) \<and>\<^sub>b
+                                        return (a \<notin> Region a' (ucast accessLength + 1)))) \<and>\<^sub>b
                    (read_state (getMemData a) =\<^sub>b return val))
                  (StoreMemory v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b
@@ -1060,7 +1060,7 @@ lemma MemoryInvariant_storeWord [MemoryInvariantI]:
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
                         (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
-                                     | Some a' \<Rightarrow> return (a \<notin> MemSegment a' 4)))))) \<and>\<^sub>b
+                                     | Some a' \<Rightarrow> return (a \<notin> Region a' 4)))))) \<and>\<^sub>b
                   (read_state (getMemData a) =\<^sub>b return val))
                  (storeWord v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b
@@ -1082,7 +1082,7 @@ lemma MemoryInvariant_storeDoubleword [MemoryInvariantI]:
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
                         (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
-                                     | Some a' \<Rightarrow> return (a \<notin> MemSegment a' 8)))))) \<and>\<^sub>b
+                                     | Some a' \<Rightarrow> return (a \<notin> Region a' 8)))))) \<and>\<^sub>b
                   (read_state (getMemData a) =\<^sub>b return val))
                  (storeDoubleword v)
                  (\<lambda>_. read_state getExceptionSignalled \<or>\<^sub>b
@@ -1831,7 +1831,7 @@ unfolding dfn'CSC_alt_def CSCActions_def
 unfolding CSCPhysicalAddress_def CSCVirtualAddress_def
 by MemoryInvariant 
    (auto simp: eq_slice_eq_and_not_mask not_less not_le
-         dest!: aligned_MemSegment_member)
+         dest!: aligned_Region_member)
 
 (* Code generation - end override *)
 
@@ -1931,7 +1931,7 @@ unfolding dfn'CSCC_alt_def CSCCActions_def
 unfolding CSCCPhysicalAddress_def CSCCVirtualAddress_def
 by MemoryInvariant
    (auto simp: eq_slice_eq_and_not_mask not_less not_le
-         dest!: aligned_MemSegment_member
+         dest!: aligned_Region_member
          split: option.splits if_splits)
 
 (* Code generation - end override *)

@@ -31,8 +31,8 @@ where
    \<not> getSealed authCap \<and>
    (getTag cap \<longrightarrow> \<not> Global (getPerms cap) \<longrightarrow> 
     Permit_Store_Local_Capability (getPerms authCap)) \<and>
-   (\<forall>a'\<in>MemSegment (ExtendCapAddress a) 32. 
-    \<exists>vAddr\<in>MemSegmentCap authCap.
+   (\<forall>a'\<in>Region (ExtendCapAddress a) 32. 
+    \<exists>vAddr\<in>RegionOfCap authCap.
     addrTrans (vAddr, STORE) = Some a')"
 
 lemma AddressIsCapWritableI:
@@ -261,8 +261,8 @@ theorem SemanticsStoreCap:
         "\<not> getSealed (getCapReg auth s)"
         "getTag (getCAPR cd s) \<and> \<not> Global (getPerms (getCAPR cd s)) \<longrightarrow>
          Permit_Store_Local_Capability (getPerms (getCapReg auth s))"
-        "MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s"
+        "Region (ExtendCapAddress a) 32 \<subseteq> 
+         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
         "getRegisterIsAccessible auth s"
         "getMemCap a s' = getCAPR cd s"
 using assms

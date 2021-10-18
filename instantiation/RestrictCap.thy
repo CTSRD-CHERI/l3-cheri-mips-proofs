@@ -2052,7 +2052,7 @@ by PrePost
                       setBounds_le
                       ValueAndStatePart_simp
                 intro: disjCI
-                elim: notE[OF _ MemSegment_subsetI])
+                elim: notE[OF _ Region_subsetI])
 
 lemma SemanticsRestrict_Instruction_dfn'CSetBoundsExact [SemanticsRestrict_InstructionI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
@@ -2072,7 +2072,7 @@ by PrePost
                       setBounds_le
                       ValueAndStatePart_simp
                 intro: disjCI
-                elim: notE[OF _ MemSegment_subsetI])
+                elim: notE[OF _ Region_subsetI])
 
 lemma SemanticsRestrict_Instruction_dfn'CSetBoundsImmediate [SemanticsRestrict_InstructionI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getCapReg r)) \<and>\<^sub>b
@@ -2092,7 +2092,7 @@ by PrePost
                       setBounds_le
                       ValueAndStatePart_simp
                 intro: disjCI
-                elim: notE[OF _ MemSegment_subsetI])
+                elim: notE[OF _ Region_subsetI])
 
 definition ClearRegLoopPre where
   "ClearRegLoopPre cond l cap r r' \<equiv>
@@ -2450,7 +2450,7 @@ by PrePost
                less_eq_UPerms_ext_def less_eq_UPerms_def
                uint_sub_lem
                bitwise_semilattice_inf.inf.absorb_iff1
-         intro!: MemSegment_subsetI
+         intro!: Region_subsetI
          dest!: arg_cong[where f="\<lambda>x. (ucast x::32 word)" and y="ucast (reg'Perms _)"]
                 arg_cong[where f="\<lambda>x. (ucast x::32 word)" and y="ucast (reg'UPerms _)"])
 

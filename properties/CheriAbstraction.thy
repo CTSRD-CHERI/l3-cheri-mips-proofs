@@ -126,16 +126,16 @@ by (auto split: CapRegister.splits)
 
 definition WrittenAddresses where
   "WrittenAddresses p \<equiv>
-   case p of StoreDataAction _ a l \<Rightarrow> MemSegment a l
-           | StoreCapAction _ _ a \<Rightarrow> MemSegment (ExtendCapAddress a) 32
+   case p of StoreDataAction _ a l \<Rightarrow> Region a l
+           | StoreCapAction _ _ a \<Rightarrow> Region (ExtendCapAddress a) 32
            | _ \<Rightarrow> {}"
 
 lemma WrittenAddresses_simps [simp]:
   shows "WrittenAddresses (LoadDataAction auth a' l) = {}"
-    and "WrittenAddresses (StoreDataAction auth a' l) = MemSegment a' l"
+    and "WrittenAddresses (StoreDataAction auth a' l) = Region a' l"
     and "WrittenAddresses (RestrictCapAction loc loc') = {}"
     and "WrittenAddresses (LoadCapAction auth a cd) = {}"
-    and "WrittenAddresses (StoreCapAction auth cd a) = MemSegment (ExtendCapAddress a) 32"
+    and "WrittenAddresses (StoreCapAction auth cd a) = Region (ExtendCapAddress a) 32"
     and "WrittenAddresses (SealCapAction auth cd cd') = {}"
     and "WrittenAddresses (UnsealCapAction auth cd cd') = {}"
 unfolding WrittenAddresses_def
@@ -168,7 +168,7 @@ definition ExecuteProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
    (getTag (getPCC s) \<and>
     \<not> getSealed (getPCC s) \<and>
     Permit_Execute (getPerms (getPCC s)) \<and>
-    getBase (getPCC s) + getPC s \<in> MemSegmentCap (getPCC s))"
+    getBase (getPCC s) + getPC s \<in> RegionOfCap (getPCC s))"
 
 lemma ExecutePropE [elim]:
   assumes "ExecuteProp s lbl s'"
@@ -177,7 +177,7 @@ lemma ExecutePropE [elim]:
   shows "getTag (getPCC s)"
     and "\<not> getSealed (getPCC s)"
     and "Permit_Execute (getPerms (getPCC s))"
-    and "getBase (getPCC s) + getPC s \<in> MemSegmentCap (getPCC s)"
+    and "getBase (getPCC s) + getPC s \<in> RegionOfCap (getPCC s)"
 using assms
 unfolding ExecuteProp_def
 by auto
@@ -192,7 +192,7 @@ definition LoadDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Load (getPerms (getCapReg auth s)) \<and>
     l \<noteq> 0 \<and>
-    MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s)"
+    Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s)"
 
 lemma LoadDataPropE [elim]:
   assumes "LoadDataProp s lbl s'"
@@ -203,7 +203,7 @@ lemma LoadDataPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Load (getPerms (getCapReg auth s))"
     and "l \<noteq> 0"
-    and "MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
+    and "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
 using assms
 unfolding LoadDataProp_def
 by auto
@@ -213,9 +213,9 @@ lemma LoadDataPropE_mem:
       and "lbl = PreserveDomain actions"
       and "LoadDataAction auth a l \<in> actions"
       and "getStateIsValid s"
-      and "a' \<in> MemSegment a l"
+      and "a' \<in> Region a l"
   obtains vAddr 
-  where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
+  where "vAddr \<in> RegionOfCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
 using LoadDataPropE[OF assms(1-4)] assms(5)
 by auto
@@ -230,7 +230,7 @@ definition StoreDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Store (getPerms (getCapReg auth s)) \<and>
     l \<noteq> 0 \<and> 
-    MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s \<and>
+    Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s \<and>
     (\<not> getTag (getMemCap (GetCapAddress a) s') \<or> 
      getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s))"
 
@@ -243,7 +243,7 @@ lemma StoreDataPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Store (getPerms (getCapReg auth s))"
     and "l \<noteq> 0"
-    and "MemSegment a l \<subseteq> getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s"
+    and "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
     and "getTag (getMemCap (GetCapAddress a) s') \<Longrightarrow>
          getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
 using assms
@@ -255,9 +255,9 @@ lemma StoreDataPropE_mem:
       and "lbl = PreserveDomain actions"
       and "StoreDataAction auth a l \<in> actions"
       and "getStateIsValid s"
-      and "a' \<in> MemSegment a l"
+      and "a' \<in> Region a l"
   obtains vAddr 
-  where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
+  where "vAddr \<in> RegionOfCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, STORE) s = Some a'"
 using StoreDataPropE[OF assms(1-4)] assms(5)
 by auto
@@ -299,8 +299,8 @@ definition LoadCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Load (getPerms (getCapReg auth s)) \<and>
     Permit_Load_Capability (getPerms (getCapReg auth s)) \<and>
-    (MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-     getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s) \<and>
+    (Region (ExtendCapAddress a) 32 \<subseteq> 
+     getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s) \<and>
     getCAPR cd s' \<le> getMemCap a s)"
 
 lemma LoadCapPropE [elim]:
@@ -312,8 +312,8 @@ lemma LoadCapPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Load (getPerms (getCapReg auth s))"
     and "Permit_Load_Capability (getPerms (getCapReg auth s))"
-    and "MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) LOAD s"
+    and "Region (ExtendCapAddress a) 32 \<subseteq> 
+         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
     and "getCAPR cd s' \<le> getMemCap a s"
 using assms
 unfolding LoadCapProp_def
@@ -324,9 +324,9 @@ lemma LoadCapPropE_mem:
       and "lbl = PreserveDomain actions"
       and "LoadCapAction auth a cd \<in> actions"
       and "getStateIsValid s"
-      and "a' \<in> MemSegment (ExtendCapAddress a) 32"
+      and "a' \<in> Region (ExtendCapAddress a) 32"
   obtains vAddr 
-  where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
+  where "vAddr \<in> RegionOfCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
 using LoadCapPropE[OF assms(1-4)] assms(5)
 by auto
@@ -341,8 +341,8 @@ definition StoreCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Store (getPerms (getCapReg auth s)) \<and>
     Permit_Store_Capability (getPerms (getCapReg auth s)) \<and>
-    (MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-     getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s) \<and>
+    (Region (ExtendCapAddress a) 32 \<subseteq> 
+     getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s) \<and>
     getMemCap a s' = getCAPR cd s)"
 
 lemma StoreCapPropE [elim]:
@@ -354,8 +354,8 @@ lemma StoreCapPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Store (getPerms (getCapReg auth s))"
     and "Permit_Store_Capability (getPerms (getCapReg auth s))"
-    and "MemSegment (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (MemSegmentCap (getCapReg auth s)) STORE s"
+    and "Region (ExtendCapAddress a) 32 \<subseteq> 
+         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
     and "getMemCap a s' = getCAPR cd s"
 using assms
 unfolding StoreCapProp_def
@@ -366,9 +366,9 @@ lemma StoreCapPropE_mem:
       and "lbl = PreserveDomain actions"
       and "StoreCapAction auth cd a \<in> actions"
       and "getStateIsValid s"
-      and "a' \<in> MemSegment (ExtendCapAddress a) 32"
+      and "a' \<in> Region (ExtendCapAddress a) 32"
   obtains vAddr 
-  where "vAddr \<in> MemSegmentCap (getCapReg auth s)"
+  where "vAddr \<in> RegionOfCap (getCapReg auth s)"
     and "getPhysicalAddress (vAddr, STORE) s = Some a'"
 using StoreCapPropE[OF assms(1-4)] assms(5)
 by auto
@@ -405,7 +405,7 @@ definition SealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
     getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Seal (getPerms (getCapReg auth s)) \<and>
-    ucast t \<in> MemSegmentCap (getCapReg auth s) \<and>
+    ucast t \<in> RegionOfCap (getCapReg auth s) \<and>
     \<not> getSealed (getCAPR cd s) \<and>
     getCAPR cd' s' = setType (setSealed ((getCAPR cd s), True), t))"
 
@@ -419,7 +419,7 @@ lemma SealCapPropE [elim]:
   shows "getTag (getCapReg auth s)"
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Seal (getPerms (getCapReg auth s))"
-    and "ucast t \<in> MemSegmentCap (getCapReg auth s)"
+    and "ucast t \<in> RegionOfCap (getCapReg auth s)"
     and  "\<not> getSealed (getCAPR cd s)"
     and "getCAPR cd' s' = setType (setSealed ((getCAPR cd s), True), t)"
 using assms
@@ -435,7 +435,7 @@ definition UnsealCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
    (Permit_Unseal (getPerms (getCapReg auth s)) \<and>
     getTag (getCapReg auth s) \<and>
     \<not> getSealed (getCapReg auth s) \<and>
-    ucast (getType (getCAPR cd s)) \<in> MemSegmentCap (getCapReg auth s) \<and>
+    ucast (getType (getCAPR cd s)) \<in> RegionOfCap (getCapReg auth s) \<and>
     getSealed (getCAPR cd s) \<and>
     getCAPR cd' s' \<le> setType (setSealed ((getCAPR cd s), False), 0))"
 
@@ -447,7 +447,7 @@ lemma UnsealCapPropE [elim]:
   shows "getTag (getCapReg auth s)"
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Unseal (getPerms (getCapReg auth s))"
-    and "ucast (getType (getCAPR cd s)) \<in> MemSegmentCap (getCapReg auth s)"
+    and "ucast (getType (getCAPR cd s)) \<in> RegionOfCap (getCapReg auth s)"
     and "getSealed (getCAPR cd s)"
     and "getCAPR cd' s' \<le> setType (setSealed ((getCAPR cd s), False), 0)"
 using assms
