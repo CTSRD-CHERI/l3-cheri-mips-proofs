@@ -32,6 +32,20 @@ Open the top-level file [Examples.thy](properties/Examples.thy) in Isabelle.
 
 - [`scripts`](scripts/) contains the Python scripts that are used to generate part of the proofs.
 
+## Correspondence to PhD thesis
+
+- For Theorem 3.17 (CHERI-MIPS satisfies the abstraction), see [`instantiation/CheriInstantiation.thy`](instantiation/CheriInstantiation.thy).
+
+- For Theorem 4.4 (monotonicity of available capabilities), see `MonotonicityAvailableCaps` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+
+- For Theorem 4.5 (special capability register invariant), see `SpecialCapRegisterInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+
+- For Theorem 4.6 (memory invariant), see `MemoryInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+
+- For Theorem 4.7 (memory tag invariant), see `MemCapInvariant` in [`properties/TraceProperties.thy`](properties/TraceProperties.thy).
+
+- For Theorem 4.9 (correctness of compartmentalistion scenario), see `CompartmentIsolation` in [`properties/Examples.thy`](properties/Examples.thy).
+
 ## Building on our proofs
 
 When building on our proofs, it is recommended to build a heap image of our theories. Add the following to the ROOTS file mentioned under `Setup`:
