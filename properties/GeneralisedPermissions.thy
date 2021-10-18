@@ -555,27 +555,27 @@ definition getPhysicalCapAddresses ::
   "VirtualAddress set \<Rightarrow> AccessType \<Rightarrow> state \<Rightarrow> PhysicalCapAddress set" 
 where
   "getPhysicalCapAddresses addrs t s \<equiv> 
-   GetCapAddress ` getPhysicalAddresses addrs t s"
+   GetCapAddress ` getTranslateAddresses addrs t s"
 
 lemma Commute_getPhysicalCapAddresses [Commute_compositeI]: 
-  assumes "Commute (read_state (getPhysicalAddresses addrs t)) m"
+  assumes "Commute (read_state (getTranslateAddresses addrs t)) m"
   shows "Commute (read_state (getPhysicalCapAddresses addrs t)) m"
 using assms
 unfolding getPhysicalCapAddresses_def Commute_def
 by auto
 
 lemma getPhysicalCapAddressesI [intro?]:
-  assumes "getPhysicalAddress (virtualAddress, t) s = Some physicalAddress"
+  assumes "getTranslateAddr (virtualAddress, t) s = Some physicalAddress"
       and "a = GetCapAddress physicalAddress"
       and "virtualAddress \<in> addrs"
   shows "a \<in> getPhysicalCapAddresses addrs t s"
 using assms
 unfolding getPhysicalCapAddresses_def
-unfolding getPhysicalAddresses_def
+unfolding getTranslateAddresses_def
 by auto
 
 lemma getPhysicalCapAddressesI_word_cat [elim]:
-  assumes "getPhysicalAddress (virtualAddress, t) s = Some (ExtendCapAddress a)"
+  assumes "getTranslateAddr (virtualAddress, t) s = Some (ExtendCapAddress a)"
       and "virtualAddress \<in> addrs"
   shows "a \<in> getPhysicalCapAddresses addrs t s"
 using assms
@@ -585,7 +585,7 @@ by (intro getPhysicalCapAddressesI) (auto simp: word_size)
 lemma getPhysicalCapAddressesE [elim]:
   assumes "a \<in> getPhysicalCapAddresses addrs t s"
   obtains virtualAddress physicalAddress
-    where "getPhysicalAddress (virtualAddress, t) s = Some physicalAddress"
+    where "getTranslateAddr (virtualAddress, t) s = Some physicalAddress"
       and "virtualAddress \<in> addrs" 
       and "a = GetCapAddress physicalAddress"
 using assms
@@ -602,10 +602,10 @@ by auto
 lemmas getPhysicalCapAddresses_le_subsetD [elim] =
   subsetD[OF getPhysicalCapAddresses_le]
 
-lemma getPhysicalCapAddresses_eqI_getPhysicalAddress:
-  assumes "\<And>a. getPhysicalAddress a s' = getPhysicalAddress a s"
+lemma getPhysicalCapAddresses_eqI_getTranslateAddr:
+  assumes "\<And>a. getTranslateAddr a s' = getTranslateAddr a s"
   shows "getPhysicalCapAddresses addrs t s' = getPhysicalCapAddresses addrs t s"
-using getPhysicalAddresses_eqI_getPhysicalAddress[OF assms]
+using getTranslateAddresses_eqI_getTranslateAddr[OF assms]
 unfolding getPhysicalCapAddresses_def
 by simp
 
@@ -613,26 +613,26 @@ lemma getPhysicalCapAddresses_distrib_union:
   shows "getPhysicalCapAddresses (addrs \<union> addrs') t s =
          (getPhysicalCapAddresses addrs t s \<union> getPhysicalCapAddresses addrs' t s)"
 unfolding getPhysicalCapAddresses_def
-unfolding getPhysicalAddresses_distrib_union
+unfolding getTranslateAddresses_distrib_union
 by auto
 
 lemma getPhysicalCapAddresses_distrib_Union:
   shows "getPhysicalCapAddresses (\<Union>addrsSet) t s =
          (\<Union>addrs\<in>addrsSet. getPhysicalCapAddresses addrs t s)"
 unfolding getPhysicalCapAddresses_def
-unfolding getPhysicalAddresses_distrib_Union
+unfolding getTranslateAddresses_distrib_Union
 by auto
 
 subsection \<open>Data writable addresses\<close>
 
 definition StorablePhysAddresses where
   "StorablePhysAddresses gperm s \<equiv>
-   getPhysicalAddresses (StorableAddresses gperm) STORE s"
+   getTranslateAddresses (StorableAddresses gperm) STORE s"
 
 lemma StorablePhysAddresses_le:
   assumes "p \<le> q"
   shows "StorablePhysAddresses p s \<subseteq> StorablePhysAddresses q s"
-using getPhysicalAddresses_le[OF StorableAddresses_le[OF assms]]
+using getTranslateAddresses_le[OF StorableAddresses_le[OF assms]]
 unfolding StorablePhysAddresses_def
 by auto
 

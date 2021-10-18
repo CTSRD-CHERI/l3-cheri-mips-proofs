@@ -2299,7 +2299,7 @@ lemma SemanticsRestrict_Instruction_LoadCap:
                                     rAccessible \<and> r'Accessible))"
   shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b 
-                  bind (read_state (getPhysicalAddress (fst v, LOAD)))
+                  bind (read_state (getTranslateAddr (fst v, LOAD)))
                        (\<lambda>a. case a of None \<Rightarrow> return True
                                     | Some _ \<Rightarrow> q))
                  (LoadCap v)

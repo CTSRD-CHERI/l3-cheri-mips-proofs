@@ -40,9 +40,9 @@ lemma AddressIsCapWritableI:
                     ucast (getBase authCap) + ucast (getLength authCap)"
       and v_lower: "getBase authCap \<le> vAddr"
       and alignment: "isCapAligned vAddr"
-      and pAddr: "getPhysicalAddress (vAddr, STORE) s = Some pAddr"
+      and pAddr: "getTranslateAddr (vAddr, STORE) s = Some pAddr"
       and a: "a = GetCapAddress pAddr"
-      and trans: "addrTrans = getPhysicalAddressFunc s"
+      and trans: "addrTrans = getTranslateAddrFunc s"
       and "Permit_Store (getPerms authCap)"
       and "Permit_Store_Capability (getPerms authCap)"
       and "getTag authCap"
@@ -58,7 +58,7 @@ proof -
     by simp
   have "(ucast pAddr::5 word) = 0"
     using arg_cong[where f="\<lambda>x. (ucast x::5 word)", 
-                   OF getPhysicalAddress_ucast12[OF pAddr]]
+                   OF getTranslateAddr_ucast12[OF pAddr]]
     using `(ucast vAddr::5 word) = 0`
     by simp
   hence [simp]: "pAddr AND mask 5 = 0"
@@ -74,7 +74,7 @@ proof -
   show ?thesis
     using assms
     unfolding AddressIsCapWritable_def 
-    unfolding getPhysicalAddressFunc_def
+    unfolding getTranslateAddrFunc_def
     unfolding ExtendCapAddress_def GetCapAddress_def
     by (auto elim!: TranslateNearbyAddress_CapAligned2)
 qed
@@ -111,7 +111,7 @@ lemmas SemanticsStoreCapability_AddressTranslation =
 lemma SemanticsStoreCapability_StoreCap:
   shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b 
                   read_state isUnpredictable \<or>\<^sub>b 
-                  bind (read_state (getPhysicalAddress (vAddr', STORE)))
+                  bind (read_state (getTranslateAddr (vAddr', STORE)))
                        (\<lambda>x. case x of None \<Rightarrow> return True 
                                     | Some y \<Rightarrow> 
                                       return (AddressIsCapWritable authCap cap a addrTrans) \<and>\<^sub>b 
@@ -139,7 +139,7 @@ qed
 lemma SemanticsStoreCapability_CSC [SemanticsStoreCapI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CSCActions v) (\<lambda>prov. return (StoreCapAction auth cd a \<in> prov)))
                  (dfn'CSC v)
@@ -159,7 +159,7 @@ proof -
     by SemanticsStoreCap
        (auto simp: not_le not_less 
                    GetCapAddress_def ExtendCapAddress_def
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
              split: option.splits
              intro!: AddressIsCapWritableI)
 qed
@@ -167,7 +167,7 @@ qed
 lemma SemanticsStoreCapability_CSCC [SemanticsStoreCapI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CSCCActions v) (\<lambda>prov. return (StoreCapAction auth cd a \<in> prov)))
                  (dfn'CSCC v)
@@ -184,7 +184,7 @@ proof -
     by SemanticsStoreCap
        (auto simp: not_le not_less if_distrib[where f="\<lambda>x. _ \<in> x"]
                    GetCapAddress_def ExtendCapAddress_def
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
              split: option.splits if_splits
              intro!: AddressIsCapWritableI)
 qed
@@ -192,7 +192,7 @@ qed
 lemma SemanticsStoreCapability_Run_aux:
   shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (RunActions v) (\<lambda>prov. return (StoreCapAction auth cd a \<in> prov)))
                  (Run v)
@@ -216,7 +216,7 @@ lemma SemanticsStoreCapability_Fetch:
   fixes auth a a' cd authCap cap addrTrans cdAccessible authAccessible
   defines "p \<equiv> \<lambda>w. (return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                     (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                    (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                    (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>ac. return (StoreCapAction auth cd a \<in> ac))"
   shows "PrePost (bind NextInstruction (case_option (return True) p))
@@ -229,7 +229,7 @@ by (intro PrePost_Fetch) Commute+
 lemma SemanticsStoreCapability_NextWithGhostState:
   shows "PrePost ((return cap =\<^sub>b read_state (getCAPR cd)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind DomainActions (\<lambda>ac. return (StoreCapAction auth cd a \<in> ac)))
                  NextWithGhostState
@@ -262,19 +262,19 @@ theorem SemanticsStoreCap:
         "getTag (getCAPR cd s) \<and> \<not> Global (getPerms (getCAPR cd s)) \<longrightarrow>
          Permit_Store_Local_Capability (getPerms (getCapReg auth s))"
         "Region (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
+         getTranslateAddresses (RegionOfCap (getCapReg auth s)) STORE s"
         "getRegisterIsAccessible auth s"
         "getMemCap a s' = getCAPR cd s"
 using assms
 using SemanticsStoreCapability_NextWithGhostState
          [where cap="getCAPR cd s" and cd=cd and a=a and auth=auth and
                 authCap="getCapReg auth s" and 
-                addrTrans="getPhysicalAddressFunc s" and
+                addrTrans="getTranslateAddrFunc s" and
                 authAccessible="getRegisterIsAccessible auth s",
           THEN PrePostE[where s=s]]
 unfolding SemanticsStoreCapPost_def 
 unfolding AddressIsCapWritable_def 
-unfolding getPhysicalAddressFunc_def getPhysicalAddresses_def
+unfolding getTranslateAddrFunc_def getTranslateAddresses_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 

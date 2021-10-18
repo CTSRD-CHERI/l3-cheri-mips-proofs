@@ -43,7 +43,7 @@ lemmas SemanticsLoadData_dfn'LoadMemoryCap_aux =
     UndefinedCase_AdjustEndian]
 
 lemma SemanticsLoadData_dfn'LoadMemoryCap:
-  shows "PrePost ((return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+  shows "PrePost ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   return ((case v of (memType, needAlign, vAddr, link) \<Rightarrow>
                            (needAlign \<and> \<not> unat vAddr mod 8 + unat memType < 8) \<or>
                             (addrTrans (vAddr, LOAD) = None))))
@@ -54,12 +54,12 @@ unfolding LoadMemoryCap_alt_def
 by (PrePost intro: 
        SemanticsLoadData_dfn'LoadMemoryCap_aux[THEN PrePost_post_weakening]
        PrePost_DefinedAddressTranslation[where p="\<lambda>x. return False", THEN PrePost_post_weakening])
-   (auto simp: getPhysicalAddressFunc_def
+   (auto simp: getTranslateAddrFunc_def
          dest!: isAligned_max_length)
 
 lemma SemanticsLoadData_dfn'LoadMemory_aux:
   shows "PrePost ((return authCap =\<^sub>b read_state (getSCAPR 0)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   return ((case v of (memType, accessLength, needAlign, vAddr, link) \<Rightarrow>
                            (a = the (addrTrans (vAddr, LOAD))) \<and>
                            (l = ucast accessLength + 1) \<and>
@@ -81,7 +81,7 @@ proof -
     unfolding LoadMemory_alt_def
     by SemanticsLoadData
        (auto simp: not_le not_less max_word_wrap_eq
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
                    AddressIsDataReadable_def
              elim: TranslateNearbyAddress_LegacyInstructions)
 qed
@@ -92,7 +92,7 @@ lemmas SemanticsLoadData_dfn'LoadMemory =
   for authAccessible
 
 lemma SemanticsLoadData_dfn'LoadCap:
-  shows "PrePost ((return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+  shows "PrePost ((return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   return ((case v of (vAddr, cond) \<Rightarrow>
                            addrTrans (vAddr, LOAD) = None)))
                  (LoadCap v)
@@ -102,11 +102,11 @@ unfolding LoadCap_alt_def
 by (PrePost intro: 
        PrePost_DefinedAddressTranslation
          [where p="\<lambda>x. return False", THEN PrePost_post_weakening])
-   (auto simp: getPhysicalAddressFunc_def)
+   (auto simp: getTranslateAddrFunc_def)
 
 lemma SemanticsLoadData_dfn'LB [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LBActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LB v)
@@ -123,12 +123,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def 
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LBU [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LBUActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LBU v)
@@ -145,12 +145,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def 
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LH [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LHActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LH v)
@@ -167,12 +167,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LHU [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LHUActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LHU v)
@@ -189,12 +189,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LW [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LWActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LW v)
@@ -211,12 +211,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LWU [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LWUActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LWU v)
@@ -233,12 +233,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LL [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LLActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LL v)
@@ -255,12 +255,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LD [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LDActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LD v)
@@ -277,12 +277,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LLD [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (LLDActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'LLD v)
@@ -299,12 +299,12 @@ proof -
     unfolding BYTE_def HALFWORD_def WORD_def DOUBLEWORD_def
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def split: option.splits)
+       (auto simp: getTranslateAddrFunc_def split: option.splits)
 qed
 
 lemma SemanticsLoadData_dfn'LWL [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -324,7 +324,7 @@ proof -
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def 
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def
+       (auto simp: getTranslateAddrFunc_def
                    ucast_and ucast_not
                    unat_not unat_and_mask unat_max_word
                    word_bool_alg.conj_disj_distrib2
@@ -333,7 +333,7 @@ qed
 
 lemma SemanticsLoadData_dfn'LWR [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -368,7 +368,7 @@ proof -
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def
+       (auto simp: getTranslateAddrFunc_def
                    ucast_and ucast_not
                    unat_not unat_and_mask unat_and_not_mask unat_max_word
                    word_bool_alg.conj_disj_distrib2
@@ -377,7 +377,7 @@ qed
 
 lemma SemanticsLoadData_dfn'LDL [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -397,7 +397,7 @@ proof -
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def
+       (auto simp: getTranslateAddrFunc_def
                    unat_and_mask ucast_not unat_not unat_max_word
                    word_bool_alg.conj_disj_distrib2
              split: option.splits)
@@ -405,7 +405,7 @@ qed
 
 lemma SemanticsLoadData_dfn'LDR [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -431,7 +431,7 @@ proof -
     unfolding CheckBranch_alt_def getVirtualAddress_alt_def
     unfolding BigEndianMem_alt_def BigEndianCPU_alt_def ReverseEndian_alt_def
     by SemanticsLoadData
-       (auto simp: getPhysicalAddressFunc_def
+       (auto simp: getTranslateAddrFunc_def
                    unat_and_not_mask unat_and_mask mask_plus_one
                    word_bool_alg.conj_disj_distrib2
              split: option.splits)
@@ -439,7 +439,7 @@ qed
 
 lemma SemanticsLoadData_dfn'CLC [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLCActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'CLC v)
@@ -458,7 +458,7 @@ proof -
     unfolding CLCPhysicalAddress_def CLCVirtualAddress_def
     by SemanticsLoadData
        (auto simp: not_le not_less
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
                    AddressIsDataReadable_def
              split: if_splits
              elim!: TranslateNearbyAddress_CapAligned)
@@ -466,7 +466,7 @@ qed
 
 lemma SemanticsLoadData_dfn'CLoad [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLoadActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'CLoad v)
@@ -499,7 +499,7 @@ proof -
        (cases rule: exhaustive_2_word[where x="case v of (_, _, _, _, _, t) \<Rightarrow> t"],
         auto simp: not_le not_less 
                    unat_mask unat_max_word
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
                    AddressIsDataReadable_def
              intro!: in_eq
              elim!: TranslateNearbyAddress[where accessLength=1]
@@ -510,7 +510,7 @@ qed
 
 lemma SemanticsLoadData_dfn'CLLC [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLLCActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'CLLC v)
@@ -529,7 +529,7 @@ proof -
     unfolding CLLCPhysicalAddress_def CLLCVirtualAddress_def
     by SemanticsLoadData
        (auto simp: not_le not_less
-                   getPhysicalAddressFunc_def
+                   getTranslateAddrFunc_def
                    AddressIsDataReadable_def
              split: if_splits
              elim!: TranslateNearbyAddress_CapAligned)
@@ -544,11 +544,11 @@ lemma SemanticsLoadData_dfn'CLLx_aux:
   assumes v_upper: "ucast vAddr + accessLength \<le> ucast (getBase cap) + ucast (getLength cap)"
       and v_lower: "getBase cap \<le> vAddr"
       and alignment: "unat vAddr mod 32 + unat accessLength \<le> 32"
-      and pAddr: "getPhysicalAddress (vAddr, LOAD) s = Some a"
+      and pAddr: "getTranslateAddr (vAddr, LOAD) s = Some a"
       and length: "l = ucast accessLength"
   shows "\<forall>a'\<in>Region a l.
          \<exists>vAddr \<in> RegionOfCap cap. 
-         getPhysicalAddress (vAddr, LOAD) s = Some a'"
+         getTranslateAddr (vAddr, LOAD) s = Some a'"
 proof -
   have min: "1 \<le> accessLength"
     unfolding accessLength_def word_le_def unat_and_mask 
@@ -566,7 +566,7 @@ qed
 
 lemma SemanticsLoadData_dfn'CLLx [SemanticsLoadDataI]:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLLxActions v) (\<lambda>prov. return (LoadDataAction auth a l \<in> prov)))
                  (dfn'CLLx v)
@@ -620,7 +620,7 @@ proof -
        (simple_auto simp: not_le not_less 
                           unat_mask unat_max_word unat_and_mask
                           ucast_power_two nat_power_eq
-                          getPhysicalAddressFunc_def
+                          getTranslateAddrFunc_def
                           AddressIsDataReadable_def
                     intro: in_eq
                            all_split[where P="\<lambda>x. x", THEN iffD2]
@@ -631,7 +631,7 @@ qed
 
 lemma SemanticsLoadData_Run_aux:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -655,7 +655,7 @@ lemmas SemanticsLoadData_Run =
 lemma SemanticsLoadData_Fetch:
   fixes auth a a' l authCap addrTrans authAccessible
   defines "p \<equiv> \<lambda>w. (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                    (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                    (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                     (read_state getCP0ConfigBE) \<and>\<^sub>b
                     (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -669,7 +669,7 @@ by (intro PrePost_Fetch) Commute+
 
 lemma SemanticsLoadData_NextWithGhostState:
   shows "PrePost ((return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (read_state getCP0ConfigBE) \<and>\<^sub>b
                   (\<not>\<^sub>b read_state getCP0StatusRE) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
@@ -703,18 +703,18 @@ theorem SemanticsLoadData:
   shows "Permit_Load (getPerms (getCapReg auth s))"
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
-        "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
+        "Region a l \<subseteq> getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
         "getRegisterIsAccessible auth s"
         "l \<noteq> 0"
 using assms
 using SemanticsLoadData_NextWithGhostState
          [where auth=auth and a=a and l=l and 
-                addrTrans="getPhysicalAddressFunc s" and
+                addrTrans="getTranslateAddrFunc s" and
                 authCap="getCapReg auth s" and
                 authAccessible="getRegisterIsAccessible auth s",
           THEN PrePostE[where s=s]]
 unfolding AddressIsDataReadable_def 
-unfolding getPhysicalAddressFunc_def getPhysicalAddresses_def
+unfolding getTranslateAddrFunc_def getTranslateAddresses_def
 unfolding StateIsValid_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)

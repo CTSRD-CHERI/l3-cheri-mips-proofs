@@ -266,7 +266,7 @@ lemma ReachablePermissions_AddressTranslation:
       and valid: "getStateIsValid s"
       and suc: "(step, s') \<in> sem s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
-  shows "getPhysicalAddress a s' = getPhysicalAddress a s"
+  shows "getTranslateAddr a s' = getTranslateAddr a s"
 proof -
   have valid_pcc: "getTag (getPCC s)"  "\<not> getSealed (getPCC s)"
     using CanBeSimulatedE_Execute[OF abstraction suc no_ex valid]
@@ -555,7 +555,7 @@ proof -
         by auto
       from LoadCapPropE_mem[OF this _ Loaded(1) valid, where a'="ExtendCapAddress a"]
       obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth s)" 
-                         "getPhysicalAddress (vAddr, LOAD) s = Some (ExtendCapAddress a)"
+                         "getTranslateAddr (vAddr, LOAD) s = Some (ExtendCapAddress a)"
         by auto
       hence le: "getCAPR cd s' \<le> getMemCap a s"
       and tag_auth: "getTag (getCapReg auth s)"
@@ -651,12 +651,12 @@ proof
         by auto
     next
       case (Memory cap' a)
-      have "getPhysicalAddress (v, LOAD) s' = getPhysicalAddress (v, LOAD) s" for v
+      have "getTranslateAddr (v, LOAD) s' = getTranslateAddr (v, LOAD) s" for v
         using CanBeSimulatedE_AddressTranslation[OF abstraction suc _ no_sys valid]
         by auto
       hence "getPhysicalCapAddresses addrs LOAD s' = getPhysicalCapAddresses addrs LOAD s" for addrs
         unfolding getPhysicalCapAddresses_def
-        unfolding getPhysicalAddresses_def
+        unfolding getTranslateAddresses_def
         by simp
       thus ?case 
         using NewCapsAreReachable[OF abstraction suc no_sys valid, where loc="LocMem a"]
@@ -748,7 +748,7 @@ lemma TraceInvarianceAddressTranslation:
       and intra: "IntraDomainTrace trace"
       and no_sys: "\<not> SystemRegisterAccess (ReachablePermissions s)"
       and valid: "getStateIsValid s"
-  shows "getPhysicalAddress addr s' = getPhysicalAddress addr s"
+  shows "getTranslateAddr addr s' = getTranslateAddr addr s"
 using trace intra
 proof (induct trace arbitrary: s')
   case Nil
@@ -760,7 +760,7 @@ next
     by auto
   have intra2: "IntraDomainTrace trace"
     using Cons by auto
-  hence ih: "getPhysicalAddress addr r = getPhysicalAddress addr s"
+  hence ih: "getTranslateAddr addr r = getTranslateAddr addr s"
     using Cons(1)[OF r\<^sub>1] 
     by auto
   have no_ex: "step \<noteq> SwitchDomain RaiseException"
@@ -948,12 +948,12 @@ proof (induct trace arbitrary: s')
   have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
     by auto
-  have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
+  have addrTrans: "getTranslateAddr a r = getTranslateAddr a s" for a
     using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from StorablePhysCapAddresses_le[OF perms]
   have no_access2: "a \<notin> StorablePhysCapAddresses (ReachablePermissions r) r"
-    using getPhysicalCapAddresses_eqI_getPhysicalAddress[OF addrTrans]
+    using getPhysicalCapAddresses_eqI_getTranslateAddr[OF addrTrans]
     using no_access
     unfolding StorablePhysCapAddresses_def
     by auto
@@ -999,7 +999,7 @@ proof (induct trace arbitrary: s')
                    [OF this _ _ valid2, 
                     where a=a' and a'=a' and auth=auth and l=l and actions=actions]
               obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth r)" 
-                                 "getPhysicalAddress (vAddr, STORE) r = Some a'"
+                                 "getTranslateAddr (vAddr, STORE) r = Some a'"
                 using action StoreDataAction target restrict
                 by auto
               hence "a \<in> getPhysicalCapAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
@@ -1037,7 +1037,7 @@ proof (induct trace arbitrary: s')
                    [OF this _ _ valid2, 
                     where a=a and a'="ExtendCapAddress a" and actions=actions]
               obtain vAddr where "vAddr \<in> RegionOfCap (getCapReg auth r)" 
-                                 "getPhysicalAddress (vAddr, STORE) r = Some (ExtendCapAddress a)"
+                                 "getTranslateAddr (vAddr, STORE) r = Some (ExtendCapAddress a)"
                 using action StoreCapAction target
                 by auto
               from getPhysicalCapAddressesI_word_cat[OF this(2) this(1)]
@@ -1144,12 +1144,12 @@ proof (induct trace arbitrary: s')
   have no_sys_pcc: "\<not> Access_System_Registers (getPerms (getPCC r))"
     using SystemRegisterAccess_PCC[OF abstraction r\<^sub>2 no_ex2 no_sys2 valid2]
     by auto
-  have addrTrans: "getPhysicalAddress a r = getPhysicalAddress a s" for a
+  have addrTrans: "getTranslateAddr a r = getTranslateAddr a s" for a
     using TraceInvarianceAddressTranslation[OF abstraction r\<^sub>1 intra2 no_sys valid]
     by auto
   from StorablePhysAddresses_le[OF perms]
   have no_access2: "a \<notin> StorablePhysAddresses (ReachablePermissions r) r"
-    using getPhysicalAddresses_eqI_getPhysicalAddress[OF addrTrans]
+    using getTranslateAddresses_eqI_getTranslateAddr[OF addrTrans]
     using no_access
     unfolding StorablePhysAddresses_def
     by auto
@@ -1170,9 +1170,9 @@ proof (induct trace arbitrary: s')
           hence "l \<noteq> 0"
             by auto
           note store = CanBeSimulatedE_StoreData[OF abstraction intra_suc _ prov valid2]
-          have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+          have *: "a \<in> getTranslateAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
             using store addr
-            by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
+            by (auto simp: Generalise_accessors intro: getTranslateAddressesI)
           have "getCapReg auth r \<in> ReachableCaps r"
             using ReachableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
@@ -1184,7 +1184,7 @@ proof (induct trace arbitrary: s')
           hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
             by auto
           note StorableAddresses_le[OF this]
-          from getPhysicalAddresses_le[OF this]
+          from getTranslateAddresses_le[OF this]
           show False
             using no_access2 *
             unfolding StorablePhysAddresses_def
@@ -1198,9 +1198,9 @@ proof (induct trace arbitrary: s')
           assume prov: "StoreCapAction auth cd a' \<in> actions" 
              and addr: "a \<in> Region (ExtendCapAddress a') 32"
           note store = CanBeSimulatedE_StoreCap[OF abstraction intra_suc _ prov valid2]
-          have *: "a \<in> getPhysicalAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
+          have *: "a \<in> getTranslateAddresses (StorableAddresses (Generalise (getCapReg auth r))) STORE r"
             using store addr
-            by (auto simp: Generalise_accessors intro: getPhysicalAddressesI)
+            by (auto simp: Generalise_accessors intro: getTranslateAddressesI)
           have "getCapReg auth r \<in> ReachableCaps r"
             using ReachableCaps_CapReg
                   [OF abstraction intra_suc prov _ no_sys_pcc valid2, where r=auth]
@@ -1212,7 +1212,7 @@ proof (induct trace arbitrary: s')
           hence "Generalise (getCapReg auth r) \<le> ReachablePermissions r"
             by auto
           note StorableAddresses_le[OF this]
-          from getPhysicalAddresses_le[OF this]
+          from getTranslateAddresses_le[OF this]
           show False
             using no_access2 *
             unfolding StorablePhysAddresses_def

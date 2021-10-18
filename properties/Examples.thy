@@ -47,14 +47,14 @@ qed
 
 lemma TranslationCapabilityAligned:
   assumes "CapabilityAligned segment"
-  shows "CapabilityAligned (getPhysicalAddresses segment t s)"
+  shows "CapabilityAligned (getTranslateAddresses segment t s)"
 unfolding CapabilityAligned_def
 proof clarify
   fix a b :: PhysicalAddress
   assume aligned: "a AND NOT mask 5 = b AND NOT mask 5"
-     and "a \<in> getPhysicalAddresses segment t s"
+     and "a \<in> getTranslateAddresses segment t s"
   then obtain virtA where "virtA \<in> segment" 
-                      and a: "getPhysicalAddress (virtA, t) s = Some a"
+                      and a: "getTranslateAddr (virtA, t) s = Some a"
     by auto
   define virtB where "virtB \<equiv> (virtA AND NOT mask 12) OR ((ucast b) AND mask 12)"
   have virtB_upper: "virtB AND NOT mask 12 = virtA AND NOT mask 12"
@@ -63,15 +63,15 @@ proof clarify
   have virtB_lower: "ucast virtB AND mask 12 = b AND mask 12"
     unfolding virtB_def
     by (auto simp: word_ao_dist word_bool_alg.conj_assoc ucast_and ucast_or ucast_not)
-  have "getPhysicalAddress (virtA AND NOT mask 12, t) s = Some (a AND NOT mask 12)"
+  have "getTranslateAddr (virtA AND NOT mask 12, t) s = Some (a AND NOT mask 12)"
     using a
-    unfolding getPhysicalAddress_and_not_mask
+    unfolding getTranslateAddr_and_not_mask
     by simp
-  hence "getPhysicalAddress (virtB AND NOT mask 12, t) s = Some (b AND NOT mask 12)"
+  hence "getTranslateAddr (virtB AND NOT mask 12, t) s = Some (b AND NOT mask 12)"
     using arg_cong[OF aligned, where f="\<lambda>x. x AND NOT mask 12"]
     by (simp add: virtB_upper)
-  hence b: "getPhysicalAddress (virtB, t) s = Some b"
-    unfolding getPhysicalAddress_split[where vAddr=virtB]
+  hence b: "getTranslateAddr (virtB, t) s = Some b"
+    unfolding getTranslateAddr_split[where vAddr=virtB]
     by (auto simp: virtB_lower)
   have "virtA AND NOT mask 5 = virtB AND NOT mask 5"
     proof (intro word_eqI, simp add: word_size, intro impI)
@@ -80,17 +80,17 @@ proof clarify
       thus "(virtA AND NOT mask 5) !! n = (virtB AND NOT mask 5) !! n"
         using word_eqD[OF aligned, where x=n]
         using word_eqD[OF virtB_upper, where x=n]
-        using word_eqD[OF getPhysicalAddress_ucast12[OF a], where x=n]
-        using word_eqD[OF getPhysicalAddress_ucast12[OF b], where x=n]
+        using word_eqD[OF getTranslateAddr_ucast12[OF a], where x=n]
+        using word_eqD[OF getTranslateAddr_ucast12[OF b], where x=n]
         by (cases "n < 12") (simp_all add: nth_ucast word_ops_nth_size word_size)
      qed        
   from CapabilityAlignedE[OF assms this]
   have "virtB \<in> segment"
     using `virtA \<in> segment` 
     by auto
-  thus "b \<in> getPhysicalAddresses segment t s"
+  thus "b \<in> getTranslateAddresses segment t s"
     using b
-    unfolding getPhysicalAddresses_def
+    unfolding getTranslateAddresses_def
     by auto
 qed
 
@@ -122,7 +122,7 @@ by simp_all
 definition GrantedCaps where 
   "GrantedCaps segment s \<equiv>
    {getCapReg r s |r. RegisterIsAlwaysAccessible r} \<union>
-   {getMemCap (GetCapAddress a) s |a. a \<in> getPhysicalAddresses segment LOAD s}"
+   {getMemCap (GetCapAddress a) s |a. a \<in> getTranslateAddresses segment LOAD s}"
 
 lemma ReadableCaps_GPermOfSegment:
   shows "ReadableCaps (GPermOfSegment segment types) s = 
@@ -141,7 +141,7 @@ proof (intro equalityI; clarify, (intro conjI)?)
         by (auto intro!: ReadableCapsI[where loc="LocReg r"])
     next
       fix a
-      assume "a \<in> getPhysicalAddresses segment LOAD s"
+      assume "a \<in> getTranslateAddresses segment LOAD s"
          and "getTag (getMemCap (GetCapAddress a) s)"
       thus "getMemCap (GetCapAddress a) s \<in> ReadableCaps (GPermOfSegment segment types) s"
         by (auto intro!: ReadableCapsI[where loc="LocMem (GetCapAddress a)"]
@@ -170,7 +170,7 @@ next
             by auto
         next
           case (LocMem a)
-          then obtain a' where "a = GetCapAddress a'" "a' \<in> getPhysicalAddresses segment LOAD s"
+          then obtain a' where "a = GetCapAddress a'" "a' \<in> getTranslateAddresses segment LOAD s"
             using loc
             by (auto simp: getPhysicalCapAddresses_def)
           thus ?thesis
@@ -248,7 +248,7 @@ definition CapabilitySetup where
 definition IsolationGuarantees where
   "IsolationGuarantees segment exit s s' \<equiv>
    (getBase (getPCC s') + getPC s' \<in> exit) \<and>
-   (\<forall>a. a \<notin> getPhysicalAddresses segment STORE s \<longrightarrow> 
+   (\<forall>a. a \<notin> getTranslateAddresses segment STORE s \<longrightarrow> 
         (getMemByte a s' = getMemByte a s \<and>
          getMemTag (GetCapAddress a) s' = getMemTag (GetCapAddress a) s)) \<and>
    (\<forall>cd. (cd \<noteq> 0 \<and> cd \<noteq> 1 \<and> cd \<noteq> 31) \<longrightarrow> 
@@ -325,7 +325,7 @@ proof (intro conjI allI impI)
   obtain crossing where [simp]: "step = SwitchDomain crossing"
     using inter by (cases step) auto
   show "getMemByte a s' = getMemByte a s"
-  if "a \<notin> getPhysicalAddresses segment STORE s" for a
+  if "a \<notin> getTranslateAddresses segment STORE s" for a
     proof -
       have "a \<notin> StorablePhysAddresses gPerm s"
         using that
@@ -339,17 +339,17 @@ proof (intro conjI allI impI)
         by metis
     qed
   show "getMemTag (GetCapAddress a) s' = getMemTag (GetCapAddress a) s" 
-  if "a \<notin> getPhysicalAddresses segment STORE s" for a
+  if "a \<notin> getTranslateAddresses segment STORE s" for a
     proof -
       have "GetCapAddress a \<notin> StorablePhysCapAddresses gPerm s"
         proof
           assume "GetCapAddress a \<in> StorablePhysCapAddresses gPerm s"
-          then obtain b where "b \<in> getPhysicalAddresses segment STORE s"
+          then obtain b where "b \<in> getTranslateAddresses segment STORE s"
                           and "GetCapAddress b = GetCapAddress a"
             unfolding StorablePhysCapAddresses_def
             unfolding getPhysicalCapAddresses_def
             by auto
-          hence "a \<in> getPhysicalAddresses segment STORE s"
+          hence "a \<in> getTranslateAddresses segment STORE s"
             using TranslationCapabilityAligned[OF aligned, where s=s and t=STORE]
             using CapabilityAligned_CapAddressE[where a=b and b=a]
             by auto

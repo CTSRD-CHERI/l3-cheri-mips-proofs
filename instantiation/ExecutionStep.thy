@@ -444,7 +444,7 @@ definition CLCPhysicalAddress :: "RegisterAddress \<Rightarrow> RegisterAddress 
                                   11 word \<Rightarrow> state \<Rightarrow> PhysicalAddress option \<times> state" where 
   "CLCPhysicalAddress cb rt offset \<equiv> 
    bind (CLCVirtualAddress cb rt offset)
-        (\<lambda>a. read_state (getPhysicalAddress (a, LOAD)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, LOAD)))"
 
 abbreviation getCLCPhysicalAddress where
   "getCLCPhysicalAddress cb rt offset \<equiv> ValuePart (CLCPhysicalAddress cb rt offset)"
@@ -456,7 +456,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CLCPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CLCVirtualAddress cb rt offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CLCPhysicalAddress cb rt offset) m"
 unfolding CLCPhysicalAddress_def
 using assms
@@ -524,7 +524,7 @@ definition CLLCPhysicalAddress :: "RegisterAddress \<Rightarrow> state \<Rightar
                                    PhysicalAddress option \<times> state" where 
   "CLLCPhysicalAddress cb \<equiv> 
    bind (CLLCVirtualAddress cb)
-        (\<lambda>a. read_state (getPhysicalAddress (a, LOAD)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, LOAD)))"
 
 abbreviation getCLLCPhysicalAddress where
   "getCLLCPhysicalAddress cb \<equiv> ValuePart (CLLCPhysicalAddress cb)"
@@ -536,7 +536,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CLLCPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CLLCVirtualAddress cb) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CLLCPhysicalAddress cb) m"
 unfolding CLLCPhysicalAddress_def
 using assms
@@ -742,7 +742,7 @@ definition CSCPhysicalAddress :: "RegisterAddress \<Rightarrow> RegisterAddress 
                                   11 word \<Rightarrow> state \<Rightarrow> PhysicalAddress option \<times> state" where 
   "CSCPhysicalAddress cb rt offset \<equiv> 
    bind (CSCVirtualAddress cb rt offset)
-        (\<lambda>a. read_state (getPhysicalAddress (a, STORE)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, STORE)))"
 
 abbreviation getCSCPhysicalAddress where
   "getCSCPhysicalAddress cb rt offset \<equiv> ValuePart (CSCPhysicalAddress cb rt offset)"
@@ -754,7 +754,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CSCPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CSCVirtualAddress cb rt offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CSCPhysicalAddress cb rt offset) m"
 unfolding CSCPhysicalAddress_def
 using assms
@@ -819,7 +819,7 @@ definition CSCCPhysicalAddress :: "RegisterAddress \<Rightarrow> state \<Rightar
                                    PhysicalAddress option \<times> state" where 
   "CSCCPhysicalAddress cb \<equiv> 
    bind (CSCCVirtualAddress cb)
-        (\<lambda>a. read_state (getPhysicalAddress (a, STORE)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, STORE)))"
 
 abbreviation getCSCCPhysicalAddress where
   "getCSCCPhysicalAddress cb \<equiv> ValuePart (CSCCPhysicalAddress cb)"
@@ -831,7 +831,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CSCCPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CSCCVirtualAddress cb) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CSCCPhysicalAddress cb) m"
 unfolding CSCCPhysicalAddress_def
 using assms
@@ -1152,7 +1152,7 @@ definition LegacyLoadPhysicalAddress :: "RegisterAddress \<Rightarrow> 16 word \
                                          state \<Rightarrow> PhysicalAddress option \<times> state" where 
   "LegacyLoadPhysicalAddress \<equiv> \<lambda>base offset.
    bind (LegacyLoadVirtualAddress base offset)
-        (\<lambda>a. read_state (getPhysicalAddress (a, LOAD)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, LOAD)))"
 
 abbreviation getLegacyLoadPhysicalAddress where
   "getLegacyLoadPhysicalAddress b offset \<equiv> ValuePart (LegacyLoadPhysicalAddress b offset)"
@@ -1164,7 +1164,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LegacyLoadPhysicalAddress [Commute_compositeI]:
   assumes "Commute (LegacyLoadVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LegacyLoadPhysicalAddress b offset) m"
 unfolding LegacyLoadPhysicalAddress_def
 using assms
@@ -1494,7 +1494,7 @@ thm dfn'LWL_alt_def
 definition LWLActions where
   "LWLActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyLoadVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, LOAD)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {LoadDataAction (RegSpecial 0) 
@@ -1521,7 +1521,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LWLActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyLoadVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LWLActions v) m"
 unfolding LWLActions_def
 by (Commute intro: assms)
@@ -1533,7 +1533,7 @@ thm dfn'LWR_alt_def
 definition LWRActions where
   "LWRActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyLoadVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr AND NOT mask 2, LOAD)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr AND NOT mask 2, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {LoadDataAction (RegSpecial 0) 
@@ -1560,7 +1560,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LWRActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyLoadVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LWRActions v) m"
 unfolding LWRActions_def
 by (Commute intro: assms)
@@ -1572,7 +1572,7 @@ thm dfn'LDL_alt_def
 definition LDLActions where
   "LDLActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyLoadVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, LOAD)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {LoadDataAction (RegSpecial 0)
@@ -1599,7 +1599,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LDLActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyLoadVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LDLActions v) m"
 unfolding LDLActions_def
 by (Commute intro: assms)
@@ -1611,7 +1611,7 @@ thm dfn'LDR_alt_def
 definition LDRActions where
   "LDRActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyLoadVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr AND NOT mask 3, LOAD)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr AND NOT mask 3, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {LoadDataAction (RegSpecial 0) 
@@ -1638,7 +1638,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LDRActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyLoadVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LDRActions v) m"
 unfolding LDRActions_def
 by (Commute intro: assms)
@@ -1676,7 +1676,7 @@ definition CLoadPhysicalAddress :: "RegisterAddress \<Rightarrow> RegisterAddres
                                      PhysicalAddress option \<times> state" where 
   "CLoadPhysicalAddress cb rt offset t \<equiv> 
    bind (CLoadVirtualAddress cb rt offset t)
-        (\<lambda>a. bind (read_state (getPhysicalAddress (a, LOAD)))
+        (\<lambda>a. bind (read_state (getTranslateAddr (a, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> None | Some y \<Rightarrow> Some y)))"
 
 abbreviation getCLoadPhysicalAddress where
@@ -1689,7 +1689,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CLoadPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CLoadVirtualAddress cb rt offset t) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CLoadPhysicalAddress cb rt offset t) m"
 unfolding CLoadPhysicalAddress_def
 using assms
@@ -1753,7 +1753,7 @@ definition CLLxPhysicalAddress :: "RegisterAddress \<Rightarrow> state \<Rightar
                                    PhysicalAddress option \<times> state" where 
   "CLLxPhysicalAddress cb \<equiv> 
    bind (CLLxVirtualAddress cb)
-        (\<lambda>a. bind (read_state (getPhysicalAddress (a, LOAD)))
+        (\<lambda>a. bind (read_state (getTranslateAddr (a, LOAD)))
         (\<lambda>x. return (case x of None \<Rightarrow> None | Some y \<Rightarrow> Some y)))"
 
 abbreviation getCLLxPhysicalAddress where
@@ -1766,7 +1766,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CLLxPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CLLxVirtualAddress cb) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CLLxPhysicalAddress cb) m"
 unfolding CLLxPhysicalAddress_def
 using assms
@@ -1839,7 +1839,7 @@ definition LegacyStorePhysicalAddress :: "RegisterAddress \<Rightarrow> 16 word 
                                          state \<Rightarrow> PhysicalAddress option \<times> state" where 
   "LegacyStorePhysicalAddress \<equiv> \<lambda>base offset.
    bind (LegacyStoreVirtualAddress base offset)
-        (\<lambda>a. read_state (getPhysicalAddress (a, STORE)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, STORE)))"
 
 abbreviation getLegacyStorePhysicalAddress where
   "getLegacyStorePhysicalAddress b offset \<equiv> ValuePart (LegacyStorePhysicalAddress b offset)"
@@ -1851,7 +1851,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_LegacyStorePhysicalAddress [Commute_compositeI]:
   assumes "Commute (LegacyStoreVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (LegacyStorePhysicalAddress b offset) m"
 unfolding LegacyStorePhysicalAddress_def
 using assms
@@ -2085,7 +2085,7 @@ thm dfn'SWL_alt_def
 definition SWLActions where
   "SWLActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyStoreVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {StoreDataAction (RegSpecial 0) 
@@ -2112,7 +2112,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_SWLActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyStoreVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (SWLActions v) m"
 unfolding SWLActions_def
 by (Commute intro: assms)
@@ -2124,7 +2124,7 @@ thm dfn'SWR_alt_def
 definition SWRActions where
   "SWRActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyStoreVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr AND NOT mask 2, STORE)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr AND NOT mask 2, STORE)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {StoreDataAction (RegSpecial 0) 
@@ -2151,7 +2151,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_SWRActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyStoreVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (SWRActions v) m"
 unfolding SWRActions_def
 by (Commute intro: assms)
@@ -2163,7 +2163,7 @@ thm dfn'SDL_alt_def
 definition SDLActions where
   "SDLActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyStoreVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {StoreDataAction (RegSpecial 0) 
@@ -2190,7 +2190,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_SDLActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyStoreVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (SDLActions v) m"
 unfolding SDLActions_def
 by (Commute intro: assms)
@@ -2202,7 +2202,7 @@ thm dfn'SDR_alt_def
 definition SDRActions where
   "SDRActions \<equiv> \<lambda>(base, rt, offset). 
    bind (LegacyStoreVirtualAddress base offset)
-        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr AND NOT mask 3, STORE)))
+        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr AND NOT mask 3, STORE)))
         (\<lambda>x. return (case x of None \<Rightarrow> {} | 
                                Some pAddr \<Rightarrow> 
                                  {StoreDataAction (RegSpecial 0) 
@@ -2229,7 +2229,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_SDRActions [Commute_compositeI]:
   assumes "\<And>b offset. Commute (LegacyStoreVirtualAddress b offset) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (SDRActions v) m"
 unfolding SDRActions_def
 by (Commute intro: assms)
@@ -2267,7 +2267,7 @@ definition CStorePhysicalAddress :: "RegisterAddress \<Rightarrow> RegisterAddre
                                      PhysicalAddress option \<times> state" where 
   "CStorePhysicalAddress cb rt offset t \<equiv> 
    bind (CStoreVirtualAddress cb rt offset t)
-        (\<lambda>a. read_state (getPhysicalAddress (a, STORE)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, STORE)))"
 
 abbreviation getCStorePhysicalAddress where
   "getCStorePhysicalAddress cb rt offset t \<equiv> ValuePart (CStorePhysicalAddress cb rt offset t)"
@@ -2279,7 +2279,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CStorePhysicalAddress [Commute_compositeI]:
   assumes "Commute (CStoreVirtualAddress cb rt offset t) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CStorePhysicalAddress cb rt offset t) m"
 unfolding CStorePhysicalAddress_def
 using assms
@@ -2343,7 +2343,7 @@ definition CSCxPhysicalAddress :: "RegisterAddress \<Rightarrow> state \<Rightar
                                    PhysicalAddress option \<times> state" where 
   "CSCxPhysicalAddress cb \<equiv> 
    bind (CSCxVirtualAddress cb)
-        (\<lambda>a. read_state (getPhysicalAddress (a, STORE)))"
+        (\<lambda>a. read_state (getTranslateAddr (a, STORE)))"
 
 abbreviation getCSCxPhysicalAddress where
   "getCSCxPhysicalAddress cb \<equiv> ValuePart (CSCxPhysicalAddress cb)"
@@ -2355,7 +2355,7 @@ by (auto simp: ValueAndStatePart_simp)
 
 lemma Commute_CSCxPhysicalAddress [Commute_compositeI]:
   assumes "Commute (CSCxVirtualAddress cb) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
   shows "Commute (CSCxPhysicalAddress cb) m"
 unfolding CSCxPhysicalAddress_def
 using assms
@@ -2464,7 +2464,7 @@ unfolding RunActions_def
 by (auto simp: ValueAndStatePart_simp cong: cong)
 
 lemma Commute_RunActions [Commute_compositeI]:
-  assumes "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+  assumes "\<And>v. Commute (read_state (getTranslateAddr v)) m"
       and "\<And>v. Commute (read_state (getCAPR v)) m"
       and "\<And>v. Commute (read_state (getSCAPR v)) m"
       and "\<And>v. Commute (read_state (getGPR v)) m"

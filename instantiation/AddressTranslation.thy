@@ -13,26 +13,26 @@ begin
 (*>*)
 section \<open>Invariance of address translation\<close>
 
-definition PhysicalAddressFuncEquals :: 
+definition TranslateAddrFuncEquals :: 
   "(VirtualAddress \<times> AccessType \<Rightarrow> PhysicalAddress option) \<Rightarrow> state \<Rightarrow> bool" where
-  "PhysicalAddressFuncEquals X \<equiv> (\<lambda>s. \<forall>a. getPhysicalAddress a s = X a)"
+  "TranslateAddrFuncEquals X \<equiv> (\<lambda>s. \<forall>a. getTranslateAddr a s = X a)"
 
-lemma Commute_getPhysicalAddressFunc [Commute_compositeI]:
-  assumes "\<And>a. Commute (read_state (getPhysicalAddress a)) m"
-  shows "Commute (read_state (PhysicalAddressFuncEquals X)) m"
+lemma Commute_getTranslateAddrFunc [Commute_compositeI]:
+  assumes "\<And>a. Commute (read_state (getTranslateAddr a)) m"
+  shows "Commute (read_state (TranslateAddrFuncEquals X)) m"
 using assms
-unfolding PhysicalAddressFuncEquals_def Commute_def
+unfolding TranslateAddrFuncEquals_def Commute_def
 by auto
 
 abbreviation (out) 
   "AddressTranslationPre X \<equiv> 
-   read_state (PhysicalAddressFuncEquals X)"
+   read_state (TranslateAddrFuncEquals X)"
 
 abbreviation (out) 
   "AddressTranslationPost X \<equiv> 
    read_state getExceptionSignalled \<or>\<^sub>b
    read_state isUnpredictable \<or>\<^sub>b
-   read_state (PhysicalAddressFuncEquals X)"
+   read_state (TranslateAddrFuncEquals X)"
 
 named_theorems MapVirtualAddressInvariantI
 
@@ -87,7 +87,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'ERET *)
 
 lemma AddressTranslationInvariant_dfn'ERET [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  dfn'ERET
@@ -687,7 +687,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'MTC0 *)
 
 lemma AddressTranslationInvariant_dfn'MTC0 [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  (dfn'MTC0 v)
@@ -701,7 +701,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'DMTC0 *)
 
 lemma AddressTranslationInvariant_dfn'DMTC0 [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  (dfn'DMTC0 v)
@@ -850,7 +850,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'TLBR *)
 
 lemma AddressTranslationInvariant_dfn'TLBR [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  dfn'TLBR
@@ -863,7 +863,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'TLBWI *)
 
 lemma AddressTranslationInvariant_dfn'TLBWI [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  dfn'TLBWI
@@ -876,7 +876,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - dfn'TLBWR *)
 
 lemma AddressTranslationInvariant_dfn'TLBWR [MapVirtualAddressInvariantI]:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  dfn'TLBWR
@@ -1234,7 +1234,7 @@ by MapVirtualAddressInvariant
 (* Code generation - override - Run *)
 
 lemma AddressTranslationInvariant_Run_aux:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  (Run v)
@@ -1255,14 +1255,14 @@ lemmas AddressTranslationInvariant_Run [MapVirtualAddressInvariantI] =
 lemma AddressTranslationInvariant_TakeBranch [MapVirtualAddressInvariantI]:
   shows "IsInvariant (read_state getExceptionSignalled \<or>\<^sub>b 
                       read_state isUnpredictable \<or>\<^sub>b 
-                      read_state (PhysicalAddressFuncEquals X))
+                      read_state (TranslateAddrFuncEquals X))
                      TakeBranch"
 unfolding TakeBranch_def
 by PrePost
 
 lemma AddressTranslationInvariant_Fetch [MapVirtualAddressInvariantI]:
   fixes X
-  defines "p \<equiv> \<lambda>w. read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b 
+  defines "p \<equiv> \<lambda>w. read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b 
                                 bind (read_state getPCC)
                                      (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc)))"
   shows "PrePost (bind NextInstruction (case_option (return True) p))
@@ -1273,7 +1273,7 @@ unfolding p_def
 by (intro PrePost_Fetch) Commute+
 
 lemma AddressTranslationInvariant_NextWithGhostState:
-  shows "PrePost (read_state (PhysicalAddressFuncEquals X) \<and>\<^sub>b
+  shows "PrePost (read_state (TranslateAddrFuncEquals X) \<and>\<^sub>b
                   bind (read_state getPCC)
                        (\<lambda>pcc. return (\<not> Access_System_Registers (getPerms pcc))))
                  NextWithGhostState
@@ -1284,7 +1284,7 @@ by MapVirtualAddressInvariant
 lemma AddressTranslationInvariant_Unpredictable:
   assumes "\<not> getKernelMode s"
       and suc: "s' \<in> UnpredictableNext s"
-  shows "getPhysicalAddress a s' = getPhysicalAddress a s"
+  shows "getTranslateAddr a s' = getTranslateAddr a s"
 using assms
 by auto
 
@@ -1293,14 +1293,14 @@ theorem InvarianceAddressTranslation:
       and valid: "getStateIsValid s"
       and suc: "(step, s') \<in> NextStates s"
       and no_ex: "step \<noteq> SwitchDomain RaiseException"
-  shows "getPhysicalAddress a s' = getPhysicalAddress a s"
+  shows "getTranslateAddr a s' = getTranslateAddr a s"
 using assms
 using AddressTranslationInvariant_NextWithGhostState
-        [where X="\<lambda>a. getPhysicalAddress a s", THEN PrePostE[where s=s]]
+        [where X="\<lambda>a. getTranslateAddr a s", THEN PrePostE[where s=s]]
 using AddressTranslationInvariant_Unpredictable[where s=s and s'=s']
 using NextStates_PredictableNonException[OF suc no_ex]
 unfolding NextStates_def
-unfolding PhysicalAddressFuncEquals_def
+unfolding TranslateAddrFuncEquals_def
 by (cases a) (auto simp: ValueAndStatePart_simp split: if_splits)
 
 corollary AddressTranslationInstantiation:

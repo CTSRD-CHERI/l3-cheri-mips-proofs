@@ -37,9 +37,9 @@ lemma AddressIsCapReadableI:
                     ucast (getBase authCap) + ucast (getLength authCap)"
       and v_lower: "getBase authCap \<le> vAddr"
       and alignment: "isCapAligned vAddr"
-      and pAddr: "getPhysicalAddress (vAddr, LOAD) s = Some pAddr"
+      and pAddr: "getTranslateAddr (vAddr, LOAD) s = Some pAddr"
       and a: "a = GetCapAddress pAddr"
-      and trans: "addrTrans = getPhysicalAddressFunc s"
+      and trans: "addrTrans = getTranslateAddrFunc s"
       and "Permit_Load (getPerms authCap)"
       and "getTag authCap"
       and "\<not> getSealed authCap"
@@ -51,7 +51,7 @@ proof -
     by simp
   have "(ucast pAddr::5 word) = 0"
     using arg_cong[where f="\<lambda>x. (ucast x::5 word)", 
-                   OF getPhysicalAddress_ucast12[OF pAddr]]
+                   OF getTranslateAddr_ucast12[OF pAddr]]
     using `(ucast vAddr::5 word) = 0`
     by simp
   hence [simp]: "pAddr AND mask 5 = 0"
@@ -67,7 +67,7 @@ proof -
   show ?thesis
     using assms
     unfolding AddressIsCapReadable_def 
-    unfolding getPhysicalAddressFunc_def
+    unfolding getTranslateAddrFunc_def
     unfolding ExtendCapAddress_def GetCapAddress_def
     by (auto elim!: TranslateNearbyAddress_CapAligned2)
 qed
@@ -103,7 +103,7 @@ lemmas SemanticsLoadCapability_AddressTranslation =
 lemma SemanticsLoadCapability_LoadCap:
   shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b
                   read_state isUnpredictable \<or>\<^sub>b
-                  bind (read_state (getPhysicalAddress (fst v, LOAD))) 
+                  bind (read_state (getTranslateAddr (fst v, LOAD))) 
                        (\<lambda>z. case z of None \<Rightarrow> return True 
                                     | Some x \<Rightarrow> 
                              return (AddressIsCapReadable authCap a addrTrans \<and> extra) \<and>\<^sub>b 
@@ -127,7 +127,7 @@ qed
 lemma SemanticsLoadCapability_CLC [SemanticsLoadCapI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLCActions v) (\<lambda>prov. return (LoadCapAction auth a cd \<in> prov)))
                  (dfn'CLC v)
@@ -154,7 +154,7 @@ qed
 lemma SemanticsLoadCapability_CLLC [SemanticsLoadCapI]:
   shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (CLLCActions v) (\<lambda>prov. return (LoadCapAction auth a cd \<in> prov)))
                  (dfn'CLLC v)
@@ -181,7 +181,7 @@ qed
 lemma SemanticsLoadCapability_Run_aux:
   shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind (RunActions v) (\<lambda>prov. return (LoadCapAction auth a cd \<in> prov)))
                  (Run v)
@@ -205,7 +205,7 @@ lemma SemanticsLoadCapability_Fetch:
   fixes auth a a' cd authCap cap addrTrans cdAccessible authAccessible
   defines "p \<equiv> \<lambda>w. (return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                     (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                    (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                    (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                     (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                     bind (RunActions (Decode w)) (\<lambda>prov. return (LoadCapAction auth a cd \<in> prov))"
   shows "PrePost (bind NextInstruction (case_option (return True) p))
@@ -218,7 +218,7 @@ by (intro PrePost_Fetch) Commute+
 lemma SemanticsLoadCapability_NextWithGhostState:
   shows "PrePost ((return cap =\<^sub>b read_state (getMemCap a)) \<and>\<^sub>b
                   (return authCap =\<^sub>b read_state (getCapReg auth)) \<and>\<^sub>b
-                  (return addrTrans =\<^sub>b read_state getPhysicalAddressFunc) \<and>\<^sub>b
+                  (return addrTrans =\<^sub>b read_state getTranslateAddrFunc) \<and>\<^sub>b
                   (return authAccessible =\<^sub>b read_state (getRegisterIsAccessible auth)) \<and>\<^sub>b
                   bind DomainActions (\<lambda>ac. return (LoadCapAction auth a cd \<in> ac)))
                  NextWithGhostState
@@ -249,18 +249,18 @@ theorem SemanticsLoadCap:
         "getTag (getCapReg auth s)"
         "\<not> getSealed (getCapReg auth s)"
         "Region (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
+         getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
         "getRegisterIsAccessible auth s"
         "getCAPR cd s' \<le> getMemCap a s"
 using assms
 using SemanticsLoadCapability_NextWithGhostState
          [where cap="getMemCap a s" and cd=cd and a=a and auth=auth and
-                authCap="getCapReg auth s" and addrTrans="getPhysicalAddressFunc s" and
+                authCap="getCapReg auth s" and addrTrans="getTranslateAddrFunc s" and
                 authAccessible="getRegisterIsAccessible auth s",
           THEN PrePostE[where s=s]]
 unfolding SemanticsLoadCapPost_def
 unfolding AddressIsCapReadable_def 
-unfolding getPhysicalAddressFunc_def getPhysicalAddresses_def
+unfolding getTranslateAddrFunc_def getTranslateAddresses_def
 unfolding NextStates_def Next_NextWithGhostState NextNonExceptionStep_def
 by (auto simp: ValueAndStatePart_simp split: if_splits option.splits)
 

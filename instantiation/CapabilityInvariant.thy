@@ -330,7 +330,7 @@ unfolding LoadCap_alt_def
 by CapInvariant
 
 lemma CapInvariant_LoadCap_aux_PhysicalAddress:
-  shows "PrePost (bind (read_state (getPhysicalAddress (fst v, LOAD)))
+  shows "PrePost (bind (read_state (getTranslateAddr (fst v, LOAD)))
                        (\<lambda>a. case a of None \<Rightarrow> return True 
                                      | Some _ \<Rightarrow> return (loc \<noteq> LocReg (RegGeneral cd))))
                  (LoadCap v) 
@@ -384,7 +384,7 @@ lemma CapInvariant_StoreMemoryCap [CapInvariantI]:
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    (case v of (MemType, AccessLength, MemElem, needAlign, vAddr, cond) \<Rightarrow>
-                    bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                    bind (read_state (getTranslateAddr (vAddr, STORE)))
                          (\<lambda>x. return (case x of None \<Rightarrow> True
                                               | Some a \<Rightarrow> loc \<noteq> LocMem (GetCapAddress a))))))
                  (StoreMemoryCap v) 
@@ -412,7 +412,7 @@ lemma CapInvariant_StoreMemory [CapInvariantI]:
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    (case v of (memType, accessLength, needAlign, memElem, vAddr, cond) \<Rightarrow>
-                    bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                    bind (read_state (getTranslateAddr (vAddr, STORE)))
                          (\<lambda>x. return (case x of None \<Rightarrow> True
                                               | Some a \<Rightarrow> loc \<noteq> LocMem (GetCapAddress a))))))
                  (StoreMemory v) 
@@ -429,7 +429,7 @@ lemma CapInvariant_StoreCap [CapInvariantI]:
                   (read_state getExceptionSignalled \<or>\<^sub>b
                    read_state isUnpredictable \<or>\<^sub>b
                    bind (read_state getLLbit)
-                        (\<lambda>llbit. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>llbit. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>a. return (case a of None \<Rightarrow> True
                                             |  Some x \<Rightarrow> (cond \<longrightarrow> llbit = Some True) \<longrightarrow>
                                                          loc \<noteq> LocMem (GetCapAddress x))))))
@@ -1065,7 +1065,7 @@ lemma CapInvariant_storeWord [CapInvariantI]:
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
-                        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> return (loc \<noteq> LocMem (GetCapAddress a'))))))))
                  (storeWord v) 
@@ -1084,7 +1084,7 @@ lemma CapInvariant_storeDoubleword [CapInvariantI]:
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
-                        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> return (loc \<noteq> LocMem (GetCapAddress a'))))))))
                  (storeDoubleword v) 

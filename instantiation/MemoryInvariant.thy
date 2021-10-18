@@ -327,13 +327,13 @@ by PrePost (auto simp: slice_xor)
 
 lemma MemoryInvariant_RegionI:
   fixes accessLength :: "3 word"
-  assumes trans: "getPhysicalAddress (vAddr', STORE) s = Some pAddr'"
+  assumes trans: "getTranslateAddr (vAddr', STORE) s = Some pAddr'"
       and slice: "(slice 3 pAddr::37 word) = slice 3 pAddr'"
       and lower: "unat vAddr' mod 8 \<le> unat pAddr mod 8"
       and upper: "unat pAddr mod 8 \<le> unat accessLength + unat vAddr' mod 8"
   shows "pAddr \<in> Region pAddr' (ucast accessLength + 1)"
 proof
-  note getPhysicalAddress_ucast12[OF trans]
+  note getTranslateAddr_ucast12[OF trans]
   from arg_cong[OF this, where f="\<lambda>x. (ucast x::3 word)"]
   have "(ucast pAddr'::3 word) = ucast vAddr'"
     by auto
@@ -371,7 +371,7 @@ proof
 qed
 
 lemma MemoryInvariant_RegionI_length_1:
-  assumes trans: "getPhysicalAddress (vAddr', STORE) s = Some pAddr'"
+  assumes trans: "getTranslateAddr (vAddr', STORE) s = Some pAddr'"
       and slice: "(slice 3 pAddr::37 word) = slice 3 pAddr'"
       and lower: "unat vAddr' mod 8 = unat pAddr mod 8"
   shows "pAddr \<in> Region pAddr' 1"
@@ -381,7 +381,7 @@ by auto
 
 lemma MemoryInvariant_StoreMemoryCap [MemoryInvariantI]:
   shows "PrePost ((case v of (memType, accessLength, memElem, needAlign, vAddr, cond) \<Rightarrow>
-                   bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                   bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> 
                                         return ((needAlign \<and> memType = accessLength) \<or> 
@@ -406,7 +406,7 @@ by (MemoryInvariant intro: PrePost_DefinedAddressTranslation)
 
 lemma MemoryInvariant_StoreMemory [MemoryInvariantI]:
   shows "PrePost ((case v of (memType, accessLength, needAlign, memElem, vAddr, cond) \<Rightarrow>
-                   bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                   bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> 
                                         return ((needAlign \<and> memType = accessLength) \<or> 
@@ -427,7 +427,7 @@ by MemoryInvariant auto?
 lemma MemoryInvariant_StoreCap [MemoryInvariantI]:
   shows "PrePost ((case v of (vAddr, cap, cond) \<Rightarrow>
                    bind (read_state getLLbit)
-                        (\<lambda>llbit. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>llbit. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> return ((cond \<longrightarrow> llbit = Some True) \<longrightarrow>
                                                           (slice 5 a::35 word) \<noteq> slice 5 a')))) \<and>\<^sub>b
@@ -1058,7 +1058,7 @@ lemma MemoryInvariant_storeWord [MemoryInvariantI]:
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
-                        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> return (a \<notin> Region a' 4)))))) \<and>\<^sub>b
                   (read_state (getMemByte a) =\<^sub>b return val))
@@ -1080,7 +1080,7 @@ lemma MemoryInvariant_storeDoubleword [MemoryInvariantI]:
                    bind (read_state (getGPR b))
                         (\<lambda>v. bind (read_state (getSCAPR 0))
                         (\<lambda>cap. bind (return (scast offset + v + getBase cap + getOffset cap))
-                        (\<lambda>vAddr. bind (read_state (getPhysicalAddress (vAddr, STORE)))
+                        (\<lambda>vAddr. bind (read_state (getTranslateAddr (vAddr, STORE)))
                         (\<lambda>x. case x of None \<Rightarrow> return True
                                      | Some a' \<Rightarrow> return (a \<notin> Region a' 8)))))) \<and>\<^sub>b
                   (read_state (getMemByte a) =\<^sub>b return val))

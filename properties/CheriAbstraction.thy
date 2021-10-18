@@ -192,7 +192,7 @@ definition LoadDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Load (getPerms (getCapReg auth s)) \<and>
     l \<noteq> 0 \<and>
-    Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s)"
+    Region a l \<subseteq> getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s)"
 
 lemma LoadDataPropE [elim]:
   assumes "LoadDataProp s lbl s'"
@@ -203,7 +203,7 @@ lemma LoadDataPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Load (getPerms (getCapReg auth s))"
     and "l \<noteq> 0"
-    and "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
+    and "Region a l \<subseteq> getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
 using assms
 unfolding LoadDataProp_def
 by auto
@@ -216,7 +216,7 @@ lemma LoadDataPropE_mem:
       and "a' \<in> Region a l"
   obtains vAddr 
   where "vAddr \<in> RegionOfCap (getCapReg auth s)"
-    and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
+    and "getTranslateAddr (vAddr, LOAD) s = Some a'"
 using LoadDataPropE[OF assms(1-4)] assms(5)
 by auto
 
@@ -230,7 +230,7 @@ definition StoreDataProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> stat
     \<not> getSealed (getCapReg auth s) \<and>
     Permit_Store (getPerms (getCapReg auth s)) \<and>
     l \<noteq> 0 \<and> 
-    Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s \<and>
+    Region a l \<subseteq> getTranslateAddresses (RegionOfCap (getCapReg auth s)) STORE s \<and>
     (\<not> getTag (getMemCap (GetCapAddress a) s') \<or> 
      getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s))"
 
@@ -243,7 +243,7 @@ lemma StoreDataPropE [elim]:
     and "\<not> getSealed (getCapReg auth s)"
     and "Permit_Store (getPerms (getCapReg auth s))"
     and "l \<noteq> 0"
-    and "Region a l \<subseteq> getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
+    and "Region a l \<subseteq> getTranslateAddresses (RegionOfCap (getCapReg auth s)) STORE s"
     and "getTag (getMemCap (GetCapAddress a) s') \<Longrightarrow>
          getMemCap (GetCapAddress a) s' = getMemCap (GetCapAddress a) s"
 using assms
@@ -258,7 +258,7 @@ lemma StoreDataPropE_mem:
       and "a' \<in> Region a l"
   obtains vAddr 
   where "vAddr \<in> RegionOfCap (getCapReg auth s)"
-    and "getPhysicalAddress (vAddr, STORE) s = Some a'"
+    and "getTranslateAddr (vAddr, STORE) s = Some a'"
 using StoreDataPropE[OF assms(1-4)] assms(5)
 by auto
 
@@ -300,7 +300,7 @@ definition LoadCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state 
     Permit_Load (getPerms (getCapReg auth s)) \<and>
     Permit_Load_Capability (getPerms (getCapReg auth s)) \<and>
     (Region (ExtendCapAddress a) 32 \<subseteq> 
-     getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s) \<and>
+     getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s) \<and>
     getCAPR cd s' \<le> getMemCap a s)"
 
 lemma LoadCapPropE [elim]:
@@ -313,7 +313,7 @@ lemma LoadCapPropE [elim]:
     and "Permit_Load (getPerms (getCapReg auth s))"
     and "Permit_Load_Capability (getPerms (getCapReg auth s))"
     and "Region (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
+         getTranslateAddresses (RegionOfCap (getCapReg auth s)) LOAD s"
     and "getCAPR cd s' \<le> getMemCap a s"
 using assms
 unfolding LoadCapProp_def
@@ -327,7 +327,7 @@ lemma LoadCapPropE_mem:
       and "a' \<in> Region (ExtendCapAddress a) 32"
   obtains vAddr 
   where "vAddr \<in> RegionOfCap (getCapReg auth s)"
-    and "getPhysicalAddress (vAddr, LOAD) s = Some a'"
+    and "getTranslateAddr (vAddr, LOAD) s = Some a'"
 using LoadCapPropE[OF assms(1-4)] assms(5)
 by auto
 
@@ -342,7 +342,7 @@ definition StoreCapProp :: "state \<Rightarrow> AbstractStep \<Rightarrow> state
     Permit_Store (getPerms (getCapReg auth s)) \<and>
     Permit_Store_Capability (getPerms (getCapReg auth s)) \<and>
     (Region (ExtendCapAddress a) 32 \<subseteq> 
-     getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s) \<and>
+     getTranslateAddresses (RegionOfCap (getCapReg auth s)) STORE s) \<and>
     getMemCap a s' = getCAPR cd s)"
 
 lemma StoreCapPropE [elim]:
@@ -355,7 +355,7 @@ lemma StoreCapPropE [elim]:
     and "Permit_Store (getPerms (getCapReg auth s))"
     and "Permit_Store_Capability (getPerms (getCapReg auth s))"
     and "Region (ExtendCapAddress a) 32 \<subseteq> 
-         getPhysicalAddresses (RegionOfCap (getCapReg auth s)) STORE s"
+         getTranslateAddresses (RegionOfCap (getCapReg auth s)) STORE s"
     and "getMemCap a s' = getCAPR cd s"
 using assms
 unfolding StoreCapProp_def
@@ -369,7 +369,7 @@ lemma StoreCapPropE_mem:
       and "a' \<in> Region (ExtendCapAddress a) 32"
   obtains vAddr 
   where "vAddr \<in> RegionOfCap (getCapReg auth s)"
-    and "getPhysicalAddress (vAddr, STORE) s = Some a'"
+    and "getTranslateAddr (vAddr, STORE) s = Some a'"
 using StoreCapPropE[OF assms(1-4)] assms(5)
 by auto
 
@@ -611,14 +611,14 @@ definition AddressTranslationProp :: "state \<Rightarrow> AbstractStep \<Rightar
    (getStateIsValid s \<and>
     \<not> Access_System_Registers (getPerms (getPCC s)) \<and>
     lbl \<noteq> SwitchDomain RaiseException) \<longrightarrow>
-   getPhysicalAddress a s' = getPhysicalAddress a s"
+   getTranslateAddr a s' = getTranslateAddr a s"
 
 lemma AddressTranslationPropE [elim]:
   assumes "AddressTranslationProp s lbl s'"
       and "lbl \<noteq> SwitchDomain RaiseException"
       and "\<not> Access_System_Registers (getPerms (getPCC s))"
       and "getStateIsValid s"
-  shows "getPhysicalAddress a s' = getPhysicalAddress a s"
+  shows "getTranslateAddr a s' = getTranslateAddr a s"
 using assms
 unfolding AddressTranslationProp_def
 by fast+

@@ -3335,7 +3335,7 @@ unfolding AddressTranslationPartial_def
 using ValuePartMakePartial_defined assms
 by metis
 
-subsection \<open>@{term getPhysicalAddress}\<close>
+subsection \<open>@{term getTranslateAddr}\<close>
 
 definition PhysicalAddress :: 
   "VirtualAddress \<times> AccessType \<Rightarrow> state \<Rightarrow> PhysicalAddress option \<times> state" where
@@ -3343,7 +3343,7 @@ definition PhysicalAddress ::
    bind (read_state (getAddressTranslationPartial v))
         (\<lambda>x. return (case x of None \<Rightarrow> None | Some y \<Rightarrow> Some (fst y)))"
 
-abbreviation "getPhysicalAddress v \<equiv> ValuePart (PhysicalAddress v)"
+abbreviation "getTranslateAddr v \<equiv> ValuePart (PhysicalAddress v)"
 
 lemma PhysicalAddress_read_only [simp]:
   shows "StatePart (PhysicalAddress v) = (\<lambda>s. s)"
@@ -3357,95 +3357,95 @@ using assms
 unfolding PhysicalAddress_def Commute_def
 by (strong_cong_simp add: ValueAndStatePart_simp)
 
-lemma getPhysicalAddress_simps [simp]:
-  shows "getPhysicalAddress v (BranchToPCC_update x_BranchToPCC s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (BranchDelayPCC_update x_BranchDelayPCC s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (the_MEM_update x_the_MEM s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setPCC x_PCC s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setCAPR x_CAPR s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setSCAPR x_SCAPR s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setMEM x_MEM s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setBranchTo x_BranchTo s) = getPhysicalAddress v s"
-    and "getPhysicalAddress v (setBranchDelay x_BranchDelay s) = getPhysicalAddress v s"
+lemma getTranslateAddr_simps [simp]:
+  shows "getTranslateAddr v (BranchToPCC_update x_BranchToPCC s) = getTranslateAddr v s"
+    and "getTranslateAddr v (BranchDelayPCC_update x_BranchDelayPCC s) = getTranslateAddr v s"
+    and "getTranslateAddr v (the_MEM_update x_the_MEM s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setPCC x_PCC s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setCAPR x_CAPR s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setSCAPR x_SCAPR s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setMEM x_MEM s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setBranchTo x_BranchTo s) = getTranslateAddr v s"
+    and "getTranslateAddr v (setBranchDelay x_BranchDelay s) = getTranslateAddr v s"
 by (rule Commute_read_state_update_stateE, Commute)+
 
-lemma getPhysicalAddress_defined:
+lemma getTranslateAddr_defined:
   assumes "\<not> getExceptionSignalled (StatePart (AddressTranslation v) s)"
       and "\<not> isUnpredictable (StatePart (AddressTranslation v) s)"
-  shows "getPhysicalAddress v s = Some (fst (ValuePart (AddressTranslation v) s))"
+  shows "getTranslateAddr v s = Some (fst (ValuePart (AddressTranslation v) s))"
 unfolding PhysicalAddress_def
 using getAddressTranslationPartial_defined[OF assms]
 by (simp add: ValueAndStatePart_simp)
 
-definition getPhysicalAddressFunc :: "state \<Rightarrow> VirtualAddress \<times> AccessType \<Rightarrow> 
+definition getTranslateAddrFunc :: "state \<Rightarrow> VirtualAddress \<times> AccessType \<Rightarrow> 
                                       PhysicalAddress option" where
-  "getPhysicalAddressFunc s \<equiv> \<lambda>v. getPhysicalAddress v s"
+  "getTranslateAddrFunc s \<equiv> \<lambda>v. getTranslateAddr v s"
 
-lemma Commute_getPhysicalAddressFunc [Commute_compositeI]: 
-  assumes "\<And>a. Commute (read_state (getPhysicalAddress a)) m"
-  shows "Commute (read_state getPhysicalAddressFunc) m"
+lemma Commute_getTranslateAddrFunc [Commute_compositeI]: 
+  assumes "\<And>a. Commute (read_state (getTranslateAddr a)) m"
+  shows "Commute (read_state getTranslateAddrFunc) m"
 using assms
-unfolding getPhysicalAddressFunc_def Commute_def
+unfolding getTranslateAddrFunc_def Commute_def
 by auto
 
-subsection \<open>@{term getPhysicalAddresses}\<close>
+subsection \<open>@{term getTranslateAddresses}\<close>
 
-definition getPhysicalAddresses :: "VirtualAddress set \<Rightarrow> AccessType \<Rightarrow> 
+definition getTranslateAddresses :: "VirtualAddress set \<Rightarrow> AccessType \<Rightarrow> 
                                     state \<Rightarrow> PhysicalAddress set" where
-  "getPhysicalAddresses vAddrs t s \<equiv> 
-   {pAddr. \<exists>vAddr \<in> vAddrs. getPhysicalAddress (vAddr, t) s = Some pAddr}"
+  "getTranslateAddresses vAddrs t s \<equiv> 
+   {pAddr. \<exists>vAddr \<in> vAddrs. getTranslateAddr (vAddr, t) s = Some pAddr}"
 
-lemma Commute_getPhysicalAddresses [Commute_compositeI]: 
-  assumes "\<And>a. Commute (read_state (getPhysicalAddress (a, t))) m"
-  shows "Commute (read_state (getPhysicalAddresses addrs t)) m"
+lemma Commute_getTranslateAddresses [Commute_compositeI]: 
+  assumes "\<And>a. Commute (read_state (getTranslateAddr (a, t))) m"
+  shows "Commute (read_state (getTranslateAddresses addrs t)) m"
 using assms
-unfolding getPhysicalAddresses_def Commute_def
+unfolding getTranslateAddresses_def Commute_def
 by auto
 
-lemma getPhysicalAddressesI [intro?]:
-  assumes "getPhysicalAddress (virtualAddress, t) s = Some a"
+lemma getTranslateAddressesI [intro?]:
+  assumes "getTranslateAddr (virtualAddress, t) s = Some a"
       and "virtualAddress \<in> addrs"
-  shows "a \<in> getPhysicalAddresses addrs t s"
+  shows "a \<in> getTranslateAddresses addrs t s"
 using assms
-unfolding getPhysicalAddresses_def
+unfolding getTranslateAddresses_def
 by auto
 
-lemma getPhysicalAddressesE [elim]:
-  assumes "a \<in> getPhysicalAddresses addrs t s"
+lemma getTranslateAddressesE [elim]:
+  assumes "a \<in> getTranslateAddresses addrs t s"
   obtains virtualAddress 
-    where "getPhysicalAddress (virtualAddress, t) s = Some a"
+    where "getTranslateAddr (virtualAddress, t) s = Some a"
       and "virtualAddress \<in> addrs" 
 using assms
-unfolding getPhysicalAddresses_def
+unfolding getTranslateAddresses_def
 by auto
 
-lemma getPhysicalAddresses_le:
+lemma getTranslateAddresses_le:
   assumes "addrs \<subseteq> addrs'"
-  shows "getPhysicalAddresses addrs t s \<subseteq> getPhysicalAddresses addrs' t s"
+  shows "getTranslateAddresses addrs t s \<subseteq> getTranslateAddresses addrs' t s"
 using assms
-unfolding getPhysicalAddresses_def
+unfolding getTranslateAddresses_def
 by auto
 
-lemmas getPhysicalAddresses_le_subsetD [elim] =
-  subsetD[OF getPhysicalAddresses_le]
+lemmas getTranslateAddresses_le_subsetD [elim] =
+  subsetD[OF getTranslateAddresses_le]
 
-lemma getPhysicalAddresses_distrib_union:
-  shows "getPhysicalAddresses (addrs \<union> addrs') t s =
-         (getPhysicalAddresses addrs t s \<union> getPhysicalAddresses addrs' t s)"
-unfolding getPhysicalAddresses_def
+lemma getTranslateAddresses_distrib_union:
+  shows "getTranslateAddresses (addrs \<union> addrs') t s =
+         (getTranslateAddresses addrs t s \<union> getTranslateAddresses addrs' t s)"
+unfolding getTranslateAddresses_def
 by auto
 
-lemma getPhysicalAddresses_distrib_Union:
-  shows "getPhysicalAddresses (\<Union>addrsSet) t s =
-         (\<Union>addrs\<in>addrsSet. getPhysicalAddresses addrs t s)"
-unfolding getPhysicalAddresses_def
+lemma getTranslateAddresses_distrib_Union:
+  shows "getTranslateAddresses (\<Union>addrsSet) t s =
+         (\<Union>addrs\<in>addrsSet. getTranslateAddresses addrs t s)"
+unfolding getTranslateAddresses_def
 by auto
 
-lemma getPhysicalAddresses_eqI_getPhysicalAddress:
-  assumes "\<And>a. getPhysicalAddress a s' = getPhysicalAddress a s"
-  shows "getPhysicalAddresses addrs t s' = getPhysicalAddresses addrs t s"
+lemma getTranslateAddresses_eqI_getTranslateAddr:
+  assumes "\<And>a. getTranslateAddr a s' = getTranslateAddr a s"
+  shows "getTranslateAddresses addrs t s' = getTranslateAddresses addrs t s"
 using assms
-unfolding getPhysicalAddresses_def
+unfolding getTranslateAddresses_def
 by simp
 
 subsection \<open>@{const PrePost} of @{const AddressTranslation}\<close>
@@ -3453,7 +3453,7 @@ subsection \<open>@{const PrePost} of @{const AddressTranslation}\<close>
 lemma PrePost_AddressTranslation:
   defines "h \<equiv> read_state getExceptionSignalled \<or>\<^sub>b read_state isUnpredictable"
   assumes "IsInvariant p (AddressTranslation v)"
-  shows "PrePost (bind (read_state (getPhysicalAddress v)) (case_option p q))
+  shows "PrePost (bind (read_state (getTranslateAddr v)) (case_option p q))
                  (AddressTranslation v)
                  (\<lambda>x. (\<not>\<^sub>b h \<or>\<^sub>b p) \<and>\<^sub>b (h \<or>\<^sub>b q (fst x)))" 
   (is "PrePost ?pre _ ?post")
@@ -3473,7 +3473,7 @@ qed
 lemma PrePost_DefinedAddressTranslation:
   shows "PrePost (read_state getExceptionSignalled \<or>\<^sub>b 
                   read_state isUnpredictable \<or>\<^sub>b 
-                  bind (read_state (getPhysicalAddress v))
+                  bind (read_state (getTranslateAddr v))
                        (\<lambda>a. case a of None \<Rightarrow> return True 
                                     | Some x \<Rightarrow> p x))
                  (AddressTranslation v)
@@ -3540,13 +3540,13 @@ qed
 
 text \<open>The lower 12 bits of the translated address equal the lower 12 of the original address.\<close>
 
-lemma getPhysicalAddress_ucast12:
-  assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+lemma getTranslateAddr_ucast12:
+  assumes "getTranslateAddr (vAddr, accessType) s = Some pAddr"
   shows "(ucast pAddr::12 word) = ucast vAddr"
 proof -
   have [simp]: "(4095::12 word) = mask 12"
     unfolding mask_def by simp
-  have "Some pAddr = getPhysicalAddress (vAddr, accessType) s \<longrightarrow>
+  have "Some pAddr = getTranslateAddr (vAddr, accessType) s \<longrightarrow>
         (ucast pAddr::12 word) = ucast vAddr"
     unfolding PhysicalAddress_def getAddressTranslationPartial_alt_def
     by (strong_cong_simp
@@ -3559,34 +3559,34 @@ proof -
     using assms by simp
 qed 
 
-corollary getPhysicalAddress_vAddr_and_mask_12:
-  assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+corollary getTranslateAddr_vAddr_and_mask_12:
+  assumes "getTranslateAddr (vAddr, accessType) s = Some pAddr"
   shows "vAddr AND mask 12 = ucast pAddr AND mask 12"
 proof (intro word_eqI impI, unfold word_size)
   fix n
   assume "n < LENGTH(64)"
   thus "(vAddr AND mask 12) !! n = ((ucast pAddr::64 word) AND mask 12) !! n"
-    using test_bit_cong[where x=n, OF getPhysicalAddress_ucast12[OF assms]]
+    using test_bit_cong[where x=n, OF getTranslateAddr_ucast12[OF assms]]
     by (auto simp: nth_ucast word_ao_nth word_size)
 qed
 
-corollary getPhysicalAddress_pAddr_and_mask_12:
-  assumes "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+corollary getTranslateAddr_pAddr_and_mask_12:
+  assumes "getTranslateAddr (vAddr, accessType) s = Some pAddr"
   shows "pAddr AND mask 12 = ucast vAddr AND mask 12"
 proof (intro word_eqI impI, unfold word_size)
   fix n
   assume "n < LENGTH(40)"
   thus "(pAddr AND mask 12) !! n = ((ucast vAddr::40 word) AND mask 12) !! n"
-    using test_bit_cong[where x=n, OF getPhysicalAddress_ucast12[OF assms]]
+    using test_bit_cong[where x=n, OF getTranslateAddr_ucast12[OF assms]]
     by (auto simp: nth_ucast word_ao_nth word_size)
 qed
 
 text \<open>The translation of the start of the page that contains an address vAddr, is given
 by clearing the lowest 12 bits of the translation of vAddr.\<close>
 
-lemma getPhysicalAddress_and_not_mask:
-  shows "getPhysicalAddress (vAddr AND NOT mask 12, accessType) s = 
-         (case getPhysicalAddress (vAddr, accessType) s 
+lemma getTranslateAddr_and_not_mask:
+  shows "getTranslateAddr (vAddr AND NOT mask 12, accessType) s = 
+         (case getTranslateAddr (vAddr, accessType) s 
             of None \<Rightarrow> None
              | Some pAddr \<Rightarrow> Some (pAddr AND NOT mask 12))"
 proof -
@@ -3623,54 +3623,54 @@ proof -
        (auto split: option.splits prod.splits)
 qed
 
-corollary getPhysicalAddress_same_page:
+corollary getTranslateAddr_same_page:
   assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
-  shows "(case getPhysicalAddress (vAddr, accessType) s 
+  shows "(case getTranslateAddr (vAddr, accessType) s 
             of None \<Rightarrow> None
              | Some pAddr \<Rightarrow> Some (pAddr AND NOT mask 12)) =
-         (case getPhysicalAddress (vAddr', accessType) s 
+         (case getTranslateAddr (vAddr', accessType) s 
             of None \<Rightarrow> None
              | Some pAddr \<Rightarrow> Some (pAddr AND NOT mask 12))"
-using getPhysicalAddress_and_not_mask[where vAddr=vAddr]
-using getPhysicalAddress_and_not_mask[where vAddr=vAddr']
+using getTranslateAddr_and_not_mask[where vAddr=vAddr]
+using getTranslateAddr_and_not_mask[where vAddr=vAddr']
 using assms
 by auto
 
-corollary getPhysicalAddress_same_page_None:
+corollary getTranslateAddr_same_page_None:
   assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
-      and "getPhysicalAddress (vAddr, accessType) s = None"
-  shows "getPhysicalAddress (vAddr', accessType) s = None"
-using getPhysicalAddress_same_page[where accessType=accessType and s=s, OF assms(1)]
+      and "getTranslateAddr (vAddr, accessType) s = None"
+  shows "getTranslateAddr (vAddr', accessType) s = None"
+using getTranslateAddr_same_page[where accessType=accessType and s=s, OF assms(1)]
 using assms(2)
 by (auto split: option.splits)
 
-corollary getPhysicalAddress_same_page_Some:
+corollary getTranslateAddr_same_page_Some:
   assumes "vAddr AND NOT mask 12 = vAddr' AND NOT mask 12"
-      and "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
-      and "getPhysicalAddress (vAddr', accessType) s = Some pAddr'"
+      and "getTranslateAddr (vAddr, accessType) s = Some pAddr"
+      and "getTranslateAddr (vAddr', accessType) s = Some pAddr'"
   shows "pAddr AND NOT mask 12 = pAddr' AND NOT mask 12"
-using getPhysicalAddress_same_page[where accessType=accessType and s=s, OF assms(1)]
+using getTranslateAddr_same_page[where accessType=accessType and s=s, OF assms(1)]
 using assms(2, 3)
 by (auto split: option.splits)
 
-lemma getPhysicalAddress_split:
-  shows "getPhysicalAddress (vAddr, accessType) s = 
-         (case getPhysicalAddress (vAddr AND NOT mask 12, accessType) s 
+lemma getTranslateAddr_split:
+  shows "getTranslateAddr (vAddr, accessType) s = 
+         (case getTranslateAddr (vAddr AND NOT mask 12, accessType) s 
             of None \<Rightarrow> None
              | Some pAddr \<Rightarrow> Some (pAddr OR (ucast vAddr AND mask 12)))"
-proof (cases "getPhysicalAddress (vAddr, accessType) s")
+proof (cases "getTranslateAddr (vAddr, accessType) s")
   case None
   thus ?thesis 
-    unfolding getPhysicalAddress_and_not_mask
+    unfolding getTranslateAddr_and_not_mask
     by (auto split: option.splits)
 next
   case (Some pAddr)
   have "ucast vAddr AND mask 12 = pAddr AND mask 12"
-    using getPhysicalAddress_ucast12[OF Some, THEN test_bit_cong]
+    using getTranslateAddr_ucast12[OF Some, THEN test_bit_cong]
     by (intro word_eqI) (auto simp: word_size word_ao_nth nth_ucast)
   thus ?thesis
     using Some
-    unfolding getPhysicalAddress_and_not_mask
+    unfolding getTranslateAddr_and_not_mask
     by (auto split: option.splits)
 qed
 
@@ -3684,10 +3684,10 @@ lemma TranslateNearbyAddress:
       and v_lower: "getBase cap \<le> vAddr"
       and length: "1 \<le> accessLength" "accessLength \<le> 32"
       and alignment: "unat vAddr mod 32 + unat accessLength \<le> 32"
-      and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+      and pAddr: "getTranslateAddr (vAddr, accessType) s = Some pAddr"
       and pAddr': "pAddr' \<in> Region pAddr (ucast accessLength)"
   obtains vAddr' where
-    "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
+    "getTranslateAddr (vAddr', accessType) s = Some pAddr'" and
     "vAddr' \<in> RegionOfCap cap"
 proof -
 
@@ -3707,7 +3707,7 @@ proof -
       have "unat pAddr mod 32 + unat accessLength' < 32"
         using alignment
         using arg_cong[where f="\<lambda>x. unat (ucast x::5 word)", 
-                       OF getPhysicalAddress_ucast12[OF pAddr]]
+                       OF getTranslateAddr_ucast12[OF pAddr]]
         unfolding accessLength_alt
         by (simp add: unat_and_mask)
       from transfer_int_nat_relations(2)[THEN iffD2, OF this]
@@ -3822,15 +3822,15 @@ proof -
     by simp
 
   -- \<open>We prove that @{term vAddr'} translates to @{term pAddr'}.\<close>
-  have vAddr'_trans: "getPhysicalAddress (vAddr', accessType) s = Some pAddr'"
+  have vAddr'_trans: "getTranslateAddr (vAddr', accessType) s = Some pAddr'"
     proof -
-      have "getPhysicalAddress (vAddr AND NOT mask 12, accessType) s = 
+      have "getTranslateAddr (vAddr AND NOT mask 12, accessType) s = 
             Some (pAddr AND NOT mask 12)"
-        unfolding getPhysicalAddress_and_not_mask 
+        unfolding getTranslateAddr_and_not_mask 
         using pAddr
         by auto
       thus ?thesis
-        unfolding getPhysicalAddress_split[where vAddr=vAddr'] 
+        unfolding getTranslateAddr_split[where vAddr=vAddr'] 
         unfolding vAddr'_def 
         by (auto simp: ucast_and ucast_or ucast_not 
                        pAddr'_not_mask[THEN sym]
@@ -3843,7 +3843,7 @@ proof -
   have vAddr'_lower: "getBase cap \<le> vAddr'"
     proof -
       have "vAddr = (vAddr AND NOT mask 12) + (ucast pAddr AND mask 12)"
-        using getPhysicalAddress_vAddr_and_mask_12[where pAddr=pAddr, THEN sym] pAddr
+        using getTranslateAddr_vAddr_and_mask_12[where pAddr=pAddr, THEN sym] pAddr
         by simp
       also have "... \<le> (vAddr AND NOT mask 12) + (ucast pAddr' AND mask 12)"
         using pAddr'_mask_lower
@@ -3877,7 +3877,7 @@ proof -
         by (simp add: uint_and_mask uint_and_not_mask
                       uint_word_and_not_mask_plus_word_and_mask)
       also have "... = uint vAddr + uint accessLength'"
-        using arg_cong[where f=uint, OF getPhysicalAddress_vAddr_and_mask_12[OF pAddr, THEN sym]]
+        using arg_cong[where f=uint, OF getTranslateAddr_vAddr_and_mask_12[OF pAddr, THEN sym]]
         by (simp add: uint_and_mask uint_and_not_mask
                       uint_word_and_not_mask_plus_word_and_mask)
       finally show ?thesis
@@ -3904,10 +3904,10 @@ lemma TranslateNearbyAddress_LegacyInstructions:
                     ucast (getBase cap) + ucast (getLength cap)"
       and v_lower: "getBase cap \<le> vAddr"
       and alignment: "unat vAddr mod 8 + unat accessLength < 8"
-      and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+      and pAddr: "getTranslateAddr (vAddr, accessType) s = Some pAddr"
       and pAddr': "pAddr' \<in> Region pAddr (ucast accessLength + 1)"
   obtains vAddr' where
-    "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
+    "getTranslateAddr (vAddr', accessType) s = Some pAddr'" and
     "vAddr' \<in> RegionOfCap cap"
 proof -
   define accessLength' :: "65 word" where "accessLength' \<equiv> ucast accessLength + 1"
@@ -3949,10 +3949,10 @@ lemma TranslateNearbyAddress_CapAligned:
                     ucast (getBase cap) + ucast (getLength cap)"
       and v_lower: "getBase cap \<le> vAddr"
       and alignment: "isCapAligned vAddr"
-      and pAddr: "getPhysicalAddress (vAddr, accessType) s = Some pAddr"
+      and pAddr: "getTranslateAddr (vAddr, accessType) s = Some pAddr"
       and pAddr': "pAddr' \<in> Region pAddr 32"
   obtains vAddr' where
-    "getPhysicalAddress (vAddr', accessType) s = Some pAddr'" and
+    "getTranslateAddr (vAddr', accessType) s = Some pAddr'" and
     "vAddr' \<in> RegionOfCap cap"
 proof -
   define accessLength' :: "65 word" where "accessLength' \<equiv> 32"
@@ -4026,7 +4026,7 @@ lemma Commute_NextInstruction [Commute_compositeI]:
       and "Commute (read_state getCP0StatusIM) m"
       and "Commute (read_state getCP0CauseIP) m"
       and "Commute (read_state getExceptionSignalled) m"
-      and "\<And>v. Commute (read_state (getPhysicalAddress v)) m"
+      and "\<And>v. Commute (read_state (getTranslateAddr v)) m"
       and "\<And>v. Commute (read_state (getReadInst v)) m"
   shows "Commute NextInstruction m"
 using assms
@@ -4202,7 +4202,7 @@ definition UnpredictableNext :: "state \<Rightarrow> state set" where
             (BranchDelayPCC s' = BranchDelayPCC s) \<and>
             (\<forall>cd. getCAPR cd s' = getCAPR cd s) \<and>
             (\<forall>cd. getSCAPR cd s' = getSCAPR cd s) \<and>
-            (\<forall>vAddr. getPhysicalAddress vAddr s' = getPhysicalAddress vAddr s) \<and>
+            (\<forall>vAddr. getTranslateAddr vAddr s' = getTranslateAddr vAddr s) \<and>
             getStateIsValid s'}"
 
 lemma UnpredictableNextI [intro]:
@@ -4211,7 +4211,7 @@ lemma UnpredictableNextI [intro]:
       and "BranchDelayPCC s' = BranchDelayPCC s"
       and "\<And>cd. getCAPR cd s' = getCAPR cd s"
       and "\<And>cd. getSCAPR cd s' = getSCAPR cd s"
-      and "\<And>vAddr. getPhysicalAddress vAddr s' = getPhysicalAddress vAddr s"
+      and "\<And>vAddr. getTranslateAddr vAddr s' = getTranslateAddr vAddr s"
       and "getStateIsValid s'"
   shows "s' \<in> UnpredictableNext s"
 using assms
@@ -4274,9 +4274,9 @@ using UnpredictableNextE[OF unpred]
 using UnpredictableNextE_getCapReg[OF unpred ghost]
 by (cases loc) auto
 
-lemma UnpredictableNextE_getPhysicalAddress [elim!]:
+lemma UnpredictableNextE_getTranslateAddr [elim!]:
   assumes "s' \<in> UnpredictableNext s"
-  shows "getPhysicalAddress vAddr s' = getPhysicalAddress vAddr s"
+  shows "getTranslateAddr vAddr s' = getTranslateAddr vAddr s"
 using assms
 unfolding UnpredictableNext_def
 by (cases vAddr) (auto split: prod.splits)
